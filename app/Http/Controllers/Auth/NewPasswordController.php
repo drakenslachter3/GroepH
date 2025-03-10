@@ -31,9 +31,17 @@ class NewPasswordController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/',
+                'confirmed',
+            ],
+            'token' => ['required'],
+        ], [
+            'password.regex' => 'Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.',
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
