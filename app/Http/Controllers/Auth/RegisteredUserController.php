@@ -32,7 +32,14 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => [
+                'required',
+                'string',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/',
+                'confirmed',
+            ],
+        ], [
+            'password.regex' => 'Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.',
         ]);
 
         $user = User::create([

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EnergyBudgetController;
@@ -14,10 +15,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
-// Route::get('/dashboard', function () {
-//     return view('dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
 Route::get('/dashboard', [EnergyVisualizationController::class, 'dashboard'])->name('dashboard');
 
 
@@ -37,6 +34,8 @@ Route::middleware('auth')->group(function () {
       Route::get('/energy/visualization', [EnergyVisualizationController::class, 'dashboard'])->name('energy.dashboard');
       
 });
+
+Route::get('/user-dashboard', [DashboardController::class, 'index'])->name('index.form');
 
 require __DIR__.'/auth.php';
 
