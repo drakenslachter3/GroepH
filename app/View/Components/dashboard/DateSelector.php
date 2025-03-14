@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Components;
+namespace App\View\Components\dashboard;
 
 use Illuminate\View\Component;
 use Illuminate\View\View;
@@ -42,6 +42,6 @@ class DateSelector extends Component
      */
     public function render(): View
     {
-        return view('components.date-selector');
+        return view('components.dashboard.date-selector');
     }
 }

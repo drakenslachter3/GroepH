@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Components;
+namespace App\View\Components\dashboard;
 
 use Illuminate\View\Component;
 use Illuminate\View\View;
@@ -52,6 +52,6 @@ class EnergySuggestions extends Component
      */
     public function render(): View
     {
-        return view('components.energy-suggestions');
+        return view('components.dashboard.energy-suggestions');
     }
 }

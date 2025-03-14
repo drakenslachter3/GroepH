@@ -8,10 +8,10 @@
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Datum en periode selectie component -->
-            <x-date-selector :period="$period" :date="$date" :housingType="$housingType" />
+            <x-dashboard.date-selector :period="$period" :date="$date" :housingType="$housingType" />
 
             <!-- Voorspelling en prognose component -->
-            <x-usage-prediction 
+            <x-dashboard.usage-prediction 
                 :electricityData="['kwh' => $totals['electricity_kwh'], 'percentage' => $totals['electricity_percentage']]" 
                 :gasData="['m3' => $totals['gas_m3'], 'percentage' => $totals['gas_percentage']]" 
                 :period="$period" 
@@ -19,7 +19,7 @@
 <!-- Budgetstatus cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <!-- Elektriciteit Status Component -->
-                <x-energy-status 
+                <x-dashboard.energy-status 
                     type="Elektriciteit" 
                     :usage="$totals['electricity_kwh']" 
                     :target="$totals['electricity_target']" 
@@ -30,7 +30,7 @@
                 />
 
                 <!-- Gas Status Component -->
-                <x-energy-status 
+                <x-dashboard.energy-status 
                     type="Gas" 
                     :usage="$totals['gas_m3']" 
                     :target="$totals['gas_target']" 
@@ -42,14 +42,14 @@
             </div>
             
             <!-- Historische vergelijking cards -->
-            <x-historical-comparison 
+            <x-dashboard.historical-comparison 
                 :weekData="['electricity' => 42.8, 'gas' => 12.3]"
                 :monthData="['electricity' => 180.5, 'gas' => 52.7]"
                 :yearComparisonData="['electricity' => 210.3, 'gas' => 57.1]"
             />
 
             <!-- Grafiek Elektriciteit -->
-            <x-energy-chart 
+            <x-dashboard.energy-chart 
                 type="electricity" 
                 title="Elektriciteitsverbruik (kWh)"
                 buttonLabel="Toon Vorig Jaar"
@@ -59,7 +59,7 @@
             />
 
             <!-- Grafiek Gas -->
-            <x-energy-chart 
+            <x-dashboard.energy-chart 
                 type="gas" 
                 title="Gasverbruik (m³)"
                 buttonLabel="Toon Vorig Jaar"
@@ -69,13 +69,15 @@
             />
 
             <!-- Trend Analyse Component -->
-            <x-trend-analysis 
+            <x-dashboard.trend-analysis 
                 :electricityData="['thisYear' => [210, 195, 180, 170, 165, 168, 172, 175, 168, 182, 190, 200], 'lastYear' => [230, 220, 200, 185, 180, 182, 190, 195, 185, 200, 210, 225]]" 
                 :gasData="['thisYear' => [120, 115, 90, 65, 40, 25, 20, 20, 35, 70, 100, 110], 'lastYear' => [130, 125, 100, 70, 45, 30, 25, 25, 40, 75, 110, 120]]" 
             />
 
             <!-- Gepersonaliseerde energiebesparingstips component -->
-            <x-energy-suggestions 
+            <!-- Kijk uit dit is hard coded -->
+
+            <x-dashboard.energy-suggestions 
                 :usagePattern="$usagePattern ?? 'avond'" 
                 :housingType="$housingType"
             />
@@ -83,7 +85,7 @@
     </div>
     
     <!-- Budget waarschuwing component -->
-    <x-budget-alert 
+    <x-dashboard.budget-alert 
         :electricityPercentage="$totals['electricity_percentage']" 
         :gasPercentage="$totals['gas_percentage']" 
         threshold="80"
@@ -100,9 +102,10 @@
             cost: {electricity: [], gas: []}
         };
         
-        @if(isset($chartData))
-            chartData = @json($chartData);
-        @endif
+        //Dit werkt niet dus heb ik eruit gecomment - L
+        // @if(isset($chartData))
+        //     chartData = @json($chartData);
+        // @endif
         
         // Last year's data (mockup voor demo)
         const lastYearData = {

@@ -1,29 +1,35 @@
 <?php
 
-namespace App\View\Components;
+namespace App\View\Components\dashboard;
 
 use Illuminate\View\Component;
 use Illuminate\View\View;
 
-class TrendAnalysis extends Component
+class UsagePrediction extends Component
 {
     /**
-     * Gegevens voor de elektriciteit trend
+     * Elektriciteitsgegevens voor voorspelling
      */
     public $electricityData;
     
     /**
-     * Gegevens voor de gas trend
+     * Gasgegevens voor voorspelling
      */
     public $gasData;
     
     /**
+     * Huidige periode (day, month, year)
+     */
+    public $period;
+    
+    /**
      * Maak een nieuwe component instantie.
      */
-    public function __construct($electricityData, $gasData)
+    public function __construct($electricityData, $gasData, $period)
     {
         $this->electricityData = $electricityData;
         $this->gasData = $gasData;
+        $this->period = $period;
     }
 
     /**
@@ -31,6 +37,6 @@ class TrendAnalysis extends Component
      */
     public function render(): View
     {
-        return view('components.trend-analysis');
+        return view('components.dashboard.usage-prediction');
     }
 }
