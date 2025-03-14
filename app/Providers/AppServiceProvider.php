@@ -2,11 +2,17 @@
 
 namespace App\Providers;
 
-use App\Services\EnergyPredictionService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\View\Component;
-use Illuminate\View\View;
+use App\View\Components\DateSelector;
+use App\View\Components\EnergyStatus;
+use App\View\Components\UsagePrediction;
+use App\View\Components\SavingTips;
+use App\View\Components\HistoricalComparison;
+use App\View\Components\EnergyChart;
+use App\View\Components\TrendAnalysis;
+use App\View\Components\BudgetAlert;
+use App\View\Components\EnergySuggestions;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,10 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Registreer de EnergyPredictionService
-        $this->app->singleton(EnergyPredictionService::class, function ($app) {
-            return new EnergyPredictionService();
-        });
+        //
     }
 
     /**
@@ -26,10 +29,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Registreer alle componenten die we hebben gemaakt
-        Blade::component('date-selector', \App\View\Components\DateSelector::class);
-        Blade::component('energy-status', \App\View\Components\EnergyStatus::class);
-        Blade::component('usage-prediction', \App\View\Components\UsagePrediction::class);
-        Blade::component('saving-tips', \App\View\Components\SavingTips::class);
+        // Bestaande componenten
+        Blade::component('date-selector', DateSelector::class);
+        Blade::component('energy-status', EnergyStatus::class);
+        Blade::component('usage-prediction', UsagePrediction::class);
+        Blade::component('saving-tips', SavingTips::class);
+        
+        // Nieuwe componenten
+        Blade::component('historical-comparison', HistoricalComparison::class);
+        Blade::component('energy-chart', EnergyChart::class);
+        Blade::component('trend-analysis', TrendAnalysis::class);
+        Blade::component('budget-alert', BudgetAlert::class);
+        Blade::component('energy-suggestions', EnergySuggestions::class);
     }
 }
