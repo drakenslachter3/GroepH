@@ -11,19 +11,18 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="flex space-x-4">
-                    <a href="{{ route('energy.dashboard', ['period' => 'day']) }}" 
-   class="px-4 py-2 rounded-md {{ ($period ?? 'month') === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
-    Dag
-</a>
-<a href="{{ route('energy.dashboard', ['period' => 'month']) }}" 
-   class="px-4 py-2 rounded-md {{ ($period ?? 'month') === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
-    Maand
-</a>
-<a href="{{ route('energy.dashboard', ['period' => 'year']) }}" 
-   class="px-4 py-2 rounded-md {{ ($period ?? 'month') === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
-    Jaar
-</a>
-
+                        <a href="{{ route('energy.dashboard', ['period' => 'day']) }}" 
+                           class="px-4 py-2 rounded-md {{ ($period ?? 'month') === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                            Dag
+                        </a>
+                        <a href="{{ route('energy.dashboard', ['period' => 'month']) }}" 
+                           class="px-4 py-2 rounded-md {{ ($period ?? 'month') === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                            Maand
+                        </a>
+                        <a href="{{ route('energy.dashboard', ['period' => 'year']) }}" 
+                           class="px-4 py-2 rounded-md {{ ($period ?? 'month') === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                            Jaar
+                        </a>
                     </div>
                 </div>
             </div>
@@ -37,32 +36,31 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-700">Verbruik:</span>
                             <span class="font-bold">{{ number_format($totals['electricity_kwh'] ?? 0, 2) }} kWh</span>
-
                         </div>
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-700">Target:</span>
-                            <span class="font-bold">{{ number_format($totals['electricity_target']?? 0, 2) }} kWh</span>
+                            <span class="font-bold">{{ number_format($totals['electricity_target'] ?? 0, 2) }} kWh</span>
                         </div>
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-700">Kosten:</span>
-                            <span class="font-bold">€ {{ number_format($totals['electricity_euro']?? 0, 2) }}</span>
+                            <span class="font-bold">€ {{ number_format($totals['electricity_euro'] ?? 0, 2) }}</span>
                         </div>
                         
                         <!-- Progress bar -->
                         <div class="mt-4">
                             <div class="w-full bg-gray-200 rounded-full h-4">
                                 <div class="h-4 rounded-full 
-                                        {{ $totals['electricity_status'] === 'goed' ? 'bg-green-500' : 
-                                           ($totals['electricity_status'] === 'waarschuwing' ? 'bg-yellow-500' : 'bg-red-500') }}"
-                                     style="width: {{ min($totals['electricity_percentage'], 100) }}%">
+                                        {{ ($totals['electricity_status'] ?? '') === 'goed' ? 'bg-green-500' : 
+                                           (($totals['electricity_status'] ?? '') === 'waarschuwing' ? 'bg-yellow-500' : 'bg-red-500') }}"
+                                     style="width: {{ min(($totals['electricity_percentage'] ?? 0), 100) }}%">
                                 </div>
                             </div>
                             <div class="flex justify-between mt-1">
                                 <span class="text-sm text-gray-600">0%</span>
                                 <span class="text-sm font-medium 
-                                        {{ $totals['electricity_status'] === 'goed' ? 'text-green-700' : 
-                                           ($totals['electricity_status'] === 'waarschuwing' ? 'text-yellow-700' : 'text-red-700') }}">
-                                    {{ number_format($totals['electricity_percentage'], 1) }}%
+                                        {{ ($totals['electricity_status'] ?? '') === 'goed' ? 'text-green-700' : 
+                                           (($totals['electricity_status'] ?? '') === 'waarschuwing' ? 'text-yellow-700' : 'text-red-700') }}">
+                                    {{ number_format($totals['electricity_percentage'] ?? 0, 1) }}%
                                 </span>
                                 <span class="text-sm text-gray-600">100%</span>
                             </div>
@@ -76,32 +74,32 @@
                         <h3 class="text-lg font-semibold mb-4">Gas Status</h3>
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-700">Verbruik:</span>
-                            <span class="font-bold">{{ number_format($totals['gas_m3'], 2) }} m³</span>
+                            <span class="font-bold">{{ number_format($totals['gas_m3'] ?? 0, 2) }} m³</span>
                         </div>
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-700">Target:</span>
-                            <span class="font-bold">{{ number_format($totals['gas_target'], 2) }} m³</span>
+                            <span class="font-bold">{{ number_format($totals['gas_target'] ?? 0, 2) }} m³</span>
                         </div>
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-700">Kosten:</span>
-                            <span class="font-bold">€ {{ number_format($totals['gas_euro'], 2) }}</span>
+                            <span class="font-bold">€ {{ number_format($totals['gas_euro'] ?? 0, 2) }}</span>
                         </div>
                         
                         <!-- Progress bar -->
                         <div class="mt-4">
                             <div class="w-full bg-gray-200 rounded-full h-4">
                                 <div class="h-4 rounded-full 
-                                        {{ $totals['gas_status'] === 'goed' ? 'bg-green-500' : 
-                                           ($totals['gas_status'] === 'waarschuwing' ? 'bg-yellow-500' : 'bg-red-500') }}"
-                                     style="width: {{ min($totals['gas_percentage'], 100) }}%">
+                                        {{ ($totals['gas_status'] ?? '') === 'goed' ? 'bg-green-500' : 
+                                           (($totals['gas_status'] ?? '') === 'waarschuwing' ? 'bg-yellow-500' : 'bg-red-500') }}"
+                                     style="width: {{ min(($totals['gas_percentage'] ?? 0), 100) }}%">
                                 </div>
                             </div>
                             <div class="flex justify-between mt-1">
                                 <span class="text-sm text-gray-600">0%</span>
                                 <span class="text-sm font-medium 
-                                        {{ $totals['gas_status'] === 'goed' ? 'text-green-700' : 
-                                           ($totals['gas_status'] === 'waarschuwing' ? 'text-yellow-700' : 'text-red-700') }}">
-                                    {{ number_format($totals['gas_percentage'], 1) }}%
+                                        {{ ($totals['gas_status'] ?? '') === 'goed' ? 'text-green-700' : 
+                                           (($totals['gas_status'] ?? '') === 'waarschuwing' ? 'text-yellow-700' : 'text-red-700') }}">
+                                    {{ number_format($totals['gas_percentage'] ?? 0, 1) }}%
                                 </span>
                                 <span class="text-sm text-gray-600">100%</span>
                             </div>
@@ -141,7 +139,7 @@
             </div>
 
             <!-- Besparingstips -->
-            @if($totals['electricity_status'] === 'kritiek' || $totals['gas_status'] === 'kritiek')
+            @if(($totals['electricity_status'] ?? '') === 'kritiek' || ($totals['gas_status'] ?? '') === 'kritiek')
                 <div class="bg-red-50 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6 border-b border-red-200">
                         <h3 class="text-lg font-semibold text-red-700 mb-4">Besparingstips</h3>
@@ -154,7 +152,7 @@
                         </ul>
                     </div>
                 </div>
-            @elseif($totals['electricity_status'] === 'waarschuwing' || $totals['gas_status'] === 'waarschuwing')
+            @elseif(($totals['electricity_status'] ?? '') === 'waarschuwing' || ($totals['gas_status'] ?? '') === 'waarschuwing')
                 <div class="bg-yellow-50 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6 border-b border-yellow-200">
                         <h3 class="text-lg font-semibold text-yellow-700 mb-4">Besparingstips</h3>
@@ -180,7 +178,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Chart data from PHP
-        const chartData = @json($chartData);
+        let chartData = {
+            labels: [],
+            electricity: {data: [], target: []},
+            gas: {data: [], target: []},
+            cost: {electricity: [], gas: []}
+        };
+        
+        @if(isset($chartData))
+            chartData = @json($chartData);
+        @endif
         
         // Format voor labels op basis van periode
         const periodLabels = {
@@ -222,7 +229,7 @@
                     x: {
                         title: {
                             display: true,
-                            text: periodLabels['{{ $period }}']
+                            text: periodLabels['{{ $period ?? 'month' }}']
                         }
                     },
                     y: {
@@ -269,7 +276,7 @@
                     x: {
                         title: {
                             display: true,
-                            text: periodLabels['{{ $period }}']
+                            text: periodLabels['{{ $period ?? 'month' }}']
                         }
                     },
                     y: {
@@ -313,7 +320,7 @@
                     x: {
                         title: {
                             display: true,
-                            text: periodLabels['{{ $period }}']
+                            text: periodLabels['{{ $period ?? 'month' }}']
                         }
                     },
                     y: {

@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\EnergyBudget;
 use App\Services\EnergyConversionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
 
 class EnergyVisualizationController extends Controller
 {
@@ -22,41 +22,50 @@ class EnergyVisualizationController extends Controller
      */
     public function dashboard(Request $request): View
     {
-        // Bepaal periode op basis van query parameter, standaard is maand
-        $period = $request->query('period', 'month');
-        $validPeriods = ['day', 'month', 'year'];
-        
-        if (!in_array($period, $validPeriods)) {
-            $period = 'month';
+        try {
+            // Bepaal periode op basis van query parameter, standaard is maand
+            $period = $request->query('period', 'month');
+            $validPeriods = ['day', 'month', 'year'];
+            
+            if (!in_array($period, $validPeriods)) {
+                $period = 'month';
+            }
+
+            // Huidige jaar voor het ophalen van het juiste budget
+            $currentYear = date('Y');
+            
+            // Haal het energiebudget voor de huidige gebruiker op
+            $budget = EnergyBudget::where('year', $currentYear)->latest()->first();
+            
+            // Als er geen budget is, toon een melding
+            if (!$budget) {
+                return view('energy.visualization.no-budget');
+            }
+
+            // Haal verbruiksgegevens op volgens de geselecteerde periode
+            $usageData = $this->getUsageDataByPeriod($period);
+            
+            // Bereken totalen en percentages
+            $totals = $this->calculateTotals($usageData, $budget, $period);
+            
+            // Bereid data voor voor grafieken
+            $chartData = $this->prepareChartData($usageData, $totals, $period);
+
+            return view('dashboard', [
+                'period' => $period,
+                'budget' => $budget,
+                'usageData' => $usageData,
+                'totals' => $totals,
+                'chartData' => $chartData,
+            ]);
+        } catch (\Exception $e) {
+            // Log de fout
+            Log::error('EnergyVisualizationController error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            
+            // Toon een eenvoudige foutpagina
+            return view('energy.visualization.error', ['error' => $e->getMessage()]);
         }
-
-        // Huidige jaar voor het ophalen van het juiste budget
-        $currentYear = date('Y');
-        
-        // Haal het energiebudget voor de huidige gebruiker op
-        $budget = EnergyBudget::where('year', $currentYear)->latest()->first();
-        
-        // Als er geen budget is, toon een melding
-        if (!$budget) {
-            return view('energy.visualization.no-budget');
-        }
-
-        // Haal verbruiksgegevens op volgens de geselecteerde periode
-        $usageData = $this->getUsageDataByPeriod($period);
-        
-        // Bereken totalen en percentages
-        $totals = $this->calculateTotals($usageData, $budget, $period);
-        
-        // Bereid data voor voor grafieken
-        $chartData = $this->prepareChartData($usageData, $totals, $period);
-
-        return view('energy.visualization.dashboard', [
-            'period' => $period,
-            'budget' => $budget,
-            'usageData' => $usageData,
-            'totals' => $totals,
-            'chartData' => $chartData,
-        ]);
     }
 
     /**
@@ -64,9 +73,7 @@ class EnergyVisualizationController extends Controller
      */
     private function getUsageDataByPeriod(string $period): array
     {
-        // In een echte applicatie zou deze data uit de database komen
-        // Voor deze demo maken we voorbeeld data aan
-        
+        // Demo data for testing
         $usageData = [];
         
         switch ($period) {
@@ -225,8 +232,15 @@ class EnergyVisualizationController extends Controller
         $gasTargetLine = array_fill(0, $count, round($avgGasTarget, 2));
         
         // Kosten data
-        $electricityCostData = array_map([$this->conversionService, 'kwhToEuro'], $electricityData);
-        $gasCostData = array_map([$this->conversionService, 'm3ToEuro'], $gasData);
+        $electricityCostData = [];
+        foreach ($electricityData as $kwh) {
+            $electricityCostData[] = $this->conversionService->kwhToEuro($kwh);
+        }
+        
+        $gasCostData = [];
+        foreach ($gasData as $m3) {
+            $gasCostData[] = $this->conversionService->m3ToEuro($m3);
+        }
         
         return [
             'labels' => $labels,

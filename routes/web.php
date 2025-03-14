@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EnergyBudgetController;
 use App\Http\Controllers\EnergyVisualizationController;
 
+
 Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
 Route::post('/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
 Route::post('/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
@@ -32,6 +33,7 @@ Route::middleware('auth')->group(function () {
       
       // Energie visualisatie routes
       Route::get('/energy/visualization', [EnergyVisualizationController::class, 'dashboard'])->name('energy.dashboard');
+      
 });
 
 require __DIR__.'/auth.php';
