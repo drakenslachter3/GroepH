@@ -11,22 +11,12 @@ use Illuminate\Validation\Rule;
 class AccountController extends Controller
 {
     /**
-     * Constructor om middleware toe te passen
-     */
-    public function __construct()
-    {
-        $this->middleware('auth');
-        $this->middleware('role:owner,admin')->except(['show', 'edit', 'update']);
-        $this->middleware('role:owner')->only(['destroy']);
-    }
-
-    /**
      * Toon een lijst met alle accounts
      */
     public function index()
     {
         $accounts = Account::with('smartMeter')->paginate(10);
-        return view('accounts.index', compact('accounts'));
+        return view('Accounts.index', compact('accounts'));
     }
 
     /**
@@ -35,7 +25,7 @@ class AccountController extends Controller
     public function create()
     {
         $smartMeters = SmartMeter::whereDoesntHave('account')->get();
-        return view('accounts.form', compact('smartMeters'));
+        return view('Accounts.form', compact('smartMeters'));
     }
 
     /**
@@ -70,7 +60,6 @@ class AccountController extends Controller
      */
     public function show(Account $account)
     {
-        $this->authorizeView($account);
         return view('accounts.show', compact('account'));
     }
 
@@ -79,15 +68,13 @@ class AccountController extends Controller
      */
     public function edit(Account $account)
     {
-        $this->authorizeView($account);
-        
         // Haal slimme meters op die niet gekoppeld zijn OF gekoppeld aan dit account
         $smartMeters = SmartMeter::where(function($query) use ($account) {
             $query->whereDoesntHave('account')
                   ->orWhere('account_id', $account->id);
         })->get();
         
-        return view('accounts.form', compact('account', 'smartMeters'));
+        return view('Accounts.form', compact('account', 'smartMeters'));
     }
 
     /**
@@ -95,8 +82,6 @@ class AccountController extends Controller
      */
     public function update(Request $request, Account $account)
     {
-        $this->authorizeView($account);
-        
         $validated = $this->validateAccount($request, $account->id);
         
         // Als er een wachtwoord is opgegeven, hash deze
@@ -137,7 +122,7 @@ class AccountController extends Controller
      */
     public function destroy(Account $account)
     {
-        // Als het account een slimme meter heeft, ontkoppen deze
+        // Als het account een slimme meter heeft, ontkoppel deze
         if ($account->smartMeter) {
             $account->smartMeter->account_id = null;
             $account->smartMeter->save();
@@ -146,7 +131,7 @@ class AccountController extends Controller
         // Verwijder het account
         $account->delete();
         
-        return redirect()->route('accounts.index')
+        return redirect()->route('Accounts.index')
             ->with('status', 'Account succesvol verwijderd!');
     }
     
@@ -177,25 +162,5 @@ class AccountController extends Controller
         }
         
         return $request->validate($rules);
-    }
-    
-    /**
-     * Controleer of de gebruiker geautoriseerd is om het account te bekijken/bewerken
-     */
-    private function authorizeView(Account $account)
-    {
-        $user = auth()->user();
-        
-        // Eigenaren en beheerders mogen alle accounts zien
-        if (in_array($user->role, ['owner', 'admin'])) {
-            return true;
-        }
-        
-        // Gebruikers mogen alleen hun eigen account zien
-        if ($user->id !== $account->id) {
-            abort(403, 'Niet geautoriseerd om dit account te bekijken.');
-        }
-        
-        return true;
     }
 }
