@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EnergyBudget;
 use App\Services\EnergyConversionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class EnergyBudgetController extends Controller
 {
@@ -44,19 +45,25 @@ class EnergyBudgetController extends Controller
                 : $this->conversionService->kwhToEuro($validated['electricity_value']),
         ];
 
-        return view('energy.confirm', compact('calculations'));
+        $energyService = $this->conversionService;
+        return view('energy.confirm', compact('calculations', 'energyService'));
     }
 
     public function store(Request $request)
     {
+        if(!Auth::check()){
+            return view('/register');
+        }
+        $user_id = Auth::user()->id;
         $budget = EnergyBudget::create([
             'gas_target_m3' => $request->gas_m3,
             'gas_target_euro' => $request->gas_euro,
             'electricity_target_kwh' => $request->electricity_kwh,
             'electricity_target_euro' => $request->electricity_euro,
             'year' => date('Y'),
+            'user_id' => $user_id,
         ]);
 
-        return redirect()->route('budget.form')->with('success', 'Annual energy budget has been set successfully!');
+        return redirect()->route('budget.form')->with('success', 'Opgeslagen!');
     }
 }
