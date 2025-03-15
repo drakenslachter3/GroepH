@@ -17,13 +17,15 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::get('/user-dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashbaord.index');
+
+Route::get('/form', [EnergyBudgetController::class, 'index'])->middleware(['auth'])->name('energy.form');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
-Route::get('/user-dashboard', [DashboardController::class, 'index'])->name('index.form');
 
 require __DIR__.'/auth.php';
 
