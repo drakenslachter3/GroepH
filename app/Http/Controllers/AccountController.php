@@ -16,7 +16,7 @@ class AccountController extends Controller
     public function index()
     {
         $accounts = Account::with('smartMeter')->paginate(10);
-        return view('Accounts.index', compact('accounts'));
+        return view('accounts.index', compact('accounts'));
     }
 
     /**
@@ -25,7 +25,7 @@ class AccountController extends Controller
     public function create()
     {
         $smartMeters = SmartMeter::whereDoesntHave('account')->get();
-        return view('Accounts.form', compact('smartMeters'));
+        return view('accounts.form', compact('smartMeters'));
     }
 
     /**
@@ -74,7 +74,7 @@ class AccountController extends Controller
                   ->orWhere('account_id', $account->id);
         })->get();
         
-        return view('Accounts.form', compact('account', 'smartMeters'));
+        return view('accounts.form', compact('account', 'smartMeters'));
     }
 
     /**
@@ -111,7 +111,7 @@ class AccountController extends Controller
                 $smartMeter->account_id = $account->id;
                 $smartMeter->save();
             }
-        }
+        }   
         
         return redirect()->route('accounts.show', $account->id)
             ->with('status', 'Account succesvol bijgewerkt!');
@@ -131,7 +131,7 @@ class AccountController extends Controller
         // Verwijder het account
         $account->delete();
         
-        return redirect()->route('Accounts.index')
+        return redirect()->route('accounts.index')
             ->with('status', 'Account succesvol verwijderd!');
     }
     
