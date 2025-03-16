@@ -41,14 +41,13 @@ class DashboardController extends Controller
         $gridLayout = ['energy-status-electricity', 'energy-status-gas', 'energy-chart-electricity', 'energy-chart-gas'];
         $energydashboard_data['gridLayout'] = $gridLayout;
 
-        $energydashboard_data['lastUpdated'] = now()->format('Y-m-d H:i:s');
+        // Set refresh interval and calculate next refresh time
+        $energydashboard_data['refreshTimeInSeconds'] = $refreshTimeInSeconds = 1;
 
-        $refreshTimeInSeconds = 65;
+        $energydashboard_data['lastRefresh'] = now()->format('Y-m-d H:i:s');
+
         $refreshTime = now()->addSeconds($refreshTimeInSeconds);
-        $energydashboard_data['refreshTime'] = $refreshTime->format('Y-m-d H:i:s');
-
-        $timeDiff = $refreshTime->diffInSeconds(now());
-        $energydashboard_data['refreshInSeconds'] = $timeDiff;
+        $energydashboard_data['nextRefresh'] = $refreshTime->format('Y-m-d H:i:s');
 
         //Chekced of er budget is gehaald uit de db. Deze redirect werkt niet binnen de dashboard() call naar eviscontroller. dus doe ik het tijdelijk zo.
         if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {

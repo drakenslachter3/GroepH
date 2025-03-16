@@ -34,8 +34,8 @@
                 
             </div>
             <div class="mb-4 p-4 bg-gray-100 rounded flex justify-between items-center">
-                <p class="text-sm text-gray-700">Laatste update: <span id="last-updated">{{ $lastUpdated ?? 'Niet beschikbaar' }}</span></p>
-                <p class="text-sm text-gray-700">Volgende update: <span id="next-update">{{ $refreshTime ?? 'Niet beschikbaar' }}</span></p>
+                <p class="text-sm text-gray-700">Laatste update: <span id="last-updated">{{ $lastRefresh ?? 'Niet beschikbaar' }}</span></p>
+                <p class="text-sm text-gray-700">Volgende update: <span id="next-update">{{ $nextRefresh ?? 'Niet beschikbaar' }}</span></p>
                 <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-gray-500 text-white rounded">Verversen</button>
             </div>
             <div class="flex flex-wrap -mx-2">
@@ -203,9 +203,9 @@
                 });
             }
         }
-
+        var time = {{ $refreshTimeInSeconds }};
         setTimeout(function() {
             window.location.reload();
-        }, 65*1000);
+        }, time*1000);
     </script>
 </x-app-layout>
