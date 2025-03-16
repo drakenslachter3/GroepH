@@ -42,7 +42,7 @@ class DashboardController extends Controller
         $energydashboard_data['gridLayout'] = $gridLayout;
 
         // Set refresh interval and calculate next refresh time
-        $energydashboard_data['refreshTimeInSeconds'] = $refreshTimeInSeconds = 1;
+        $energydashboard_data['refreshTimeInSeconds'] = $refreshTimeInSeconds = 10*60;
 
         $energydashboard_data['lastRefresh'] = now()->format('Y-m-d H:i:s');
 
