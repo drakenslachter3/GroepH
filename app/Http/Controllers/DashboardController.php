@@ -41,8 +41,8 @@ class DashboardController extends Controller
         $gridLayout = ['energy-status-electricity', 'energy-status-gas', 'energy-chart-electricity', 'energy-chart-gas'];
         $energydashboard_data['gridLayout'] = $gridLayout;
 
-        //Chekced of er budget is gehaald uit de db. Deze redirect werkt niet binnen de dashboard() call naar eviscontroller. dus doe ik het tijdelijk zo. 
-        if($energydashboard_data['budget'] == null){
+        //Chekced of er budget is gehaald uit de db. Deze redirect werkt niet binnen de dashboard() call naar eviscontroller. dus doe ik het tijdelijk zo.
+        if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
             return redirect()->route('budget.form');
         }
         return view('dashboard', $energydashboard_data);
