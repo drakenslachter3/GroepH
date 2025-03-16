@@ -22,19 +22,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Energie budget routes
+    Route::get('/energy/budget', [EnergyBudgetController::class, 'index'])->name('budget.form');
+    Route::post('/energy/budget/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
+    Route::post('/energy/budget/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
 
-    
-      // Energie budget routes
-      Route::get('/energy/budget', [EnergyBudgetController::class, 'index'])->name('budget.form');
-      Route::post('/energy/budget/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
-      Route::post('/energy/budget/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
-      
-      // Energie visualisatie routes
-      Route::get('/energy/visualization', [EnergyVisualizationController::class, 'dashboard'])->name('energy.dashboard');
-      
+    // Energie visualisatie routes
+    Route::get('/energy/visualization', [EnergyVisualizationController::class, 'dashboard'])->name('energy.dashboard');
 });
 
-Route::get('/user-dashboard', [DashboardController::class, 'index'])->name('index.form');
 
 require __DIR__.'/auth.php';
 

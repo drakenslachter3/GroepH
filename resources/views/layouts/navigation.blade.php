@@ -15,6 +15,10 @@
                     <x-etc.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-etc.nav-link>
+
+                    <x-etc.nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
+                        {{ __('Budget Form') }}
+                    </x-etc.nav-link>
                 </div>
             </div>
 
