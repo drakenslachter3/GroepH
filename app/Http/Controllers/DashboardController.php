@@ -54,7 +54,7 @@ class DashboardController extends Controller
         if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
             return redirect()->route('budget.form');
         }
-        return view('dashboard', ['energydashboard_data' => $energydashboard_data]);
+        return view('dashboard', $energydashboard_data);
     }
 
     public function setWidget(){
