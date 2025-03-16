@@ -15,8 +15,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', [EnergyVisualizationController::class, 'dashboard'])->name('dashboard');
-
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/user-dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashbaord.index');
 
