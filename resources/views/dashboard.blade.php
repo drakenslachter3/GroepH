@@ -30,8 +30,14 @@
                 <button onclick="saveLayout()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Save Layout</button>
                 <button onclick="resetLayout()" class="mt-4 px-4 py-2 bg-red-500 text-white rounded">Reset Layout</button>
                 <button onclick="window.location.href='{{ route('budget.form') }}'" class="mt-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition duration-200">Budget aanpassen</button>
+                
+                
             </div>
-
+            <div class="mb-4 p-4 bg-gray-100 rounded flex justify-between items-center">
+                    <p class="text-sm text-gray-700">Laatste update: <span id="last-updated">{{ $lastUpdated ?? 'Niet beschikbaar' }}</span></p>
+                    <p class="text-sm text-gray-700">Volgende update: <span id="next-update">{{ $refreshTime ?? 'Niet beschikbaar' }}</span></p>
+                    <button onclick="window.location.reload()" class="px-4 py-2 bg-gray-500 text-white rounded">Verversen</button>
+                </div>
             <div class="flex flex-wrap -mx-2">
                 @foreach ($gridLayout as $item)
                     @php
@@ -197,5 +203,9 @@
                 });
             }
         }
+
+        setTimeout(function() {
+            window.location.reload();
+        }, 65*1000);
     </script>
 </x-app-layout>
