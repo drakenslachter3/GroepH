@@ -9,14 +9,24 @@
             <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4 border-b border-gray-200">
-                    <button id="toggleConfigSection" class="w-full flex justify-between items-center text-left focus:outline-none">
-                        <h2 class="text-xl font-semibold text-gray-800">Dashboard Configuratie</h2>
+                    <button id="toggleConfigSection" class="w-full flex flex-row justify-between items-center text-left focus:outline-none">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800">Dashboard Configuratie</h2>
+                            <p class="text-sm text-gray-600" id="last-updated">Laatste update: {{ $lastRefresh ?? 'Niet beschikbaar' }}</p>
+                        </div>
+
                         <svg id="configSectionIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
+
+                    <!-- Refresh Button -->
+                    <div class="mt-4 p-4 bg-gray-100 rounded-md flex justify-end">
+                        <button onclick="window.location.reload()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition duration-200">Verversen</button>
+                    </div>
+
                 </div>
-                
+
                 <!-- Content section (collapsible) -->
                 <div id="configSectionContent" class="hidden">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
@@ -67,11 +77,11 @@
                                 </button>
                             </div>
                         </div>
-                        
+
                         <!-- Date Selector Section -->
                         <div>
                             <h2 class="text-xl font-semibold text-gray-800 mb-6">Datum en Periode</h2>
-                            
+
                             <!-- Current date/period display -->
                             <div class="mb-4 pb-4 border-b border-gray-200">
                                 <h3 class="text-lg font-bold text-gray-800">
@@ -90,7 +100,7 @@
                                     @endswitch
                                 </h3>
                             </div>
-                            
+
                             <!-- Form for Time Settings -->
                             <form id="timeSetterForm" action="{{ route('dashboard.setTime') }}" method="POST" class="space-y-6">
                                 @csrf
@@ -118,7 +128,7 @@
                                         </label>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Date picker -->
                                 <div class="mb-4">
                                     <h3 class="text-lg font-medium mb-2">Datumkiezer</h3>
@@ -137,20 +147,20 @@
                                             @endswitch
                                         </div>
                                     </div>
-                                    
+
                                     <!-- Navigation arrows for date -->
                                     <div class="flex justify-center mt-4">
-                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d'), 'housing_type' => $housingType]) }}" 
+                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d'), 'housing_type' => $housingType]) }}"
                                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-l-md">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                             </svg>
                                         </a>
-                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::now()->format('Y-m-d'), 'housing_type' => $housingType]) }}" 
+                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::now()->format('Y-m-d'), 'housing_type' => $housingType]) }}"
                                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 mx-1">
                                             Vandaag
                                         </a>
-                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::parse($date)->add(1, $period)->format('Y-m-d'), 'housing_type' => $housingType]) }}" 
+                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::parse($date)->add(1, $period)->format('Y-m-d'), 'housing_type' => $housingType]) }}"
                                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-r-md">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -158,7 +168,7 @@
                                         </a>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Housing type selection -->
                                 <div>
                                     <h3 class="text-lg font-medium mb-2">Woningtype</h3>
@@ -170,28 +180,22 @@
                                         <option value="vrijstaand" {{ $housingType === 'vrijstaand' ? 'selected' : '' }}>Vrijstaand</option>
                                     </select>
                                 </div>
-                                
+
                                 <button type="submit" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
                                     Toepassen
                                 </button>
                             </form>
-                            
-                            <!-- Last update information bar -->
-                            <div class="mt-6 p-4 bg-gray-100 rounded-md flex justify-between items-center">
-                                <p class="flex flex-col items-center">Laatste update: <span id="last-updated">{{ $lastRefresh ?? 'Niet beschikbaar' }}</span></p>
-                                <button onclick="window.location.reload()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition duration-200">Verversen</button>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="flex flex-wrap -mx-2">
                 @foreach ($gridLayout as $item)
                 @php
                 // Skip the date-selector since we've integrated it into the top section
                 if ($item === 'date-selector') continue;
-                
+
                 $widgetSize = match($item) {
                     'usage-prediction' => 'large',
                     'energy-status-electricity', 'energy-status-gas' => 'small',
@@ -291,7 +295,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Add this at the bottom before closing the layout -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -301,39 +305,39 @@
         'month': 'Dagen',
         'year': 'Maanden'
     };
-    
+
     // Define default empty data structure if not provided by the backend
     const lastYearData = {
         electricity: [],
         gas: []
     };
-    
+
     // Config section toggle and time setter functionality
     document.addEventListener('DOMContentLoaded', function() {
         // Toggle for the entire configuration section
         const toggleConfigSection = document.getElementById('toggleConfigSection');
         const configSectionContent = document.getElementById('configSectionContent');
         const configSectionIcon = document.getElementById('configSectionIcon');
-        
+
         if (toggleConfigSection && configSectionContent) {
             // Check localStorage for saved state
             const configSectionOpen = localStorage.getItem('configSectionOpen') === 'true';
-            
+
             // Set initial state based on localStorage or default to open on first visit
             if (configSectionOpen || localStorage.getItem('configSectionOpen') === null) {
                 configSectionContent.classList.remove('hidden');
                 configSectionIcon.classList.add('rotate-180');
             }
-            
+
             toggleConfigSection.addEventListener('click', function() {
                 configSectionContent.classList.toggle('hidden');
                 configSectionIcon.classList.toggle('rotate-180');
-                
+
                 // Save state to localStorage
                 localStorage.setItem('configSectionOpen', !configSectionContent.classList.contains('hidden'));
             });
         }
-        
+
         // Period selection UI enhancement
         const periodRadios = document.querySelectorAll('input[name="period"]');
         periodRadios.forEach(radio => {
@@ -343,21 +347,21 @@
                     r.nextElementSibling.classList.remove('bg-blue-600', 'text-white');
                     r.nextElementSibling.classList.add('bg-gray-200', 'text-gray-700');
                 });
-                
+
                 // Highlight the selected button
                 this.nextElementSibling.classList.remove('bg-gray-200', 'text-gray-700');
                 this.nextElementSibling.classList.add('bg-blue-600', 'text-white');
-                
+
                 // Update date input type based on selected period
                 updateDatePickerType(this.value);
             });
         });
-        
+
         // Function to update date picker type based on period
         function updateDatePickerType(period) {
             const dateContainer = document.querySelector('.date-input-container');
             let dateInput;
-            
+
             if (period === 'day') {
                 dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
             } else if (period === 'month') {
@@ -365,7 +369,7 @@
             } else if (period === 'year') {
                 dateInput = `<input type="number" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y') }}" min="2000" max="2050">`;
             }
-            
+
             if (dateContainer) {
                 dateContainer.innerHTML = dateInput;
             }
