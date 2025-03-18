@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\EnergyVisualizationController;
 use App\Services\EnergyPredictionService;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -34,6 +35,58 @@ class DashboardController extends Controller
         }
 
         return view('dashboard', $energydashboard_data);
+    }
+
+    // New method to handle date and period settings
+    public function setTime(Request $request)
+    {
+        $request->validate([
+            'period' => 'required|in:day,month,year',
+            'date' => 'required',
+            'housing_type' => 'required|string',
+        ]);
+
+        $period = $request->input('period');
+        $housingType = $request->input('housing_type');
+        $inputDate = $request->input('date');
+        
+        // Format the date based on the period type
+        $formattedDate = $this->formatDateByPeriod($period, $inputDate);
+        
+        // Redirect back to dashboard with the new parameters
+        return redirect()->route('dashboard', [
+            'period' => $period,
+            'date' => $formattedDate,
+            'housing_type' => $housingType
+        ]);
+    }
+    
+    // Helper method to format dates based on period
+    private function formatDateByPeriod($period, $inputDate)
+    {
+        switch ($period) {
+            case 'day':
+                // For day period, the date should already be in YYYY-MM-DD format
+                return $inputDate;
+                
+            case 'month':
+                // For month period, ensure we have YYYY-MM-DD with first day of month
+                if (strlen($inputDate) === 7) { // YYYY-MM format
+                    return $inputDate . '-01';
+                }
+                return $inputDate;
+                
+            case 'year':
+                // For year period, ensure we have YYYY-MM-DD with first day of year
+                if (strlen($inputDate) === 4) { // YYYY format
+                    return $inputDate . '-01-01';
+                }
+                return $inputDate;
+                
+            default:
+                // Default to current date if something goes wrong
+                return Carbon::now()->format('Y-m-d');
+        }
     }
 
     private function getDefaultLayout()
@@ -89,6 +142,7 @@ class DashboardController extends Controller
 
         return redirect()->route('dashboard')->with('status', 'Widget toegevoegd!');
     }
+    
     public function resetLayout(Request $request)
     {
         $user = Auth::user();

@@ -6,85 +6,207 @@
     </x-slot>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="max-w-md mx-auto my-8 p-6 bg-white shadow-lg rounded-lg border border-gray-100">
-                <h2 class="text-xl font-semibold text-gray-800 mb-6">Widget Configuratie</h2>
-
-                <form action="{{ route('dashboard.setWidget') }}" method="POST" class="space-y-6">
-                    @csrf
-                    <div class="space-y-2">
-                        <label for="grid-position" class="block text-sm font-medium text-gray-700">Positie:</label>
-                        <select name="grid_position" id="grid-position" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
-                            @for ($i = 0; $i < count($gridLayout); $i++)
-                                <option value="{{ $i }}">Positie {{ $i + 1 }}</option>
-                                @endfor
-                        </select>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="widget-type" class="block text-sm font-medium text-gray-700">Widget Type:</label>
-                        <select name="widget_type" id="widget-type" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
-                            <option value="date-selector">Datum en Periode Selectie</option>
-                            <option value="usage-prediction">Voorspelling en Prognose</option>
-                            <option value="energy-status-electricity">Electra Status</option>
-                            <option value="energy-status-gas">Gas Status</option>
-                            <option value="historical-comparison">Historische Vergelijking</option>
-                            <option value="energy-chart-electricity">Electra Grafiek</option>
-                            <option value="energy-chart-gas">Gas Grafiek</option>
-                            <option value="trend-analysis">Trend Analyse</option>
-                            <option value="energy-suggestions">Energiebesparingstips</option>
-                            <option value="budget-alert">Budget Waarschuwing</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
-                        Widget Toevoegen
-                    </button>
-                </form>
-
-                <div class="mt-6 border-t border-gray-200 pt-6 flex space-x-4">
-                    <form action="{{ route('dashboard.resetLayout') }}" method="POST" class="flex-1">
-                        @csrf
-                        <button type="submit" class="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
-                            Reset Layout
-                        </button>
-                    </form>
-
-                    <button onclick="window.location.href='{{ route('budget.form') }}'" class="flex-1 py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
-                        Budget Aanpassen
+            <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8">
+                <!-- Toggle button for the entire config section -->
+                <div class="p-4 border-b border-gray-200">
+                    <button id="toggleConfigSection" class="w-full flex justify-between items-center text-left focus:outline-none">
+                        <h2 class="text-xl font-semibold text-gray-800">Dashboard Configuratie</h2>
+                        <svg id="configSectionIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
                     </button>
                 </div>
-            </div>
+                
+                <!-- Content section (collapsible) -->
+                <div id="configSectionContent" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+                        <!-- Widget Configuration Section -->
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800 mb-6">Widget Configuratie</h2>
+                            <form action="{{ route('dashboard.setWidget') }}" method="POST" class="space-y-6">
+                                @csrf
+                                <div class="space-y-2">
+                                    <label for="grid-position" class="block text-sm font-medium text-gray-700">Positie:</label>
+                                    <select name="grid_position" id="grid-position" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
+                                        @for ($i = 0; $i < count($gridLayout); $i++)
+                                            <option value="{{ $i }}">Positie {{ $i + 1 }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
 
+                                <div class="space-y-2">
+                                    <label for="widget-type" class="block text-sm font-medium text-gray-700">Widget Type:</label>
+                                    <select name="widget_type" id="widget-type" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
+                                        <option value="usage-prediction">Voorspelling en Prognose</option>
+                                        <option value="energy-status-electricity">Electra Status</option>
+                                        <option value="energy-status-gas">Gas Status</option>
+                                        <option value="historical-comparison">Historische Vergelijking</option>
+                                        <option value="energy-chart-electricity">Electra Grafiek</option>
+                                        <option value="energy-chart-gas">Gas Grafiek</option>
+                                        <option value="trend-analysis">Trend Analyse</option>
+                                        <option value="energy-suggestions">Energiebesparingstips</option>
+                                        <option value="budget-alert">Budget Waarschuwing</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
+                                    Widget Toevoegen
+                                </button>
+                            </form>
+
+                            <div class="mt-6 border-t border-gray-200 pt-6 flex space-x-4">
+                                <form action="{{ route('dashboard.resetLayout') }}" method="POST" class="flex-1">
+                                    @csrf
+                                    <button type="submit" class="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
+                                        Reset Layout
+                                    </button>
+                                </form>
+
+                                <button onclick="window.location.href='{{ route('budget.form') }}'" class="flex-1 py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
+                                    Budget Aanpassen
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Date Selector Section -->
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800 mb-6">Datum en Periode</h2>
+                            
+                            <!-- Current date/period display -->
+                            <div class="mb-4 pb-4 border-b border-gray-200">
+                                <h3 class="text-lg font-bold text-gray-800">
+                                    @switch($period)
+                                        @case('day')
+                                            Energieverbruik op {{ \Carbon\Carbon::parse($date)->format('d F Y') }}
+                                            @break
+                                        @case('month')
+                                            Energieverbruik in {{ \Carbon\Carbon::parse($date)->format('F Y') }}
+                                            @break
+                                        @case('year')
+                                            Energieverbruik in {{ \Carbon\Carbon::parse($date)->format('Y') }}
+                                            @break
+                                        @default
+                                            Energieverbruik
+                                    @endswitch
+                                </h3>
+                            </div>
+                            
+                            <!-- Form for Time Settings -->
+                            <form id="timeSetterForm" action="{{ route('dashboard.setTime') }}" method="POST" class="space-y-6">
+                                @csrf
+                                <!-- Period selection -->
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-medium mb-2">Tijdsperiode</h3>
+                                    <div class="flex space-x-4">
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="period" value="day" {{ $period === 'day' ? 'checked' : '' }} class="hidden">
+                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                                Dag
+                                            </span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="period" value="month" {{ $period === 'month' ? 'checked' : '' }} class="hidden">
+                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                                Maand
+                                            </span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="period" value="year" {{ $period === 'year' ? 'checked' : '' }} class="hidden">
+                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                                Jaar
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Date picker -->
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-medium mb-2">Datumkiezer</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="date-input-container w-full">
+                                            @switch($period)
+                                                @case('day')
+                                                    <input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">
+                                                    @break
+                                                @case('month')
+                                                    <input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">
+                                                    @break
+                                                @case('year')
+                                                    <input type="number" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y') }}" min="2000" max="2050">
+                                                    @break
+                                            @endswitch
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Navigation arrows for date -->
+                                    <div class="flex justify-center mt-4">
+                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d'), 'housing_type' => $housingType]) }}" 
+                                           class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-l-md">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </a>
+                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::now()->format('Y-m-d'), 'housing_type' => $housingType]) }}" 
+                                           class="px-4 py-2 bg-gray-200 hover:bg-gray-300 mx-1">
+                                            Vandaag
+                                        </a>
+                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::parse($date)->add(1, $period)->format('Y-m-d'), 'housing_type' => $housingType]) }}" 
+                                           class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-r-md">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <!-- Housing type selection -->
+                                <div>
+                                    <h3 class="text-lg font-medium mb-2">Woningtype</h3>
+                                    <select name="housing_type" id="housingType" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md">
+                                        <option value="appartement" {{ $housingType === 'appartement' ? 'selected' : '' }}>Appartement</option>
+                                        <option value="tussenwoning" {{ $housingType === 'tussenwoning' ? 'selected' : '' }}>Tussenwoning</option>
+                                        <option value="hoekwoning" {{ $housingType === 'hoekwoning' ? 'selected' : '' }}>Hoekwoning</option>
+                                        <option value="twee_onder_een_kap" {{ $housingType === 'twee_onder_een_kap' ? 'selected' : '' }}>2-onder-1-kap</option>
+                                        <option value="vrijstaand" {{ $housingType === 'vrijstaand' ? 'selected' : '' }}>Vrijstaand</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                                    Toepassen
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="flex flex-wrap -mx-2">
                 @foreach ($gridLayout as $item)
                 @php
+                // Skip the date-selector since we've integrated it into the top section
+                if ($item === 'date-selector') continue;
+                
                 $widgetSize = match($item) {
-                'date-selector' => 'full',
-                'usage-prediction' => 'medium',
-                'energy-status-electricity', 'energy-status-gas' => 'small',
-                'historical-comparison' => 'full',
-                'energy-chart-electricity', 'energy-chart-gas' => 'large',
-                'trend-analysis' => 'full',
-                'energy-suggestions' => 'medium',
-                default => 'full'
+                    'usage-prediction' => 'large',
+                    'energy-status-electricity', 'energy-status-gas' => 'small',
+                    'historical-comparison' => 'full',
+                    'energy-chart-electricity', 'energy-chart-gas' => 'large',
+                    'trend-analysis' => 'full',
+                    'energy-suggestions' => 'large',
+                    default => 'full'
                 };
 
                 $widthClasses = match($widgetSize) {
-                'small' => 'w-full sm:w-1/2 lg:w-1/4',
-                'medium' => 'w-full sm:w-1/2 lg:w-1/3',
-                'large' => 'w-full lg:w-1/2',
-                'full' => 'w-full'
+                    'small' => 'w-full sm:w-1/2 lg:w-1/4',
+                    'medium' => 'w-full sm:w-1/2 lg:w-1/3',
+                    'large' => 'w-full lg:w-1/2',
+                    'full' => 'w-full'
                 };
                 @endphp
 
                 <div class="p-2 {{ $widthClasses }}">
                     <div class="h-full p-4 bg-white shadow-md rounded-lg">
                         @switch($item)
-                        @case('date-selector')
-                        <x-dashboard.date-selector :period="$period" :date="$date" :housingType="$housingType" />
-                        @break
-
                         @case('usage-prediction')
                         <x-dashboard.usage-prediction
                             :electricityData="['kwh' => $totals['electricity_kwh'], 'percentage' => $totals['electricity_percentage']]"
@@ -143,14 +265,15 @@
 
                         @case('trend-analysis')
                         <x-dashboard.trend-analysis
-                            :electricityData="['thisYear' => [210, 195, 180], 'lastYear' => [230, 220, 200]]"
-                            :gasData="['thisYear' => [120, 115, 90], 'lastYear' => [130, 125, 100]]" />
+                            :electricityData="['thisYear' => [210, 195, 180, 170, 165, 168, 172, 175, 168, 182, 190, 200], 'lastYear' => [230, 220, 200, 185, 180, 182, 190, 195, 185, 200, 210, 225]]"
+                            :gasData="['thisYear' => [120, 115, 90, 65, 40, 25, 20, 20, 35, 70, 100, 110], 'lastYear' => [130, 125, 100, 70, 45, 30, 25, 25, 40, 75, 110, 120]]" />
                         @break
 
                         @case('energy-suggestions')
                         <x-dashboard.energy-suggestions
                             :usagePattern="$usagePattern ?? 'avond'"
-                            :housingType="$housingType" />
+                            :housingType="$housingType"
+                            :season="date('n') >= 3 && date('n') <= 5 ? 'lente' : (date('n') >= 6 && date('n') <= 8 ? 'zomer' : (date('n') >= 9 && date('n') <= 11 ? 'herfst' : 'winter'))" />
                         @break
 
                         @default
@@ -178,7 +301,72 @@
         electricity: [],
         gas: []
     };
+    
+    // Config section toggle and time setter functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle for the entire configuration section
+        const toggleConfigSection = document.getElementById('toggleConfigSection');
+        const configSectionContent = document.getElementById('configSectionContent');
+        const configSectionIcon = document.getElementById('configSectionIcon');
+        
+        if (toggleConfigSection && configSectionContent) {
+            // Check localStorage for saved state
+            const configSectionOpen = localStorage.getItem('configSectionOpen') === 'true';
+            
+            // Set initial state based on localStorage or default to open on first visit
+            if (configSectionOpen || localStorage.getItem('configSectionOpen') === null) {
+                configSectionContent.classList.remove('hidden');
+                configSectionIcon.classList.add('rotate-180');
+            }
+            
+            toggleConfigSection.addEventListener('click', function() {
+                configSectionContent.classList.toggle('hidden');
+                configSectionIcon.classList.toggle('rotate-180');
+                
+                // Save state to localStorage
+                localStorage.setItem('configSectionOpen', !configSectionContent.classList.contains('hidden'));
+            });
+        }
+        
+        // Period selection UI enhancement
+        const periodRadios = document.querySelectorAll('input[name="period"]');
+        periodRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Reset all buttons
+                periodRadios.forEach(r => {
+                    r.nextElementSibling.classList.remove('bg-blue-600', 'text-white');
+                    r.nextElementSibling.classList.add('bg-gray-200', 'text-gray-700');
+                });
+                
+                // Highlight the selected button
+                this.nextElementSibling.classList.remove('bg-gray-200', 'text-gray-700');
+                this.nextElementSibling.classList.add('bg-blue-600', 'text-white');
+                
+                // Update date input type based on selected period
+                updateDatePickerType(this.value);
+            });
+        });
+        
+        // Function to update date picker type based on period
+        function updateDatePickerType(period) {
+            const dateContainer = document.querySelector('.date-input-container');
+            let dateInput;
+            
+            if (period === 'day') {
+                dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
+            } else if (period === 'month') {
+                dateInput = `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
+            } else if (period === 'year') {
+                dateInput = `<input type="number" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y') }}" min="2000" max="2050">`;
+            }
+            
+            if (dateContainer) {
+                dateContainer.innerHTML = dateInput;
+            }
+        }
+    });
     </script>
     @stack('chart-scripts')
+    @stack('trend-scripts')
     @stack('scripts')
 </x-app-layout>
