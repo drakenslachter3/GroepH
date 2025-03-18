@@ -175,11 +175,17 @@
                                     Toepassen
                                 </button>
                             </form>
+                            
+                            <!-- Last update information bar -->
+                            <div class="mt-6 p-4 bg-gray-100 rounded-md flex justify-between items-center">
+                                <p class="flex flex-col items-center">Laatste update: <span id="last-updated">{{ $lastRefresh ?? 'Niet beschikbaar' }}</span></p>
+                                <button onclick="window.location.reload()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition duration-200">Verversen</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
+            
             <div class="flex flex-wrap -mx-2">
                 @foreach ($gridLayout as $item)
                 @php

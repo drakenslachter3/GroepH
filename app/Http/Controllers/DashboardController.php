@@ -13,6 +13,7 @@ use Carbon\Carbon;
 class DashboardController extends Controller
 {
     private $energyVisController;
+    
     public function __construct(EnergyConversionService $conversionService, EnergyPredictionService $predictionService)
     {
         $this->energyVisController = new EnergyVisualizationController($conversionService, $predictionService);
@@ -33,6 +34,9 @@ class DashboardController extends Controller
         if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
             return redirect()->route('budget.form');
         }
+        
+        // Add last refresh time information
+        $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
 
         return view('dashboard', $energydashboard_data);
     }
@@ -89,21 +93,6 @@ class DashboardController extends Controller
         }
     }
 
-    private function getDefaultLayout()
-    {
-        return [
-            'energy-status-electricity',
-            'energy-status-gas',
-            'energy-chart-electricity',
-            'energy-chart-gas',
-            'usage-prediction', 
-            'date-selector',
-            'historical-comparison',
-            'trend-analysis',
-            'energy-suggestions'
-        ];
-    }
-
     public function setWidget(Request $request)
     {
         $user = Auth::user();
@@ -152,5 +141,20 @@ class DashboardController extends Controller
         );
 
         return redirect()->route('dashboard')->with('status', 'Dashboard layout is gereset!');
+    }
+
+    private function getDefaultLayout()
+    {
+        return [
+            'energy-status-electricity',
+            'energy-status-gas',
+            'energy-chart-electricity',
+            'energy-chart-gas',
+            'usage-prediction', 
+            'date-selector',
+            'historical-comparison',
+            'trend-analysis',
+            'energy-suggestions'
+        ];
     }
 }
