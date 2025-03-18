@@ -9,23 +9,27 @@
             <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4 border-b border-gray-200">
-                    <button id="toggleConfigSection" class="w-full flex flex-row justify-between items-center text-left focus:outline-none">
-                        <div>
+                    <!-- Dropdown button, last update info & refresh button in one row -->
+                    <div class="flex justify-between items-center">
+                        <!-- Dropdown button with title and icon -->
+                        <button id="toggleConfigSection" class="flex items-center text-left focus:outline-none">
                             <h2 class="text-xl font-semibold text-gray-800">Dashboard Configuratie</h2>
-                            <p class="text-sm text-gray-600" id="last-updated">Laatste update: {{ $lastRefresh ?? 'Niet beschikbaar' }}</p>
+                            <svg id="configSectionIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+
+                        <!-- Last update text and refresh button -->
+                        <div class="flex items-center gap-3">
+                            <p class="text-sm text-gray-600">Laatste update: <span id="last-updated">{{ $lastRefresh ?? 'Niet beschikbaar' }}</span></p>
+                            <button onclick="window.location.reload()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition duration-200 text-sm">
+                                Verversen
+                            </button>
                         </div>
-
-                        <svg id="configSectionIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-
-                    <!-- Refresh Button -->
-                    <div class="mt-4 p-4 bg-gray-100 rounded-md flex justify-end">
-                        <button onclick="window.location.reload()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition duration-200">Verversen</button>
                     </div>
-
                 </div>
+
+
 
                 <!-- Content section (collapsible) -->
                 <div id="configSectionContent" class="hidden">
