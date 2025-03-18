@@ -6,7 +6,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
-                        <x-etc.application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                        <img src="{{ asset('images/mnext_logo_dark.svg') }}" alt="Mnext Logo" class="block h-9 w-auto">
                     </a>
                 </div>
 
@@ -14,6 +14,10 @@
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-etc.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
+                    </x-etc.nav-link>
+
+                    <x-etc.nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
+                        {{ __('Budget Form') }}
                     </x-etc.nav-link>
                 </div>
             </div>
