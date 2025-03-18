@@ -8,10 +8,12 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\EnergyVisualizationController;
 use App\Services\EnergyPredictionService;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     private $energyVisController;
+    
     public function __construct(EnergyConversionService $conversionService, EnergyPredictionService $predictionService)
     {
         $this->energyVisController = new EnergyVisualizationController($conversionService, $predictionService);
@@ -32,23 +34,63 @@ class DashboardController extends Controller
         if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
             return redirect()->route('budget.form');
         }
+        
+        // Add last refresh time information
+        $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
 
         return view('dashboard', $energydashboard_data);
     }
 
-    private function getDefaultLayout()
+    // New method to handle date and period settings
+    public function setTime(Request $request)
     {
-        return [
-            'energy-status-electricity',
-            'energy-status-gas',
-            'energy-chart-electricity',
-            'energy-chart-gas',
-            'usage-prediction', 
-            'date-selector',
-            'historical-comparison',
-            'trend-analysis',
-            'energy-suggestions'
-        ];
+        $request->validate([
+            'period' => 'required|in:day,month,year',
+            'date' => 'required',
+            'housing_type' => 'required|string',
+        ]);
+
+        $period = $request->input('period');
+        $housingType = $request->input('housing_type');
+        $inputDate = $request->input('date');
+        
+        // Format the date based on the period type
+        $formattedDate = $this->formatDateByPeriod($period, $inputDate);
+        
+        // Redirect back to dashboard with the new parameters
+        return redirect()->route('dashboard', [
+            'period' => $period,
+            'date' => $formattedDate,
+            'housing_type' => $housingType
+        ]);
+    }
+    
+    // Helper method to format dates based on period
+    private function formatDateByPeriod($period, $inputDate)
+    {
+        switch ($period) {
+            case 'day':
+                // For day period, the date should already be in YYYY-MM-DD format
+                return $inputDate;
+                
+            case 'month':
+                // For month period, ensure we have YYYY-MM-DD with first day of month
+                if (strlen($inputDate) === 7) { // YYYY-MM format
+                    return $inputDate . '-01';
+                }
+                return $inputDate;
+                
+            case 'year':
+                // For year period, ensure we have YYYY-MM-DD with first day of year
+                if (strlen($inputDate) === 4) { // YYYY format
+                    return $inputDate . '-01-01';
+                }
+                return $inputDate;
+                
+            default:
+                // Default to current date if something goes wrong
+                return Carbon::now()->format('Y-m-d');
+        }
     }
 
     public function setWidget(Request $request)
@@ -89,6 +131,7 @@ class DashboardController extends Controller
 
         return redirect()->route('dashboard')->with('status', 'Widget toegevoegd!');
     }
+    
     public function resetLayout(Request $request)
     {
         $user = Auth::user();
@@ -98,5 +141,20 @@ class DashboardController extends Controller
         );
 
         return redirect()->route('dashboard')->with('status', 'Dashboard layout is gereset!');
+    }
+
+    private function getDefaultLayout()
+    {
+        return [
+            'energy-status-electricity',
+            'energy-status-gas',
+            'energy-chart-electricity',
+            'energy-chart-gas',
+            'usage-prediction', 
+            'date-selector',
+            'historical-comparison',
+            'trend-analysis',
+            'energy-suggestions'
+        ];
     }
 }
