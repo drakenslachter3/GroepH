@@ -444,9 +444,6 @@ class EnergyVisualizationController extends Controller
         ];
     }
 
-    /**
-     * Bepaal de status op basis van het percentage van het budget.
-     */
     private function determineStatus(float $percentage): string
     {
         if ($percentage > 95) {
