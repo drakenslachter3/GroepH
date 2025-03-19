@@ -39,7 +39,7 @@
                 <input type="hidden" name="electricity_euro" value="{{ $calculations['electricity_euro'] }}">
 
                 <div class="flex gap-4 mt-4">
-                    <button type="submit" class="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700">Bereken en opslaan</button>
+                    <button type="submit" class="px-4 py-2 text-white bg-green-500 rounded-lg hover:bg-green-700">Bereken en opslaan</button>
                     <a href="{{ route('budget.form') }}" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">Terug</a>
                 </div>
             </form>

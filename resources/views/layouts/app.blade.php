@@ -9,7 +9,7 @@
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Favicon -->
-        <link rel="icon" href="{{ asset('images/mnext_logo.svg') }}" type="image/svg+xml">
+        <link rel="icon" href="{{ asset('images/mnext_logo_light.svg') }}" type="image/svg+xml">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -34,7 +34,8 @@
 
             <!-- Page Content -->
             <main>
-                {{ $slot }}
+                @yield('content')
+                {{ $slot ?? '' }}   
             </main>
         </div>
     </body>
