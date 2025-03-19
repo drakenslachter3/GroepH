@@ -34,17 +34,17 @@
             <div class="row-1">
                 <!-- Email Address -->
                 <div>
-                    <x-input-label for="email" :value="__('Email')" />
-                    <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                    <x-etc.input-label for="email" :value="__('E-mailadres')" />
+                    <x-etc.text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+                    <x-etc.input-error :messages="$errors->get('email')" class="mt-2" />
                 </div>
             </div>
 
-            <x-input-label for="password" :value="__('Password')" />
+            <x-etc.input-label for="password" :value="__('Wachtwoord')" />
             <div class="row-2">
                 <!-- Password -->        
                 <div class="relative flex items-center">
-                    <x-text-input id="password" class="block mt-1 w-full absolute"
+                    <x-etc.text-input id="password" class="block mt-1 w-full absolute"
                                   type="password"
                                   name="password"
                                   required autocomplete="current-password" />
@@ -54,14 +54,14 @@
                     </svg>
                 </div>
             </div>
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            <x-etc.input-error :messages="$errors->get('password')" class="mt-2" />
 
             <div class="row-3">
                 <!-- Remember Me -->
                 <div class="block mt-4">
                     <label for="remember_me" class="inline-flex items-center">
                         <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                        <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
+                        <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Gegevens onthouden') }}</span>
                     </label>
                 </div>
             </div>
@@ -78,7 +78,7 @@
                 @if (Route::has('password.request'))
                     <div class="mt-5 pt-2 text-sm">
                         <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
-                            {{ __('Forgot your password?') }}
+                            {{ __('Wachtwoord vergeten?') }}
                         </a>
                     </div>
                 @endif
