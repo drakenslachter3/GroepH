@@ -40,7 +40,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Wachtwoord {{ isset($user) ? '' : '<span class="text-red-600">*</span>' }}</label>
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Wachtwoord {!! isset($account) ? '' : '<span class="text-red-600">*</span>' !!}</label>
                         <input type="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="password" name="password" {{ isset($user) ? '' : 'required' }}>
                         @if(isset($user))
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Laat leeg om het huidige wachtwoord te behouden</p>
@@ -51,7 +51,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bevestig wachtwoord {{ isset($user) ? '' : '<span class="text-red-600">*</span>' }}</label>
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bevestig wachtwoord {!! isset($account) ? '' : '<span class="text-red-600">*</span>' !!}</label>
                         <input type="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="password_confirmation" name="password_confirmation" {{ isset($user) ? '' : 'required' }}>
                     </div>
 
