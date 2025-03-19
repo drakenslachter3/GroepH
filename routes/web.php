@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EnergyBudgetController;
 use App\Http\Controllers\EnergyVisualizationController;
@@ -35,5 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/set-time', [DashboardController::class, 'setTime'])->name('dashboard.setTime');
 });
 
+Route::middleware('auth')->group(function () {
+    // Gebruikersbeheer routes (vervangt accountbeheer)
+    Route::resource('users', UserController::class);
+    Route::post('/delete-user/{user}', [UserController::class, 'destroy'])->name('users.delete');
+});
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
