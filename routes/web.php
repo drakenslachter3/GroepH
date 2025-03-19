@@ -7,8 +7,9 @@ use App\Http\Controllers\EnergyBudgetController;
 use App\Http\Controllers\EnergyVisualizationController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('dashboard');
 });
+
 
 
 Route::middleware('auth')->group(function () {
