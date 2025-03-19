@@ -8,7 +8,7 @@
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-semibold">Gebruikersbeheer</h2>
                         <a href="{{ route('users.create') }}"
-                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-sm flex items-center">
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-600 text-white rounded-md shadow-sm flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
                                 fill="currentColor">
                                 <path fill-rule="evenodd"
