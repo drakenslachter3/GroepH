@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::resource('accounts', AccountController::class);
+    Route::post('/delete-account/{account}', [AccountController::class, 'destroy'])->name('accounts.delete');
 });
 
 require __DIR__.'/auth.php';
