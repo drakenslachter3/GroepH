@@ -8,7 +8,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8">
                 <!-- Toggle button for the entire config section -->
-                <div class="p-4 border-b border-gray-200">
+                <div class="p-4 border-gray-200">
                     <!-- Dropdown button, last update info & refresh button in one row -->
                     <div class="flex justify-between items-center">
                         <!-- Dropdown button with title and icon -->
@@ -28,12 +28,9 @@
                         </div>
                     </div>
                 </div>
-
-
-
                 <!-- Content section (collapsible) -->
                 <div id="configSectionContent" class="hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border-t">
                         <!-- Widget Configuration Section -->
                         <div>
                             <h2 class="text-xl font-semibold text-gray-800 mb-6">Widget Configuratie</h2>
