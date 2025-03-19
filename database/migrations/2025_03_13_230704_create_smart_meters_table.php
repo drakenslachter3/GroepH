@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('meter_id')->unique();
             $table->string('location')->nullable();
             $table->string('type')->default('electricity');
-            $table->foreignId('account_id')->nullable()->constrained('accounts')->nullOnDelete();
+            $table->foreignId('account_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('installation_date')->nullable();
             $table->timestamp('last_reading_date')->nullable();
             $table->boolean('active')->default(true);

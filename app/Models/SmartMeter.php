@@ -38,11 +38,11 @@ class SmartMeter extends Model
     ];
 
     /**
-     * Get het account waartoe deze meter behoort.
+     * Get de gebruiker waartoe deze meter behoort.
      */
-    public function account()
+    public function user()
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(User::class, 'account_id');
     }
 
     /**
@@ -62,7 +62,7 @@ class SmartMeter extends Model
     }
 
     /**
-     * Controleer of de smart meter is gekoppeld aan een account.
+     * Controleer of de smart meter is gekoppeld aan een gebruiker.
      */
     public function isLinked()
     {

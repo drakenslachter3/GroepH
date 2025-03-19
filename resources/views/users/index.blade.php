@@ -6,8 +6,8 @@
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Accountbeheer</h2>
-                        <a href="{{ route('accounts.create') }}"
+                        <h2 class="text-xl font-semibold">Gebruikersbeheer</h2>
+                        <a href="{{ route('users.create') }}"
                             class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-sm flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
                                 fill="currentColor">
@@ -15,7 +15,7 @@
                                     d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
                                     clip-rule="evenodd" />
                             </svg>
-                            Nieuw Account
+                            Nieuwe Gebruiker
                         </a>
                     </div>
 
@@ -45,26 +45,26 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($accounts as $account)
+                                @forelse ($users as $user)
                                     <tr
                                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                        <td class="py-4 px-6">{{ $account->id }}</td>
-                                        <td class="py-4 px-6">{{ $account->name }}</td>
-                                        <td class="py-4 px-6">{{ $account->email }}</td>
+                                        <td class="py-4 px-6">{{ $user->id }}</td>
+                                        <td class="py-4 px-6">{{ $user->name }}</td>
+                                        <td class="py-4 px-6">{{ $user->email }}</td>
                                         <td class="py-4 px-6">
-                                            @if ($account->smartMeter)
+                                            @if ($user->smartMeter)
                                                 <span
-                                                    class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{{ $account->smartMeter->meter_id }}</span>
+                                                    class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{{ $user->smartMeter->meter_id }}</span>
                                             @else
                                                 <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Niet
                                                     gekoppeld</span>
                                             @endif
                                         </td>
-                                        <td class="py-4 px-6">{{ $account->created_at->format('d-m-Y H:i') }}</td>
-                                        <td class="py-4 px-6">{{ $account->updated_at->format('d-m-Y H:i') }}</td>
+                                        <td class="py-4 px-6">{{ $user->created_at->format('d-m-Y H:i') }}</td>
+                                        <td class="py-4 px-6">{{ $user->updated_at->format('d-m-Y H:i') }}</td>
                                         <td class="py-4 px-6">
                                             <div class="flex space-x-2">
-                                                <a href="{{ route('accounts.show', $account->id) }}"
+                                                <a href="{{ route('users.show', $user->id) }}"
                                                     class="px-3 py-1 text-blue-500 hover:text-blue-700">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -74,7 +74,7 @@
                                                             d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
                                                 </a>
-                                                <a href="{{ route('accounts.edit', $account->id) }}"
+                                                <a href="{{ route('users.edit', $user->id) }}"
                                                     class="px-3 py-1 text-yellow-500 hover:text-yellow-700">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -82,11 +82,11 @@
                                                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
                                                 </a>
-                                                <form method="POST" action="{{ route('accounts.delete', $account->id) }}"
+                                                <form method="POST" action="{{ route('users.delete', $user->id) }}"
                                                     style="display: inline;">
                                                     @csrf
                                                     <button type="submit"
-                                                        onclick="return confirm('Weet je zeker dat je het account van {{ $account->name }} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.');"
+                                                        onclick="return confirm('Weet je zeker dat je de gebruiker {{ $user->name }} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.');"
                                                         class="px-3 py-1 text-red-500 hover:text-red-700">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                             viewBox="0 0 24 24" stroke="currentColor">
@@ -101,7 +101,7 @@
                                     </tr>
                                 @empty
                                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                        <td colspan="7" class="py-4 px-6 text-center">Geen accounts gevonden</td>
+                                        <td colspan="7" class="py-4 px-6 text-center">Geen gebruikers gevonden</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -109,7 +109,7 @@
                     </div>
 
                     <div class="mt-4">
-                        {{ $accounts->links() }}
+                        {{ $users->links() }}
                     </div>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\AccountController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -19,8 +19,9 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::resource('accounts', AccountController::class);
-    Route::post('/delete-account/{account}', [AccountController::class, 'destroy'])->name('accounts.delete');
+    // Gebruikersbeheer routes (vervangt accountbeheer)
+    Route::resource('users', UserController::class);
+    Route::post('/delete-user/{user}', [UserController::class, 'destroy'])->name('users.delete');
 });
 
 require __DIR__.'/auth.php';

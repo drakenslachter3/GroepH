@@ -6,9 +6,9 @@
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Account details</h2>
+                        <h2 class="text-xl font-semibold">Gebruiker details</h2>
                         <div class="flex space-x-2">
-                            <a href="{{ route('accounts.edit', $account->id) }}"
+                            <a href="{{ route('users.edit', $user->id) }}"
                                 class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md shadow-sm flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -17,11 +17,11 @@
                                 </svg>
                                 Bewerken
                             </a>
-                            <form method="POST" action="{{ route('accounts.delete', $account->id) }}"
+                            <form method="POST" action="{{ route('users.delete', $user->id) }}"
                                 style="display: inline;">
                                 @csrf
                                 <button type="submit"
-                                    onclick="return confirm('Weet je zeker dat je het account van {{ $account->name }} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.');"
+                                    onclick="return confirm('Weet je zeker dat je de gebruiker {{ $user->name }} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.');"
                                     class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md shadow-sm flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -45,7 +45,7 @@
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Status:</span>
                                 <div class="mt-1">
-                                    @if($account->active)
+                                    @if($user->active)
                                         <span
                                             class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Actief</span>
                                     @else
@@ -60,10 +60,10 @@
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Rol:</span>
                                 <div class="mt-1">
-                                    @if($account->role == 'owner')
+                                    @if($user->role == 'owner')
                                         <span
                                             class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Eigenaar</span>
-                                    @elseif($account->role == 'admin')
+                                    @elseif($user->role == 'admin')
                                         <span
                                             class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Beheerder</span>
                                     @else
@@ -77,42 +77,42 @@
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Naam:</span>
-                                <span class="mt-1">{{ $account->name }}</span>
+                                <span class="mt-1">{{ $user->name }}</span>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Email:</span>
-                                <span class="mt-1">{{ $account->email }}</span>
+                                <span class="mt-1">{{ $user->email }}</span>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Telefoonnummer:</span>
-                                <span class="mt-1">{{ $account->phone ?: 'Niet opgegeven' }}</span>
+                                <span class="mt-1">{{ $user->phone ?: 'Niet opgegeven' }}</span>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Adres:</span>
-                                <span class="mt-1">{{ $account->address ?: 'Niet opgegeven' }}</span>
+                                <span class="mt-1">{{ $user->address ?: 'Niet opgegeven' }}</span>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Postcode:</span>
-                                <span class="mt-1">{{ $account->postal_code ?: 'Niet opgegeven' }}</span>
+                                <span class="mt-1">{{ $user->postal_code ?: 'Niet opgegeven' }}</span>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Stad:</span>
-                                <span class="mt-1">{{ $account->city ?: 'Niet opgegeven' }}</span>
+                                <span class="mt-1">{{ $user->city ?: 'Niet opgegeven' }}</span>
                             </div>
                         </div>
 
@@ -120,12 +120,12 @@
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Slimme Meter:</span>
                                 <div class="mt-1">
-                                    @if($account->smartMeter)
+                                    @if($user->smartMeter)
                                         <div class="flex items-center">
                                             <span
                                                 class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 mr-2">Gekoppeld</span>
-                                            <span>{{ $account->smartMeter->meter_id }} -
-                                                {{ $account->smartMeter->location }}</span>
+                                            <span>{{ $user->smartMeter->meter_id }} -
+                                                {{ $user->smartMeter->location }}</span>
                                         </div>
                                     @else
                                         <span
@@ -139,20 +139,20 @@
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aangemaakt op:</span>
-                                <span class="mt-1">{{ $account->created_at->format('d-m-Y H:i') }}</span>
+                                <span class="mt-1">{{ $user->created_at->format('d-m-Y H:i') }}</span>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Laatst bijgewerkt:</span>
-                                <span class="mt-1">{{ $account->updated_at->format('d-m-Y H:i') }}</span>
+                                <span class="mt-1">{{ $user->updated_at->format('d-m-Y H:i') }}</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-8">
-                        <a href="{{ route('accounts.index') }}"
+                        <a href="{{ route('users.index') }}"
                             class="px-4 py-2 bg-gray-300 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-400 focus:bg-gray-400 active:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">

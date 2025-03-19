@@ -3,16 +3,16 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Account;
+use App\Models\User;
 use App\Models\SmartMeter;
 use Illuminate\Support\Facades\Hash;
 
-class AccountSeeder extends Seeder
+class UserSeeder extends Seeder
 {
     public function run()
     {
-        // Create a test account
-        $account = Account::create([
+        // Create a test user
+        $user = User::create([
             'name' => 'Test Gebruiker',
             'email' => 'gebruiker@example.com',
             'password' => Hash::make('password'),
@@ -24,8 +24,8 @@ class AccountSeeder extends Seeder
             'active' => true,
         ]);
 
-        // Create an admin account
-        Account::create([
+        // Create an admin user
+        User::create([
             'name' => 'Admin Gebruiker',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
@@ -54,8 +54,8 @@ class AccountSeeder extends Seeder
             'active' => true,
         ]);
 
-        // Link a meter to the test account
-        $meter1->account_id = $account->id;
+        // Link a meter to the test user
+        $meter1->account_id = $user->id;
         $meter1->save();
     }
 }
