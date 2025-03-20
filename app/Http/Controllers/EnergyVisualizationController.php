@@ -143,244 +143,347 @@ class EnergyVisualizationController extends Controller
         }
     }
 
-    /**
-     * Haal verbruiksgegevens op volgens de geselecteerde periode en datum.
-     */
-    private function getUsageDataByPeriod(string $period, string $date): array
-    {
-        // Haal de dagelijkse elektriciteitskosten en de dagelijkse gaskosten op
-        $dailyElectricityCost = 1.97; // Euro per dag
-        $dailyGasCost = $this->gasCostsByHousingType[$this->housingType];
+   /**
+ * Haal verbruiksgegevens op volgens de geselecteerde periode en datum.
+ */
+private function getUsageDataByPeriod(string $period, string $date): array
+{
+    // Get housing type gas costs
+    $dailyGasCost = $this->gasCostsByHousingType[$this->housingType];
+    
+    // More realistic electricity usage values by housing type
+    $electricityUsageByHousingType = [
+        'appartement' => 5.7,     // ~5.7 kWh per day for apartment
+        'tussenwoning' => 9.2,    // ~9.2 kWh per day for terraced house
+        'hoekwoning' => 10.5,     // ~10.5 kWh per day for corner house
+        'twee_onder_een_kap' => 12.8, // ~12.8 kWh per day for semi-detached house
+        'vrijstaand' => 16.3,     // ~16.3 kWh per day for detached house
+    ];
+    
+    // Get daily electricity usage based on housing type
+    $dailyElectricityKwh = $electricityUsageByHousingType[$this->housingType] ?? 9.2;
+    
+    // More realistic gas usage values (in m3 per day) by housing type
+    $gasUsageByHousingType = [
+        'appartement' => 1.8,     // ~1.8 m3 per day for apartment
+        'tussenwoning' => 2.4,    // ~2.4 m3 per day for terraced house
+        'hoekwoning' => 2.9,      // ~2.9 m3 per day for corner house
+        'twee_onder_een_kap' => 3.3, // ~3.3 m3 per day for semi-detached house
+        'vrijstaand' => 4.4,      // ~4.4 m3 per day for detached house
+    ];
+    
+    // Get daily gas usage based on housing type
+    $dailyGasM3 = $gasUsageByHousingType[$this->housingType] ?? 2.4;
+    
+    // Calculate electricity cost from kWh
+    $dailyElectricityCost = $this->conversionService->kwhToEuro($dailyElectricityKwh);
+    
+    // Genereer data voor de geselecteerde periode
+    $usageData = [];
+    
+    // Splitst datum in componenten
+    $year = date('Y', strtotime($date));
+    $month = date('m', strtotime($date));
+    $day = date('d', strtotime($date));
 
-        // Bereken kWh en m³ op basis van kosten en tarieven
-        $dailyElectricityKwh = $this->conversionService->euroToKwh($dailyElectricityCost);
-        $dailyGasM3 = $this->conversionService->euroToM3($dailyGasCost);
+    switch ($period) {
+        case 'day':
+            // Realistic hourly patterns for electricity and gas
+            // Based on typical Dutch household consumption patterns
+            $hourlyElectricityFactors = [
+                0.3, 0.2, 0.15, 0.15, 0.15, 0.25,  // 0-5u: low nighttime usage
+                0.6, 1.3, 1.8, 1.1, 0.8, 0.9,      // 6-11u: morning peak (breakfast, leaving for work)
+                0.7, 0.8, 0.7, 0.7, 0.9, 1.4,      // 12-17u: midday usage
+                2.3, 2.5, 2.0, 1.4, 0.9, 0.5       // 18-23u: evening peak (dinner, TV, etc.)
+            ];
 
-        // Genereer data voor de geselecteerde periode
-        $usageData = [];
+            $hourlyGasFactors = [
+                0.2, 0.15, 0.15, 0.15, 0.15, 0.2,  // 0-5u: minimal night usage
+                1.2, 2.1, 1.2, 0.7, 0.5, 0.5,      // 6-11u: morning peak (heating, shower)
+                0.6, 0.5, 0.4, 0.4, 0.6, 1.1,      // 12-17u: midday usage 
+                2.3, 2.1, 1.4, 1.0, 0.6, 0.4       // 18-23u: evening peak (heating, cooking)
+            ];
 
-        // Splitst datum in componenten
-        $year = date('Y', strtotime($date));
-        $month = date('m', strtotime($date));
-        $day = date('d', strtotime($date));
+            // Apply seasonal variations for gas
+            // Heating is used more in winter and less in summer
+            $currentMonth = (int)$month;
+            $seasonalGasMultiplier = $this->getSeasonalGasMultiplier($currentMonth);
+            
+            // Normalize hourly factors to maintain daily average
+            $electricityFactorSum = array_sum($hourlyElectricityFactors);
+            $gasFactorSum = array_sum($hourlyGasFactors);
 
-        switch ($period) {
-            case 'day':
-                // Voorbeeld data voor uren van de dag
-                // Verdeel het dagelijkse verbruik over de uren met realistische patronen
-                $hourlyElectricityFactors = [
-                    0.3,
-                    0.2,
-                    0.2,
-                    0.2,
-                    0.2,
-                    0.3,  // 0-5u: laag verbruik 's nachts
-                    0.7,
-                    1.5,
-                    1.8,
-                    1.2,
-                    0.8,
-                    0.7,  // 6-11u: ochtendpiek
-                    0.6,
-                    0.6,
-                    0.6,
-                    0.6,
-                    0.7,
-                    1.2,  // 12-17u: middagverbruik
-                    1.9,
-                    2.0,
-                    1.8,
-                    1.5,
-                    1.0,
-                    0.5   // 18-23u: avondpiek
+            // Seed with consistent but different values based on date
+            $seed = intval($year . $month . $day);
+            mt_srand($seed);
+
+            for ($hour = 0; $hour < 24; $hour++) {
+                $normalizedElectricityFactor = $hourlyElectricityFactors[$hour] * 24 / $electricityFactorSum;
+                $normalizedGasFactor = $hourlyGasFactors[$hour] * 24 / $gasFactorSum;
+
+                // Calculate hourly values
+                $hourlyElectricityKwh = ($dailyElectricityKwh / 24) * $normalizedElectricityFactor;
+                
+                // Apply seasonal multiplier for gas
+                $hourlyGasM3 = ($dailyGasM3 / 24) * $normalizedGasFactor * $seasonalGasMultiplier;
+
+                // Add small random variation (±5%)
+                $randomFactor = 0.95 + (mt_rand(0, 100) / 1000);
+                $hourlyElectricityKwh *= $randomFactor;
+                
+                $randomFactor = 0.95 + (mt_rand(0, 100) / 1000);
+                $hourlyGasM3 *= $randomFactor;
+
+                $usageData[] = [
+                    'label' => sprintf('%02d:00', $hour),
+                    'electricity_kwh' => round($hourlyElectricityKwh, 2),
+                    'gas_m3' => round($hourlyGasM3, 3)
                 ];
+            }
+            break;
 
-                $hourlyGasFactors = [
-                    0.3,
-                    0.2,
-                    0.2,
-                    0.2,
-                    0.2,
-                    0.3,  // 0-5u: laag verbruik 's nachts
-                    1.0,
-                    1.7,
-                    1.5,
-                    0.8,
-                    0.5,
-                    0.5,  // 6-11u: ochtendpiek (verwarming, douche)
-                    0.5,
-                    0.5,
-                    0.5,
-                    0.5,
-                    0.7,
-                    1.0,  // 12-17u: middagverbruik
-                    1.8,
-                    1.9,
-                    1.5,
-                    1.2,
-                    0.8,
-                    0.4   // 18-23u: avondpiek (verwarming, koken)
+        case 'month':
+            $daysInMonth = date('t', strtotime($date));
+            
+            // Apply seasonal effect on monthly data
+            $currentMonth = (int)$month;
+            $seasonalGasMultiplier = $this->getSeasonalGasMultiplier($currentMonth);
+            
+            // Weekend vs weekday patterns
+            $weekdayElectricityFactor = 0.9;  // Weekdays use less electricity (people at work)
+            $weekendElectricityFactor = 1.3;  // Weekends use more (people at home)
+            
+            $weekdayGasFactor = 0.9;          // Weekdays lower gas (heating might be lowered during work)
+            $weekendGasFactor = 1.25;         // Weekends higher (more cooking, heating all day)
+            
+            // Create random but consistent weather patterns that affect usage
+            $seed = intval($year . $month);
+            mt_srand($seed);
+            
+            // Initialize weather pattern for the month (cold snaps, warm spells)
+            $weatherPattern = [];
+            for ($i = 0; $i < $daysInMonth; $i++) {
+                $weatherPattern[] = 0.85 + (mt_rand(0, 30) / 100);
+            }
+            
+            // Create consecutive weather events (3-5 day patterns)
+            $weatherEventLength = mt_rand(3, 5);
+            for ($i = 0; $i < $daysInMonth; $i += $weatherEventLength) {
+                $eventFactor = 0.85 + (mt_rand(0, 30) / 100);
+                for ($j = 0; $j < $weatherEventLength && ($i + $j) < $daysInMonth; $j++) {
+                    // Gradually change the factor to create smooth transitions
+                    $weatherPattern[$i + $j] = $eventFactor + (($j / $weatherEventLength) * 0.15);
+                }
+                $weatherEventLength = mt_rand(3, 5); // New random length for next event
+            }
+
+            // Adjust for month normalization
+            $weekdayCount = 0;
+            $weekendCount = 0;
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $currentDate = date('Y-m-d', strtotime("$year-$month-$day"));
+                $dayOfWeek = date('N', strtotime($currentDate));
+                if ($dayOfWeek >= 6) {
+                    $weekendCount++;
+                } else {
+                    $weekdayCount++;
+                }
+            }
+            
+            $monthlyElectricityAdjustment = $daysInMonth / 
+                (($weekdayCount * $weekdayElectricityFactor) + ($weekendCount * $weekendElectricityFactor));
+            $monthlyGasAdjustment = $daysInMonth / 
+                (($weekdayCount * $weekdayGasFactor) + ($weekendCount * $weekendGasFactor));
+
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $currentDate = date('Y-m-d', strtotime("$year-$month-$day"));
+                $dayOfWeek = date('N', strtotime($currentDate));
+                $isWeekend = ($dayOfWeek >= 6);
+
+                $electricityFactor = $isWeekend ? $weekendElectricityFactor : $weekdayElectricityFactor;
+                $gasFactor = $isWeekend ? $weekendGasFactor : $weekdayGasFactor;
+
+                // Apply weather effect (more significant for gas than electricity)
+                $weatherEffect = $weatherPattern[$day - 1];
+                
+                $dailyElectricityKwhAdjusted = $dailyElectricityKwh * $electricityFactor * 
+                    $monthlyElectricityAdjustment * (1 + (($weatherEffect - 1) * 0.3));
+                
+                $dailyGasM3Adjusted = $dailyGasM3 * $gasFactor * $monthlyGasAdjustment * 
+                    $seasonalGasMultiplier * $weatherEffect;
+
+                $usageData[] = [
+                    'label' => sprintf('%02d-%s', $day, $month),
+                    'electricity_kwh' => round($dailyElectricityKwhAdjusted, 2),
+                    'gas_m3' => round($dailyGasM3Adjusted, 3)
                 ];
+            }
+            break;
 
-                // Normaliseer factors zodat ze optellen tot 24 (uren per dag)
-                $electricityFactorSum = array_sum($hourlyElectricityFactors);
-                $gasFactorSum = array_sum($hourlyGasFactors);
+        case 'year':
+            // More realistic seasonal patterns based on Dutch energy consumption
+            $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            // Electricity seasonal factors
+            // Higher in winter (more lighting, more indoor activities)
+            // Higher in summer too (fans, some AC units in recent years)
+            $electricitySeasonalFactors = [1.18, 1.10, 1.00, 0.92, 0.85, 0.80, 0.85, 0.90, 0.95, 1.05, 1.15, 1.25];
+            
+            // Gas seasonal factors - very seasonal due to heating
+            // Winter is much higher than summer when gas is mainly used just for cooking/hot water
+            $gasSeasonalFactors = [2.30, 2.10, 1.50, 1.00, 0.50, 0.30, 0.25, 0.25, 0.45, 0.95, 1.70, 2.20];
+            
+            // Yearly random variation to account for weather differences year to year
+            $seed = intval($year);
+            mt_srand($seed);
+            
+            // Add random yearly variation (cold or mild winters effect)
+            $yearlyVariation = 0.9 + (mt_rand(0, 20) / 100);
+            
+            // Apply partial trending factors (efficiency improvements, behavior changes)
+            // More recent years might show slightly lower consumption
+            $efficiencyFactor = 1 - (min(max((int)$year - 2018, 0), 7) * 0.01); // 1% reduction per year after 2018
+            
+            for ($monthIndex = 0; $monthIndex < 12; $monthIndex++) {
+                $daysInThisMonth = cal_days_in_month(CAL_GREGORIAN, $monthIndex + 1, $year);
+                
+                // Apply seasonal factors
+                $monthlyElectricityKwh = $dailyElectricityKwh * $daysInThisMonth * 
+                    $electricitySeasonalFactors[$monthIndex] * $efficiencyFactor;
+                
+                // Gas is more affected by yearly weather variations
+                $gasVariation = ($monthIndex < 3 || $monthIndex > 8) 
+                    ? $yearlyVariation  // More variation in winter months
+                    : 1 + (($yearlyVariation - 1) * 0.3); // Less variation in summer
+                
+                $monthlyGasM3 = $dailyGasM3 * $daysInThisMonth * 
+                    $gasSeasonalFactors[$monthIndex] * $gasVariation * $efficiencyFactor;
+                
+                // Add small random variation for reality
+                $randomFactor = 0.95 + (mt_rand(0, 10) / 100);
+                $monthlyElectricityKwh *= $randomFactor;
+                
+                $randomFactor = 0.95 + (mt_rand(0, 10) / 100);
+                $monthlyGasM3 *= $randomFactor;
 
-                // Pas de seed aan op basis van de datum voor consistente maar verschillende resultaten
-                $seed = intval($year . $month . $day);
-                mt_srand($seed);
-
-                for ($hour = 0; $hour < 24; $hour++) {
-                    $normalizedElectricityFactor = $hourlyElectricityFactors[$hour] * 24 / $electricityFactorSum;
-                    $normalizedGasFactor = $hourlyGasFactors[$hour] * 24 / $gasFactorSum;
-
-                    $hourlyElectricityKwh = ($dailyElectricityKwh / 24) * $normalizedElectricityFactor;
-                    $hourlyGasM3 = ($dailyGasM3 / 24) * $normalizedGasFactor;
-
-                    // Voeg wat kleine willekeurige variatie toe
-                    $hourlyElectricityKwh *= (0.95 + (mt_rand(0, 10) / 100));
-                    $hourlyGasM3 *= (0.95 + (mt_rand(0, 10) / 100));
-
-                    $usageData[] = [
-                        'label' => sprintf('%02d:00', $hour),
-                        'electricity_kwh' => round($hourlyElectricityKwh, 2),
-                        'gas_m3' => round($hourlyGasM3, 3)
-                    ];
-                }
-                break;
-
-            case 'month':
-                // Voorbeeld data voor dagen van de maand
-                $daysInMonth = date('t', strtotime($date));
-
-                // Definieer patronen voor weekdagen vs. weekend
-                $weekdayElectricityFactor = 0.9;
-                $weekendElectricityFactor = 1.3;
-
-                $weekdayGasFactor = 0.9;
-                $weekendGasFactor = 1.2;
-
-                // Pas de seed aan op basis van de datum
-                $seed = intval($year . $month);
-                mt_srand($seed);
-
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $currentDate = date('Y-m-d', strtotime("$year-$month-$day"));
-                    $dayOfWeek = date('N', strtotime($currentDate));
-                    $isWeekend = ($dayOfWeek >= 6);
-
-                    $electricityFactor = $isWeekend ? $weekendElectricityFactor : $weekdayElectricityFactor;
-                    $gasFactor = $isWeekend ? $weekendGasFactor : $weekdayGasFactor;
-
-                    // Normaliseer zodat het gemiddelde overeenkomt met de dagelijkse doelwaarden
-                    $monthlyElectricityAdjustment = $daysInMonth / (5 * $weekdayElectricityFactor + 2 * $weekendElectricityFactor);
-                    $monthlyGasAdjustment = $daysInMonth / (5 * $weekdayGasFactor + 2 * $weekendGasFactor);
-
-                    $dailyElectricityKwhAdjusted = $dailyElectricityKwh * $electricityFactor * $monthlyElectricityAdjustment;
-                    $dailyGasM3Adjusted = $dailyGasM3 * $gasFactor * $monthlyGasAdjustment;
-
-                    // Voeg wat willekeurige variatie toe
-                    $dailyElectricityKwhAdjusted *= (0.9 + (mt_rand(0, 20) / 100));
-                    $dailyGasM3Adjusted *= (0.9 + (mt_rand(0, 20) / 100));
-
-                    $usageData[] = [
-                        'label' => sprintf('%02d-%s', $day, $month),
-                        'electricity_kwh' => round($dailyElectricityKwhAdjusted, 2),
-                        'gas_m3' => round($dailyGasM3Adjusted, 3)
-                    ];
-                }
-                break;
-
-            case 'year':
-                // Voorbeeld data voor maanden van het jaar
-                $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-                // Seizoensgebonden patronen
-                // Gas: hoog in winter, laag in zomer
-                $gasSeasonalFactors = [1.8, 1.7, 1.4, 1.0, 0.7, 0.5, 0.4, 0.4, 0.6, 1.0, 1.5, 1.8];
-
-                // Elektriciteit: redelijk consistent, iets hoger in winter (verlichting) en zomer (koeling)
-                $electricitySeasonalFactors = [1.1, 1.0, 0.9, 0.9, 0.9, 1.0, 1.1, 1.1, 0.9, 1.0, 1.0, 1.1];
-
-                // Normaliseer factoren zodat ze overeenkomen met het jaarlijkse gemiddelde
-                $gasFactorSum = array_sum($gasSeasonalFactors);
-                $electricityFactorSum = array_sum($electricitySeasonalFactors);
-
-                // Pas de seed aan op basis van het jaar
-                $seed = intval($year);
-                mt_srand($seed);
-
-                for ($month = 0; $month < 12; $month++) {
-                    $daysInThisMonth = cal_days_in_month(CAL_GREGORIAN, $month + 1, $year);
-
-                    $normalizedGasFactor = $gasSeasonalFactors[$month] * 12 / $gasFactorSum;
-                    $normalizedElectricityFactor = $electricitySeasonalFactors[$month] * 12 / $electricityFactorSum;
-
-                    $monthlyElectricityKwh = $dailyElectricityKwh * $daysInThisMonth * $normalizedElectricityFactor;
-                    $monthlyGasM3 = $dailyGasM3 * $daysInThisMonth * $normalizedGasFactor;
-
-                    // Voeg wat willekeurige variatie toe
-                    $monthlyElectricityKwh *= (0.95 + (mt_rand(0, 10) / 100));
-                    $monthlyGasM3 *= (0.95 + (mt_rand(0, 10) / 100));
-
-                    $usageData[] = [
-                        'label' => $months[$month],
-                        'electricity_kwh' => round($monthlyElectricityKwh, 2),
-                        'gas_m3' => round($monthlyGasM3, 2)
-                    ];
-                }
-                break;
-        }
-
-        return $usageData;
+                $usageData[] = [
+                    'label' => $months[$monthIndex],
+                    'electricity_kwh' => round($monthlyElectricityKwh, 1),
+                    'gas_m3' => round($monthlyGasM3, 1)
+                ];
+            }
+            break;
     }
+
+    return $usageData;
+}
+
+/**
+ * Helper method to calculate seasonal gas multiplier
+ * Gas usage is highly seasonal in the Netherlands
+ */
+private function getSeasonalGasMultiplier(int $month): float
+{
+    // Monthly multipliers where winter months use much more gas than summer
+    $monthlyMultipliers = [
+        1 => 2.3,  // January
+        2 => 2.1,  // February
+        3 => 1.5,  // March
+        4 => 1.0,  // April
+        5 => 0.5,  // May
+        6 => 0.3,  // June
+        7 => 0.25, // July
+        8 => 0.25, // August
+        9 => 0.45, // September
+        10 => 0.95, // October
+        11 => 1.7,  // November
+        12 => 2.2   // December
+    ];
+    
+    return $monthlyMultipliers[$month] ?? 1.0;
+}
 
     /**
      * Haal historische verbruiksgegevens op voor vergelijkende analyses.
      */
-    private function getHistoricalData(string $period, string $date): array
-    {
-        // In een echte implementatie zou dit historische data ophalen uit de database
-        // Voor deze demo genereren we gesimuleerde historische data
-
-        $currentDate = strtotime($date);
-        $historicalData = [];
-
-        switch ($period) {
-            case 'day':
-                // Haal gegevens op van dezelfde dag vorig jaar
-                $lastYear = date('Y-m-d', strtotime('-1 year', $currentDate));
-                $historicalData['last_year'] = $this->getUsageDataByPeriod($period, $lastYear);
-
-                // Haal gegevens op van vorige dag
-                $yesterday = date('Y-m-d', strtotime('-1 day', $currentDate));
-                $historicalData['previous_day'] = $this->getUsageDataByPeriod($period, $yesterday);
-                break;
-
-            case 'month':
-                // Haal gegevens op van dezelfde maand vorig jaar
-                $lastYear = date('Y-m-d', strtotime('-1 year', $currentDate));
-                $historicalData['last_year'] = $this->getUsageDataByPeriod($period, $lastYear);
-
-                // Haal gegevens op van vorige maand
-                $lastMonth = date('Y-m-d', strtotime('-1 month', $currentDate));
-                $historicalData['previous_month'] = $this->getUsageDataByPeriod($period, $lastMonth);
-                break;
-
-            case 'year':
-                // Haal gegevens op van vorig jaar
-                $lastYear = date('Y-m-d', strtotime('-1 year', $currentDate));
-                $historicalData['last_year'] = $this->getUsageDataByPeriod($period, $lastYear);
-
-                // Haal gegevens op van 2 jaar geleden
-                $twoYearsAgo = date('Y-m-d', strtotime('-2 years', $currentDate));
-                $historicalData['two_years_ago'] = $this->getUsageDataByPeriod($period, $twoYearsAgo);
-                break;
-        }
-
-        return $historicalData;
+  /**
+ * Haal historische verbruiksgegevens op voor vergelijkende analyses.
+ * This creates more realistic historical data with yearly trends and seasonal variations.
+ */
+private function getHistoricalData(string $period, string $date): array
+{
+    // In a real implementation, this would fetch data from the database
+    // For this demo, we generate simulated historical data with realistic patterns
+    
+    $currentDate = strtotime($date);
+    $historicalData = [];
+    
+    // Year-over-year efficiency trend - consumption tends to decrease slightly each year
+    // due to more efficient appliances, better insulation, behavior changes, etc.
+    $yearlyEfficiencyFactor = 0.97; // 3% less usage per year in the past
+    
+    switch ($period) {
+        case 'day':
+            // Get data from same day last year
+            $lastYear = date('Y-m-d', strtotime('-1 year', $currentDate));
+            $lastYearData = $this->getUsageDataByPeriod($period, $lastYear);
+            
+            // Apply yearly efficiency factor (people tend to use more energy in past years)
+            foreach ($lastYearData as &$hourData) {
+                $hourData['electricity_kwh'] = round($hourData['electricity_kwh'] / $yearlyEfficiencyFactor, 2);
+                $hourData['gas_m3'] = round($hourData['gas_m3'] / $yearlyEfficiencyFactor, 3);
+            }
+            $historicalData['last_year'] = $lastYearData;
+            
+            // Get data from previous day
+            $yesterday = date('Y-m-d', strtotime('-1 day', $currentDate));
+            $historicalData['previous_day'] = $this->getUsageDataByPeriod($period, $yesterday);
+            break;
+            
+        case 'month':
+            // Get data from same month last year
+            $lastYear = date('Y-m-d', strtotime('-1 year', $currentDate));
+            $lastYearData = $this->getUsageDataByPeriod($period, $lastYear);
+            
+            // Apply yearly efficiency factor
+            foreach ($lastYearData as &$dayData) {
+                $dayData['electricity_kwh'] = round($dayData['electricity_kwh'] / $yearlyEfficiencyFactor, 2);
+                $dayData['gas_m3'] = round($dayData['gas_m3'] / $yearlyEfficiencyFactor, 3);
+            }
+            $historicalData['last_year'] = $lastYearData;
+            
+            // Get data from previous month
+            $lastMonth = date('Y-m-d', strtotime('-1 month', $currentDate));
+            $historicalData['previous_month'] = $this->getUsageDataByPeriod($period, $lastMonth);
+            break;
+            
+        case 'year':
+            // Get data from last year
+            $lastYear = date('Y-m-d', strtotime('-1 year', $currentDate));
+            $lastYearData = $this->getUsageDataByPeriod($period, $lastYear);
+            
+            // Apply yearly efficiency factor
+            foreach ($lastYearData as &$monthData) {
+                $monthData['electricity_kwh'] = round($monthData['electricity_kwh'] / $yearlyEfficiencyFactor, 1);
+                $monthData['gas_m3'] = round($monthData['gas_m3'] / $yearlyEfficiencyFactor, 1);
+            }
+            $historicalData['last_year'] = $lastYearData;
+            
+            // Get data from 2 years ago
+            $twoYearsAgo = date('Y-m-d', strtotime('-2 years', $currentDate));
+            $twoYearsAgoData = $this->getUsageDataByPeriod($period, $twoYearsAgo);
+            
+            // Apply efficiency factor twice for 2 years ago
+            foreach ($twoYearsAgoData as &$monthData) {
+                $monthData['electricity_kwh'] = round($monthData['electricity_kwh'] / ($yearlyEfficiencyFactor * $yearlyEfficiencyFactor), 1);
+                $monthData['gas_m3'] = round($monthData['gas_m3'] / ($yearlyEfficiencyFactor * $yearlyEfficiencyFactor), 1);
+            }
+            $historicalData['two_years_ago'] = $twoYearsAgoData;
+            break;
     }
-
+    
+    return $historicalData;
+}
     /**
      * Bereken totalen en percentages op basis van verbruiksgegevens en budget.
      */
@@ -457,78 +560,195 @@ class EnergyVisualizationController extends Controller
     /**
      * Bereid data voor voor grafieken, inclusief historische vergelijkingen.
      */
-    private function prepareChartData(array $usageData, array $totals, string $period, array $historicalData): array
-    {
-        $labels = array_column($usageData, 'label');
+    /**
+ * Bereid data voor voor grafieken, inclusief historische vergelijkingen.
+ */
+private function prepareChartData(array $usageData, array $totals, string $period, array $historicalData): array
+{
+    $labels = array_column($usageData, 'label');
 
-        // Elektriciteitsverbruik data
-        $electricityData = array_column($usageData, 'electricity_kwh');
+    // Elektriciteitsverbruik data
+    $electricityData = array_column($usageData, 'electricity_kwh');
 
-        // Gasverbruik data
-        $gasData = array_column($usageData, 'gas_m3');
+    // Gasverbruik data
+    $gasData = array_column($usageData, 'gas_m3');
 
-        // Target lijnen (gemiddelde per periode-eenheid)
-        $count = count($usageData);
+    // Smarter target lines based on realistic seasonal patterns
+    $count = count($usageData);
+    
+    // Base target on realistic monthly distribution for target lines
+    $electricityTargetLine = [];
+    $gasTargetLine = [];
+    
+    if ($period === 'year') {
+        // For yearly view, create seasonally adjusted target lines
+        $yearlyElectricityTarget = $totals['electricity_target'];
+        $yearlyGasTarget = $totals['gas_target'];
+        
+        // Typical monthly distribution patterns for electricity in Netherlands
+        $electricityMonthlyDistribution = [0.10, 0.09, 0.085, 0.078, 0.072, 0.068, 0.072, 0.076, 0.08, 0.087, 0.095, 0.107];
+        
+        // Typical monthly distribution patterns for gas in Netherlands (very seasonal)
+        $gasMonthlyDistribution = [0.175, 0.160, 0.120, 0.080, 0.040, 0.023, 0.020, 0.020, 0.035, 0.075, 0.125, 0.167];
+        
+        for ($i = 0; $i < 12; $i++) {
+            $electricityTargetLine[] = round($yearlyElectricityTarget * $electricityMonthlyDistribution[$i], 1);
+            $gasTargetLine[] = round($yearlyGasTarget * $gasMonthlyDistribution[$i], 1);
+        }
+    } else {
+        // For daily and monthly views, consider distributing the target evenly
+        // but still account for patterns where appropriate
+        
+        // Base average targets
         $avgElectricityTarget = $count > 0 ? $totals['electricity_target'] / $count : 0;
         $avgGasTarget = $count > 0 ? $totals['gas_target'] / $count : 0;
-
-        $electricityTargetLine = array_fill(0, $count, round($avgElectricityTarget, 2));
-        $gasTargetLine = array_fill(0, $count, round($avgGasTarget, 2));
-
-        // Kosten data
-        $electricityCostData = [];
-        foreach ($electricityData as $kwh) {
-            $electricityCostData[] = $this->conversionService->kwhToEuro($kwh);
+        
+        if ($period === 'day') {
+            // For daily view, create hourly distribution of target
+            // Higher during peak hours, lower during night
+            $hourlyElectricityPattern = [
+                0.5, 0.4, 0.3, 0.3, 0.3, 0.5,  // 0-5 hours
+                0.8, 1.2, 1.5, 1.2, 0.9, 0.8,  // 6-11 hours
+                0.8, 0.7, 0.7, 0.8, 1.0, 1.3,  // 12-17 hours
+                1.8, 2.0, 1.7, 1.4, 1.0, 0.7   // 18-23 hours
+            ];
+            
+            $hourlyGasPattern = [
+                0.3, 0.2, 0.2, 0.2, 0.2, 0.4,  // 0-5 hours
+                1.1, 1.8, 1.3, 0.7, 0.5, 0.5,  // 6-11 hours
+                0.6, 0.5, 0.5, 0.6, 0.9, 1.2,  // 12-17 hours
+                2.0, 1.8, 1.3, 0.9, 0.6, 0.4   // 18-23 hours
+            ];
+            
+            // Normalize patterns
+            $electricitySum = array_sum($hourlyElectricityPattern);
+            $gasSum = array_sum($hourlyGasPattern);
+            
+            for ($i = 0; $i < 24; $i++) {
+                $electricityTargetLine[] = round($avgElectricityTarget * $hourlyElectricityPattern[$i] * 24 / $electricitySum, 2);
+                $gasTargetLine[] = round($avgGasTarget * $hourlyGasPattern[$i] * 24 / $gasSum, 3);
+            }
+        } elseif ($period === 'month') {
+            // For monthly view, consider weekday vs weekend pattern
+            $daysInMonth = count($usageData);
+            
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $date = sprintf("%s-%02d", substr($usageData[0]['label'], 3), $day);
+                $dayOfWeek = date('N', strtotime(date('Y-') . $date));
+                $isWeekend = ($dayOfWeek >= 6);
+                
+                // Weekends tend to have higher consumption
+                $electricityFactor = $isWeekend ? 1.25 : 0.9;
+                $gasFactor = $isWeekend ? 1.2 : 0.95;
+                
+                $electricityTargetLine[] = round($avgElectricityTarget * $electricityFactor, 2);
+                $gasTargetLine[] = round($avgGasTarget * $gasFactor, 3);
+            }
+        } else {
+            // Fallback to even distribution
+            $electricityTargetLine = array_fill(0, $count, round($avgElectricityTarget, 2));
+            $gasTargetLine = array_fill(0, $count, round($avgGasTarget, 3));
         }
+    }
 
-        $gasCostData = [];
-        foreach ($gasData as $m3) {
-            $gasCostData[] = $this->conversionService->m3ToEuro($m3);
-        }
+    // Cost data based on current pricing
+    $electricityCostData = [];
+    foreach ($electricityData as $kwh) {
+        $electricityCostData[] = $this->conversionService->kwhToEuro($kwh);
+    }
 
-        // Historische vergelijking data
-        $historicalElectricity = [];
-        $historicalGas = [];
+    $gasCostData = [];
+    foreach ($gasData as $m3) {
+        $gasCostData[] = $this->conversionService->m3ToEuro($m3);
+    }
 
-        if (!empty($historicalData['last_year'])) {
-            $historicalElectricity['last_year'] = array_column($historicalData['last_year'], 'electricity_kwh');
-            $historicalGas['last_year'] = array_column($historicalData['last_year'], 'gas_m3');
-        }
+    // Historical comparison data
+    $historicalElectricity = [];
+    $historicalGas = [];
 
-        if (isset($historicalData['previous_day'])) {
-            $historicalElectricity['previous_period'] = array_column($historicalData['previous_day'], 'electricity_kwh');
-            $historicalGas['previous_period'] = array_column($historicalData['previous_day'], 'gas_m3');
-        } elseif (isset($historicalData['previous_month'])) {
-            $historicalElectricity['previous_period'] = array_column($historicalData['previous_month'], 'electricity_kwh');
-            $historicalGas['previous_period'] = array_column($historicalData['previous_month'], 'gas_m3');
-        }
+    if (!empty($historicalData['last_year'])) {
+        $historicalElectricity['last_year'] = array_column($historicalData['last_year'], 'electricity_kwh');
+        $historicalGas['last_year'] = array_column($historicalData['last_year'], 'gas_m3');
+    }
 
-        // Trend data voor langetermijnanalyse
-        $trendLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        $trendElectricity = [210, 195, 180, 170, 165, 168, 172, 175, 168, 182, 190, 200];
-        $trendGas = [120, 115, 90, 65, 40, 25, 20, 20, 35, 70, 100, 110];
+    if (isset($historicalData['previous_day'])) {
+        $historicalElectricity['previous_period'] = array_column($historicalData['previous_day'], 'electricity_kwh');
+        $historicalGas['previous_period'] = array_column($historicalData['previous_day'], 'gas_m3');
+    } elseif (isset($historicalData['previous_month'])) {
+        $historicalElectricity['previous_period'] = array_column($historicalData['previous_month'], 'electricity_kwh');
+        $historicalGas['previous_period'] = array_column($historicalData['previous_month'], 'gas_m3');
+    }
 
-        return [
-            'labels' => $labels,
+    // Trend data - use genuine seasonal patterns for Dutch energy consumption
+    $trendLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Create a model of the yearly trend with seasonal variations for both electricity and gas
+    // These values show a 3-year trend
+    $currentYear = date('Y');
+    
+    // Realistic electricity trend for typical Dutch household (in kWh per month)
+    // Higher in winter (lighting, indoor activities) and some increase in summer (fans)
+    $baseElectricityMonth = [
+        285, 260, 240, 220, 200, 190, 200, 210, 220, 240, 260, 290  // This year
+    ];
+    
+    // Realistic gas trend for typical Dutch household (in m³ per month)
+    // Much higher in winter months for heating, minimal in summer (just cooking and hot water)
+    $baseGasMonth = [
+        180, 165, 120, 80, 40, 25, 20, 20, 35, 75, 135, 175  // This year
+    ];
+    
+    // Create trend data for this year and previous two years
+    $trendElectricity = $baseElectricityMonth;
+    $trendGas = $baseGasMonth;
+    
+    // Previous year (typically slightly higher consumption - ~3% efficiency improvement per year)
+    $lastYearElectricity = array_map(function($value) {
+        return round($value * 1.03);  // 3% higher last year
+    }, $baseElectricityMonth);
+    
+    $lastYearGas = array_map(function($value) {
+        return round($value * 1.03);  // 3% higher last year
+    }, $baseGasMonth);
+    
+    // Two years ago (higher consumption)
+    $twoYearAgoElectricity = array_map(function($value) {
+        return round($value * 1.06);  // 6% higher two years ago
+    }, $baseElectricityMonth);
+    
+    $twoYearAgoGas = array_map(function($value) {
+        return round($value * 1.06);  // 6% higher two years ago
+    }, $baseGasMonth);
+
+    return [
+        'labels' => $labels,
+        'electricity' => [
+            'data' => $electricityData,
+            'target' => $electricityTargetLine,
+            'historical' => $historicalElectricity
+        ],
+        'gas' => [
+            'data' => $gasData,
+            'target' => $gasTargetLine,
+            'historical' => $historicalGas
+        ],
+        'cost' => [
+            'electricity' => $electricityCostData,
+            'gas' => $gasCostData
+        ],
+        'trend' => [
+            'labels' => $trendLabels,
             'electricity' => [
-                'data' => $electricityData,
-                'target' => $electricityTargetLine,
-                'historical' => $historicalElectricity
+                'thisYear' => $trendElectricity,
+                'lastYear' => $lastYearElectricity,
+                'twoYearsAgo' => $twoYearAgoElectricity
             ],
             'gas' => [
-                'data' => $gasData,
-                'target' => $gasTargetLine,
-                'historical' => $historicalGas
-            ],
-            'cost' => [
-                'electricity' => $electricityCostData,
-                'gas' => $gasCostData
-            ],
-            'trend' => [
-                'labels' => $trendLabels,
-                'electricity' => $trendElectricity,
-                'gas' => $trendGas
+                'thisYear' => $trendGas,
+                'lastYear' => $lastYearGas,
+                'twoYearsAgo' => $twoYearAgoGas
             ]
-        ];
-    }
+        ]
+    ];
+}
 }
