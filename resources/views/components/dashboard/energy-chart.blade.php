@@ -1,7 +1,7 @@
 @props(['type', 'title', 'buttonLabel', 'buttonColor', 'chartData', 'period'])
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-    <div class="p-6 bg-white border-b border-gray-200">
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
+    <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
         <div class="flex justify-between items-start mb-4">
             <h3 class="text-lg font-semibold">{{ $title }}</h3>
             <div>
@@ -34,6 +34,14 @@
             console.error('Chart.js is not loaded!');
             return;
         }
+        
+        // Check if dark mode is active
+        const isDarkMode = document.documentElement.classList.contains('dark') || 
+                          document.querySelector('html').classList.contains('dark') ||
+                          window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // Set the text color based on dark mode
+        const textColor = isDarkMode ? '#FFFFFF' : '#000000';
         
         console.log('Initializing {{ $type }} chart');
         const {{ $type }}Ctx = document.getElementById('{{ $type }}Chart{{ $loop->index ?? 0 }}');
@@ -74,14 +82,28 @@
                     x: {
                         title: {
                             display: true,
-                            text: periodLabels['{{ $period }}'] || '{{ $period }}'
+                            text: periodLabels['{{ $period }}'] || '{{ $period }}',
+                            color: textColor
+                        },
+                        ticks: {
+                            color: textColor
+                        },
+                        grid: {
+                            color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
                         }
                     },
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: '{{ $type === "electricity" ? "Elektriciteit (kWh)" : "Gas (m³)" }}'
+                            text: '{{ $type === "electricity" ? "Elektriciteit (kWh)" : "Gas (m³)" }}',
+                            color: textColor
+                        },
+                        ticks: {
+                            color: textColor
+                        },
+                        grid: {
+                            color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
                         }
                     }
                 },
@@ -99,6 +121,11 @@
                                 const percentage = target ? (value / target * 100).toFixed(1) : 0;
                                 return `${percentage}% van je target\nKosten: €${(value * {{ $type === "electricity" ? 0.35 : 1.45 }}).toFixed(2)}`;
                             }
+                        }
+                    },
+                    legend: {
+                        labels: {
+                            color: textColor
                         }
                     }
                 }
@@ -143,6 +170,34 @@
         } else {
             console.error('Toggle button not found');
         }
+        
+        // Add listener for dark mode changes (if using a theme toggle)
+        const darkModeObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    const isDarkNow = document.documentElement.classList.contains('dark') || 
+                                    document.querySelector('html').classList.contains('dark');
+                    if (isDarkNow !== isDarkMode) {
+                        // Update chart colors
+                        const newTextColor = isDarkNow ? '#FFFFFF' : '#000000';
+                        const newGridColor = isDarkNow ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                        
+                        {{ $type }}Chart.options.scales.x.title.color = newTextColor;
+                        {{ $type }}Chart.options.scales.x.ticks.color = newTextColor;
+                        {{ $type }}Chart.options.scales.x.grid.color = newGridColor;
+                        {{ $type }}Chart.options.scales.y.title.color = newTextColor;
+                        {{ $type }}Chart.options.scales.y.ticks.color = newTextColor;
+                        {{ $type }}Chart.options.scales.y.grid.color = newGridColor;
+                        {{ $type }}Chart.options.plugins.legend.labels.color = newTextColor;
+                        
+                        {{ $type }}Chart.update();
+                    }
+                }
+            });
+        });
+        
+        // Start observing html or document element for dark mode changes
+        darkModeObserver.observe(document.documentElement, { attributes: true });
     });
 </script>
 @endpush

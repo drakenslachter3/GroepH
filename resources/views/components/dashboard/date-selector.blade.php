@@ -1,6 +1,6 @@
 @props(['period', 'date', 'housingType'])
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
     <div class="p-6 bg-white border-b border-gray-200">
         <!-- Huidige geselecteerde datum/periode weergave -->
         <div class="mb-4 pb-4 border-b border-gray-200">

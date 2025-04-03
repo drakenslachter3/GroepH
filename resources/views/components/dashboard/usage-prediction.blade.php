@@ -1,7 +1,7 @@
 @props(['electricityData', 'gasData', 'period'])
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-    <div class="p-6 bg-white border-b border-gray-200">
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
+    <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
         <h3 class="text-lg font-semibold mb-4">Verbruiksvoorspelling</h3>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

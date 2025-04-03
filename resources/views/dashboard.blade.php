@@ -6,22 +6,22 @@
     </x-slot>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8">
+            <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4 border-gray-200">
                     <!-- Dropdown button, last update info & refresh button in one row -->
                     <div class="flex justify-between items-center">
                         <!-- Dropdown button with title and icon -->
-                        <button id="toggleConfigSection" class="flex items-center text-left focus:outline-none">
-                            <h2 class="text-xl font-semibold text-gray-800">Dashboard Configuratie</h2>
+                        <button id="toggleConfigSection" class="flex items-center text-left focus:outline-none dark:text-white">
+                            <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Dashboard Configuratie</h2>
                             <svg id="configSectionIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
 
                         <!-- Last update text and refresh button -->
-                        <div class="flex items-center gap-3">
-                            <p class="text-sm text-gray-600">Laatste update: <span id="last-updated">{{ $lastRefresh ?? 'Niet beschikbaar' }}</span></p>
+                        <div class="flex items-center gap-3 dark:text-white">
+                            <p class="text-sm text-gray-600 dark:text-white">Laatste update: <span id="last-updated">{{ $lastRefresh ?? 'Niet beschikbaar' }}</span></p>
                             <button onclick="window.location.reload()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition duration-200 text-sm">
                                 Verversen
                             </button>
@@ -33,11 +33,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border-t">
                         <!-- Widget Configuration Section -->
                         <div>
-                            <h2 class="text-xl font-semibold text-gray-800 mb-6">Widget Configuratie</h2>
+                            <h2 class="text-xl font-semibold text-gray-800 mb-6 dark:text-white">Widget Configuratie</h2>
                             <form action="{{ route('dashboard.setWidget') }}" method="POST" class="space-y-6">
                                 @csrf
                                 <div class="space-y-2">
-                                    <label for="grid-position" class="block text-sm font-medium text-gray-700">Positie:</label>
+                                    <label for="grid-position" class="block text-sm font-medium text-gray-700 dark:text-white">Positie:</label>
                                     <select name="grid_position" id="grid-position" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
                                         @for ($i = 0; $i < count($gridLayout); $i++)
                                             <option value="{{ $i }}">Positie {{ $i + 1 }}</option>
@@ -46,7 +46,7 @@
                                 </div>
 
                                 <div class="space-y-2">
-                                    <label for="widget-type" class="block text-sm font-medium text-gray-700">Widget Type:</label>
+                                    <label for="widget-type" class="block text-sm font-medium text-gray-700 dark:text-white">Widget Type:</label>
                                     <select name="widget_type" id="widget-type" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
                                         <option value="usage-prediction">Voorspelling en Prognose</option>
                                         <option value="energy-status-electricity">Electra Status</option>
@@ -85,7 +85,7 @@
 
                             <!-- Current date/period display -->
                             <div class="mb-4 pb-4 border-b border-gray-200">
-                                <h3 class="text-lg font-bold text-gray-800">
+                                <h3 class="text-lg font-bold text-gray-800 dark:text-white">
                                     @switch($period)
                                         @case('day')
                                             Energieverbruik op {{ \Carbon\Carbon::parse($date)->format('d F Y') }}
@@ -107,7 +107,7 @@
                                 @csrf
                                 <!-- Period selection -->
                                 <div class="mb-4">
-                                    <h3 class="text-lg font-medium mb-2">Tijdsperiode</h3>
+                                    <h3 class="text-lg font-medium mb-2 text-black dark:text-white">Tijdsperiode</h3>
                                     <div class="flex space-x-4">
                                         <label class="inline-flex items-center">
                                             <input type="radio" name="period" value="day" {{ $period === 'day' ? 'checked' : '' }} class="hidden">
@@ -132,7 +132,7 @@
 
                                 <!-- Date picker -->
                                 <div class="mb-4">
-                                    <h3 class="text-lg font-medium mb-2">Datumkiezer</h3>
+                                    <h3 class="text-lg font-medium mb-2 dark:text-white">Datumkiezer</h3>
                                     <div class="flex items-center space-x-2">
                                         <div class="date-input-container w-full">
                                             @switch($period)
@@ -171,7 +171,7 @@
                                 </div>
 
                                 <!-- Housing type selection -->
-                                <div>
+                                <div class="hidden">
                                     <h3 class="text-lg font-medium mb-2">Woningtype</h3>
                                     <select name="housing_type" id="housingType" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md">
                                         <option value="appartement" {{ $housingType === 'appartement' ? 'selected' : '' }}>Appartement</option>
@@ -182,7 +182,7 @@
                                     </select>
                                 </div>
 
-                                <button type="submit" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                                <button type="submit" class="hidden w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
                                     Toepassen
                                 </button>
                             </form>
@@ -216,7 +216,7 @@
                 @endphp
 
                 <div class="p-2 {{ $widthClasses }}">
-                    <div class="h-full p-4 bg-white shadow-md rounded-lg">
+                    <div class="h-full p-4 bg-white shadow-md rounded-lg dark:bg-gray-800 dark:text-white">
                         @switch($item)
                         @case('usage-prediction')
                         <x-dashboard.usage-prediction
