@@ -24,34 +24,32 @@
                     @csrf
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Budget Gas</label>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Huidige gasprijs: €{{ number_format($energyService->gasRate, 2) }} per m³</p>
                         <div class="flex max-w-xs">
                             <input type="number"
-                                step="0.01"
-                                name="gas_value"
-                                class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-200"
-                                value="{{ old('gas_value') }}"
-                                required>
-                            <select name="gas_unit" class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-700 dark:text-gray-200 w-1/3">
-                                <option value="euro" selected>€</option>
-                                <option value="m3">m³</option>
-                            </select>
+                                   step="0.01"
+                                   name="gas_value"
+                                   class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-200"
+                                   value="{{ old('gas_value') }}"
+                                   required>
+                            <div class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-700 dark:text-gray-200 w-1/3">
+                                m³
+                            </div>
+                            <input type="hidden" name="gas_unit" value="m3">
                         </div>
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Budget Elektra</label>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Huidige elektriciteitsprijs: €{{ number_format($energyService->electricityRate, 2) }} per kWh</p>
                         <div class="flex max-w-xs">
                             <input type="number"
-                                step="0.01"
-                                name="electricity_value"
-                                class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-200"
-                                value="{{ old('electricity_value') }}"
-                                required>
-                            <select name="electricity_unit" class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-700 dark:text-gray-200 w-1/3">
-                                <option value="euro" selected>€</option>
-                                <option value="kwh">kWh</option>
-                            </select>
+                                   step="0.01"
+                                   name="electricity_value"
+                                   class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-200"
+                                   value="{{ old('electricity_value') }}"
+                                   required>
+                            <div class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-700 dark:text-gray-200 w-1/3">
+                                kWh
+                            </div>
+                            <input type="hidden" name="electricity_unit" value="kwh">
                         </div>
                     </div>
                     <div class="flex space-x-4">
