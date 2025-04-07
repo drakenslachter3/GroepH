@@ -9,9 +9,7 @@ class EnergyBudget extends Model
     protected $fillable = [
         'user_id',
         'gas_target_m3',
-        'gas_target_euro',
         'electricity_target_kwh',
-        'electricity_target_euro',
         'year',
     ];
 

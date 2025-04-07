@@ -31,18 +31,8 @@ class EnergyBudgetController extends Controller
         ]);
 
         $calculations = [
-            'gas_m3' => $validated['gas_unit'] === 'm3' 
-                ? $validated['gas_value']
-                : $this->conversionService->euroToM3($validated['gas_value']),
-            'gas_euro' => $validated['gas_unit'] === 'euro'
-                ? $validated['gas_value']
-                : $this->conversionService->m3ToEuro($validated['gas_value']),
-            'electricity_kwh' => $validated['electricity_unit'] === 'kwh'
-                ? $validated['electricity_value']
-                : $this->conversionService->euroToKwh($validated['electricity_value']),
-            'electricity_euro' => $validated['electricity_unit'] === 'euro'
-                ? $validated['electricity_value']
-                : $this->conversionService->kwhToEuro($validated['electricity_value']),
+            'gas_m3' => $validated['gas_value'],
+            'electricity_kwh' => $validated['electricity_value'],
         ];
 
         $energyService = $this->conversionService;
@@ -57,9 +47,7 @@ class EnergyBudgetController extends Controller
         $user_id = Auth::user()->id;
         $budget = EnergyBudget::create([
             'gas_target_m3' => $request->gas_m3,
-            'gas_target_euro' => $request->gas_euro,
             'electricity_target_kwh' => $request->electricity_kwh,
-            'electricity_target_euro' => $request->electricity_euro,
             'year' => date('Y'),
             'user_id' => $user_id,
         ]);
