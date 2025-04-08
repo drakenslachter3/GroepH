@@ -1,17 +1,15 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EnergyBudgetController;
+use App\Http\Controllers\EnergyVisualizationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EnergyBudgetController;
-use App\Http\Controllers\EnergyVisualizationController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
-
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
@@ -26,6 +24,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/energy/budget', [EnergyBudgetController::class, 'index'])->name('budget.form');
     Route::post('/energy/budget/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
     Route::post('/energy/budget/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
+
+    Route::get('/energy/monthly-budget', [MonthlyEnergyBudgetController::class, 'index'])->name('budget.monthly');
+    Route::post('/energy/monthly-budget/update', [MonthlyEnergyBudgetController::class, 'update'])->name('budget.monthly.update');
+    Route::post('/energy/monthly-budget/reset', [MonthlyEnergyBudgetController::class, 'reset'])->name('budget.monthly.reset');
 
     // Energie visualisatie routes
     Route::get('/energy/visualization', [EnergyVisualizationController::class, 'dashboard'])->name('energy.dashboard');
@@ -42,4 +44,4 @@ Route::middleware('auth')->group(function () {
     Route::post('/delete-user/{user}', [UserController::class, 'destroy'])->name('users.delete');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
