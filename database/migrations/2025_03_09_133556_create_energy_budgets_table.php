@@ -11,9 +11,7 @@ return new class extends Migration
         Schema::create('energy_budgets', function (Blueprint $table) {
             $table->id();
             $table->decimal('gas_target_m3', 10, 2);
-            $table->decimal('gas_target_euro', 10, 2);
             $table->decimal('electricity_target_kwh', 10, 2);
-            $table->decimal('electricity_target_euro', 10, 2);
             $table->year('year');
             $table->timestamps();
         });

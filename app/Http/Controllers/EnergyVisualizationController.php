@@ -16,7 +16,7 @@ class EnergyVisualizationController extends Controller
     private $conversionService;
     private $predictionService;
 
-    // Definieer de dagelijkse kosten per type woning voor gas 
+    // Definieer de dagelijkse kosten per type woning voor gas
     //m2 ?? -lars
     private $gasCostsByHousingType = [
         'appartement' => 2.71,
@@ -37,7 +37,7 @@ class EnergyVisualizationController extends Controller
 
     /**
      * Toon het dashboard voor energieverbruik.
-     * 
+     *
      * @param Request $request
      * @return View|RedirectResponse
      */
@@ -439,7 +439,6 @@ class EnergyVisualizationController extends Controller
             'gas_status' => $gasStatus,
 
             'total_euro' => $totalElectricityCost + $totalGasCost,
-            'total_target_euro' => $this->conversionService->kwhToEuro($electricityTarget) + $this->conversionService->m3ToEuro($gasTarget),
             'period' => $period
         ];
     }
