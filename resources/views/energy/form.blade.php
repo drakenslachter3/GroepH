@@ -29,7 +29,7 @@
                                    step="0.01"
                                    name="gas_value"
                                    class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-200"
-                                   value="{{ old('gas_value') }}"
+                                   value="{{ old('gas_value', $currentBudget->gas_target_m3 ?? '') }}"
                                    required>
                             <div class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-700 dark:text-gray-200 w-1/3">
                                 m³
@@ -44,7 +44,7 @@
                                    step="0.01"
                                    name="electricity_value"
                                    class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-200"
-                                   value="{{ old('electricity_value') }}"
+                                   value="{{ old('electricity_value', $currentBudget->electricity_target_kwh ?? '') }}"
                                    required>
                             <div class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-700 dark:text-gray-200 w-1/3">
                                 kWh

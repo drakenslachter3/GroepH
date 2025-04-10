@@ -18,7 +18,15 @@ class EnergyBudgetController extends Controller
 
     public function index()
     {
-        return view('energy.form');
+        $currentBudget = null;
+
+        if (Auth::check()) {
+            $currentBudget = EnergyBudget::where('user_id', Auth::id())
+                ->where('year', date('Y'))
+                ->first();
+        }
+
+        return view('energy.form', compact('currentBudget'));
     }
 
     public function calculate(Request $request)
@@ -44,13 +52,24 @@ class EnergyBudgetController extends Controller
         if(!Auth::check()){
             return view('/register');
         }
-        $user_id = Auth::user()->id;
-        $budget = EnergyBudget::create([
-            'gas_target_m3' => $request->gas_m3,
-            'electricity_target_kwh' => $request->electricity_kwh,
-            'year' => date('Y'),
-            'user_id' => $user_id,
-        ]);
+        $user_id = Auth::id();
+        $existingBudget = EnergyBudget::where('user_id', $user_id)
+            ->where('year', date('Y'))
+            ->first();
+
+        if ($existingBudget) {
+            $existingBudget->update([
+                'gas_target_m3' => $request->gas_m3,
+                'electricity_target_kwh' => $request->electricity_kwh,
+            ]);
+        } else {
+            EnergyBudget::create([
+                'gas_target_m3' => $request->gas_m3,
+                'electricity_target_kwh' => $request->electricity_kwh,
+                'year' => date('Y'),
+                'user_id' => $user_id,
+            ]);
+        }
 
         return redirect()->route('budget.form')->with('success', 'Opgeslagen!');
     }
