@@ -2,16 +2,50 @@
 
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
     <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
-        <div class="flex justify-between items-start mb-4">
-            <h3 class="text-lg font-semibold">{{ $title }}</h3>
-            <div>
-                <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200">
-                    {{ $buttonLabel }}
-                </button>
+        <!-- Verbeterde header sectie met tijdsinterval visualisatie -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+            <div class="flex items-center mb-2 sm:mb-0">
+                <h3 class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
+                <span class="ml-2 px-2 py-1 text-xs rounded-md bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 dark:bg-{{ $buttonColor }}-700 dark:text-{{ $buttonColor }}-100">
+                    @switch($period)
+                        @case('day')
+                            Per uur
+                            @break
+                        @case('month')
+                            Per dag
+                            @break
+                        @case('year')
+                            Per maand
+                            @break
+                    @endswitch
+                </span>
+            </div>
+            
+            <!-- Tijdsinterval indicator -->
+            <div class="flex w-full sm:w-auto mt-2 sm:mt-0 dark:border dark:border-gray-700">
+                <a href="{{ route('dashboard', ['period' => 'day', 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
+                   class="px-3 py-1 text-sm rounded-l-md {{ $period === 'day' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
+                    Dag
+                </a>
+                <a href="{{ route('dashboard', ['period' => 'month', 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
+                   class="px-3 py-1 text-sm {{ $period === 'month' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
+                    Maand
+                </a>
+                <a href="{{ route('dashboard', ['period' => 'year', 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
+                   class="px-3 py-1 text-sm rounded-r-md {{ $period === 'year' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
+                    Jaar
+                </a>
             </div>
         </div>
-        <div style="height: 300px;">
+        
+        <div class="relative" style="height: 300px;">
             <canvas id="{{ $type }}Chart{{ $loop->index ?? 0 }}"></canvas>
+        </div>
+        
+        <div class="mt-4 flex justify-end">
+            <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
+                {{ $buttonLabel }}
+            </button>
         </div>
     </div>
 </div>
@@ -62,17 +96,8 @@
                         backgroundColor: 'rgba({{ $type === "electricity" ? "59, 130, 246" : "245, 158, 11" }}, 0.5)',
                         borderColor: 'rgb({{ $type === "electricity" ? "59, 130, 246" : "245, 158, 11" }})',
                         borderWidth: 1
-                    },
-                    {
-                        label: 'Target',
-                        data: (chartData{{ ucfirst($type) }}.{{ $type }} && chartData{{ ucfirst($type) }}.{{ $type }}.target) || [],
-                        type: 'line',
-                        borderColor: 'rgb(220, 38, 38)',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        fill: false,
-                        pointRadius: 0
                     }
+                    // Doellijn is verwijderd zoals gevraagd
                 ]
             },
             options: {
@@ -119,7 +144,7 @@
                                 const value = chartData{{ ucfirst($type) }}.{{ $type }}.data[dataIndex] || 0;
                                 const target = chartData{{ ucfirst($type) }}.{{ $type }}.target[dataIndex] || 0;
                                 const percentage = target ? (value / target * 100).toFixed(1) : 0;
-                                return `${percentage}% van je target\nKosten: €${(value * {{ $type === "electricity" ? 0.35 : 1.45 }}).toFixed(2)}`;
+                                return `Kosten: €${(value * {{ $type === "electricity" ? 0.35 : 1.45 }}).toFixed(2)}`;
                             }
                         }
                     },
@@ -143,8 +168,8 @@
                     // Verwijder de dataset als deze al bestaat
                     {{ $type }}Chart.data.datasets = {{ $type }}Chart.data.datasets.filter(ds => ds.label !== 'Vorig Jaar');
                     button.textContent = '{{ $buttonLabel }}';
-                    button.classList.remove('bg-{{ $buttonColor }}-200');
-                    button.classList.add('bg-{{ $buttonColor }}-100');
+                    button.classList.remove('bg-{{ $buttonColor }}-200', 'dark:bg-{{ $buttonColor }}-700');
+                    button.classList.add('bg-{{ $buttonColor }}-100', 'dark:bg-{{ $buttonColor }}-800');
                 } else {
                     // Check if lastYearData exists
                     if (!window.lastYearData || !window.lastYearData.{{ $type }}) {
@@ -161,8 +186,8 @@
                         borderWidth: 1
                     });
                     button.textContent = 'Verberg Vorig Jaar';
-                    button.classList.remove('bg-{{ $buttonColor }}-100');
-                    button.classList.add('bg-{{ $buttonColor }}-200');
+                    button.classList.remove('bg-{{ $buttonColor }}-100', 'dark:bg-{{ $buttonColor }}-800');
+                    button.classList.add('bg-{{ $buttonColor }}-200', 'dark:bg-{{ $buttonColor }}-700');
                 }
                 
                 {{ $type }}Chart.update();

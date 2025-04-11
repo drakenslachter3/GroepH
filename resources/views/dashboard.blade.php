@@ -226,26 +226,30 @@
                         @break
 
                         @case('energy-status-electricity')
-                        <x-dashboard.energy-status
-                            type="Elektriciteit"
-                            :usage="$totals['electricity_kwh']"
-                            :target="$totals['electricity_target']"
-                            :cost="$totals['electricity_euro']"
-                            :percentage="$totals['electricity_percentage']"
-                            :status="$totals['electricity_status']"
-                            unit="kWh" />
-                        @break
+<x-dashboard.energy-status
+    type="Elektriciteit"
+    :usage="$totals['electricity_kwh']"
+    :target="$totals['electricity_target']"
+    :cost="$totals['electricity_euro']"
+    :percentage="$totals['electricity_percentage']"
+    :status="$totals['electricity_status']"
+    :date="$date"
+    :period="$period"
+    unit="kWh" />
+@break
 
-                        @case('energy-status-gas')
-                        <x-dashboard.energy-status
-                            type="Gas"
-                            :usage="$totals['gas_m3']"
-                            :target="$totals['gas_target']"
-                            :cost="$totals['gas_euro']"
-                            :percentage="$totals['gas_percentage']"
-                            :status="$totals['gas_status']"
-                            unit="m³" />
-                        @break
+@case('energy-status-gas')
+<x-dashboard.energy-status
+    type="Gas"
+    :usage="$totals['gas_m3']"
+    :target="$totals['gas_target']"
+    :cost="$totals['gas_euro']"
+    :percentage="$totals['gas_percentage']"
+    :status="$totals['gas_status']"
+    :date="$date"
+    :period="$period"
+    unit="m³" />
+@break
 
                         @case('historical-comparison')
                         <x-dashboard.historical-comparison
@@ -315,67 +319,133 @@
 
     // Config section toggle and time setter functionality
     document.addEventListener('DOMContentLoaded', function() {
-        // Toggle for the entire configuration section
-        const toggleConfigSection = document.getElementById('toggleConfigSection');
-        const configSectionContent = document.getElementById('configSectionContent');
-        const configSectionIcon = document.getElementById('configSectionIcon');
+    // Toggle for the entire configuration section
+    const toggleConfigSection = document.getElementById('toggleConfigSection');
+    const configSectionContent = document.getElementById('configSectionContent');
+    const configSectionIcon = document.getElementById('configSectionIcon');
 
-        if (toggleConfigSection && configSectionContent) {
-            // Check localStorage for saved state
-            const configSectionOpen = localStorage.getItem('configSectionOpen') === 'true';
+    if (toggleConfigSection && configSectionContent) {
+        // Check localStorage for saved state
+        const configSectionOpen = localStorage.getItem('configSectionOpen') === 'true';
 
-            // Set initial state based on localStorage or default to open on first visit
-            if (configSectionOpen || localStorage.getItem('configSectionOpen') === null) {
-                configSectionContent.classList.remove('hidden');
-                configSectionIcon.classList.add('rotate-180');
-            }
-
-            toggleConfigSection.addEventListener('click', function() {
-                configSectionContent.classList.toggle('hidden');
-                configSectionIcon.classList.toggle('rotate-180');
-
-                // Save state to localStorage
-                localStorage.setItem('configSectionOpen', !configSectionContent.classList.contains('hidden'));
-            });
+        // Set initial state based on localStorage or default to open on first visit
+        if (configSectionOpen || localStorage.getItem('configSectionOpen') === null) {
+            configSectionContent.classList.remove('hidden');
+            configSectionIcon.classList.add('rotate-180');
         }
 
-        // Period selection UI enhancement
-        const periodRadios = document.querySelectorAll('input[name="period"]');
-        periodRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                // Reset all buttons
-                periodRadios.forEach(r => {
-                    r.nextElementSibling.classList.remove('bg-blue-600', 'text-white');
-                    r.nextElementSibling.classList.add('bg-gray-200', 'text-gray-700');
-                });
+        toggleConfigSection.addEventListener('click', function() {
+            configSectionContent.classList.toggle('hidden');
+            configSectionIcon.classList.toggle('rotate-180');
 
-                // Highlight the selected button
-                this.nextElementSibling.classList.remove('bg-gray-200', 'text-gray-700');
-                this.nextElementSibling.classList.add('bg-blue-600', 'text-white');
-
-                // Update date input type based on selected period
-                updateDatePickerType(this.value);
-            });
+            // Save state to localStorage
+            localStorage.setItem('configSectionOpen', !configSectionContent.classList.contains('hidden'));
         });
+    }
 
-        // Function to update date picker type based on period
-        function updateDatePickerType(period) {
-            const dateContainer = document.querySelector('.date-input-container');
-            let dateInput;
+    // Period selection UI enhancement
+    const periodRadios = document.querySelectorAll('input[name="period"]');
+    periodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Reset all buttons
+            periodRadios.forEach(r => {
+                r.nextElementSibling.classList.remove('bg-blue-600', 'text-white');
+                r.nextElementSibling.classList.add('bg-gray-200', 'text-gray-700');
+            });
 
-            if (period === 'day') {
-                dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
-            } else if (period === 'month') {
-                dateInput = `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
-            } else if (period === 'year') {
-                dateInput = `<input type="number" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y') }}" min="2000" max="2050">`;
-            }
+            // Highlight the selected button
+            this.nextElementSibling.classList.remove('bg-gray-200', 'text-gray-700');
+            this.nextElementSibling.classList.add('bg-blue-600', 'text-white');
 
-            if (dateContainer) {
-                dateContainer.innerHTML = dateInput;
+            // Update date input type based on selected period
+            updateDatePickerType(this.value);
+            
+            // NIEUWE CODE: Submit form na een korte vertraging
+            setTimeout(function() {
+                document.getElementById('timeSetterForm').submit();
+            }, 300);
+        });
+    });
+
+    // Function to update date picker type based on period
+    function updateDatePickerType(period) {
+        const dateContainer = document.querySelector('.date-input-container');
+        let dateInput;
+
+        if (period === 'day') {
+            dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
+        } else if (period === 'month') {
+            dateInput = `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
+        } else if (period === 'year') {
+            dateInput = `<input type="number" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y') }}" min="2000" max="2050">`;
+        }
+
+        if (dateContainer) {
+            dateContainer.innerHTML = dateInput;
+            
+            // NIEUWE CODE: Luister naar wijzigingen op de nieuwe datepicker
+            const newDatePicker = document.getElementById('datePicker');
+            if (newDatePicker) {
+                newDatePicker.addEventListener('change', function() {
+                    document.getElementById('timeSetterForm').submit();
+                });
+                
+                // Voor maand en jaar inputs die mogelijk geen change event triggeren
+                if (period === 'month' || period === 'year') {
+                    newDatePicker.addEventListener('input', function() {
+                        // Gebruik een timer om veelvuldige submits te voorkomen
+                        if (this._timer) clearTimeout(this._timer);
+                        this._timer = setTimeout(() => {
+                            document.getElementById('timeSetterForm').submit();
+                        }, 500);
+                    });
+                    
+                    // Voor jaar input, ook luisteren naar de Enter toets
+                    if (period === 'year') {
+                        newDatePicker.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                                document.getElementById('timeSetterForm').submit();
+                            }
+                        });
+                    }
+                }
             }
         }
-    });
+    }
+    
+    // NIEUWE CODE: Initiële setup van de datepicker listener
+    function initDatePickerListener() {
+        const datePicker = document.getElementById('datePicker');
+        if (datePicker) {
+            datePicker.addEventListener('change', function() {
+                document.getElementById('timeSetterForm').submit();
+            });
+            
+            // Voor type="month" en type="number" inputs
+            if (datePicker.type === 'month' || datePicker.type === 'number') {
+                datePicker.addEventListener('input', function() {
+                    // Vertraging om te voorkomen dat het formulier te vaak wordt verzonden
+                    if (this._timer) clearTimeout(this._timer);
+                    this._timer = setTimeout(() => {
+                        document.getElementById('timeSetterForm').submit();
+                    }, 500);
+                });
+                
+                // Voor jaar input, luister naar Enter toets
+                if (datePicker.type === 'number') {
+                    datePicker.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            document.getElementById('timeSetterForm').submit();
+                        }
+                    });
+                }
+            }
+        }
+    }
+    
+    // Roep de initiële setup aan
+    initDatePickerListener();
+});
     </script>
     @stack('chart-scripts')
     @stack('trend-scripts')
