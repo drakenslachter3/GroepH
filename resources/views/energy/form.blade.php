@@ -7,348 +7,641 @@
 
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-
             <div class="grid md:grid-cols-3 gap-6">
-                <!-- Left Panel: Yearly Budget (1) -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="font-semibold text-lg mb-4">{{ __('Jaarbudget') }}</h3>
+                <!-- Left Column (Sections 1 & 2) -->
+                <div class="md:col-span-1 space-y-6">
+                    <!-- Section 1: Yearly Budget -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6 border-b border-gray-200 dark:border-gray-700 relative">
+                            <h3 class="font-semibold text-lg mb-4">{{ __('Jaarbudget') }}</h3>
 
-                        <form method="POST" action="{{ route('budget.store') }}">
-                            @csrf
-                            <div class="mb-6">
-                                <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Elektriciteit</label>
-                                <div class="flex">
-                                    <input type="number" step="0.01" name="electricity_value"
-                                        id="yearly_electricity_budget"
-                                        class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-200"
-                                        value="{{ $yearlyBudget->electricity_target_kwh ?? old('electricity_value') }}"
-                                        required>
-                                    <span
-                                        class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-700 dark:text-gray-200 w-1/3 flex items-center justify-center">kWh</span>
+                            <!-- Yearly Budget Form -->
+                            <form id="yearlyBudgetForm" method="POST" action="{{ route('budget.store') }}">
+                                @csrf
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Elektriciteit
+                                    </label>
+                                    <div class="flex">
+                                        <input type="number" step="0.01" name="electricity_value" id="electricity_input"
+                                            class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-300"
+                                            value="{{ $yearlyBudget->electricity_target_kwh ?? 3500 }}">
+                                        <span class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-600 dark:text-gray-300 w-1/3 flex items-center justify-center">
+                                            kWh
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="mb-6">
-                                <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Gas</label>
-                                <div class="flex">
-                                    <input type="number" step="0.01" name="gas_value" id="yearly_gas_budget"
-                                        class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-200"
-                                        value="{{ $yearlyBudget->gas_target_m3 ?? old('gas_value') }}" required>
-                                    <span
-                                        class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-700 dark:text-gray-200 w-1/3 flex items-center justify-center">m³</span>
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Gas
+                                    </label>
+                                    <div class="flex">
+                                        <input type="number" step="0.01" name="gas_value" id="gas_input"
+                                            class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-300"
+                                            value="{{ $yearlyBudget->gas_target_m3 ?? 1200 }}">
+                                        <span class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-600 dark:text-gray-300 w-1/3 flex items-center justify-center">
+                                            m³
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
+                            </form>
 
+                            <div class="absolute bottom-0 right-0 p-1">
+                                <span class="text-xs text-gray-500 dark:text-gray-400">1.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Action Buttons -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6 relative">
                             <div class="flex flex-col space-y-4">
                                 <button type="button" id="resetButton"
-                                    class="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                    class="w-full px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600">
                                     Reset
                                 </button>
 
-                                <button type="submit"
-                                    class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <button type="submit" form="yearlyBudgetForm"
+                                    class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700">
                                     Opslaan
                                 </button>
                             </div>
-                        </form>
+                            <div class="absolute bottom-0 right-0 p-1">
+                                <span class="text-xs text-gray-500 dark:text-gray-400">2.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Right Panel: Monthly Budgets (2, 3, 4) -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg md:col-span-2"
-                    x-data="monthlyBudget()">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <!-- Utility Toggle (4) -->
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-semibold text-lg">{{ __('Maandelijks budget') }}</h3>
-                            <div class="relative">
-                                <button @click="toggleUtility()"
-                                    class="relative px-4 py-2 bg-white border rounded-md shadow-sm w-40 text-center font-medium">
-                                    <span x-text="activeUtility === 'gas' ? 'm³' : 'kWh'"
-                                        class="text-sm font-medium"></span>
-                                </button>
-                                <div class="absolute top-0 right-0 mt-1 mr-1 text-xs text-gray-500">4.</div>
-                            </div>
-                        </div>
-
-                        <!-- Year Total Display -->
-                        <div class="mb-4 text-sm text-gray-500">
-                            <span>Jaarlijks totaal: </span>
-                            <span
-                                x-text="activeUtility === 'gas' ? yearlyGasBudget + ' m³' : yearlyElectricityBudget + ' kWh'"></span>
-                            <span x-text="'(' + getTotalUsed() + ' gebruikt)'"></span>
-                        </div>
-
-                        <form method="POST" action="{{ route('budget.monthly.update') }}" id="monthlyBudgetForm">
-                            @csrf
-
-                            <!-- Monthly Budget Sliders (3) -->
-                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-                                <template x-for="(month, index) in months" :key="index">
-                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                        <div class="mb-2 flex justify-between items-center">
-                                            <span class="font-medium" x-text="month"></span>
-                                            <span class="text-sm"
-                                                x-text="formatValue(activeUtility === 'gas' ? gasData[index].value : electricityData[index].value)"></span>
-                                        </div>
-
-                                        <input type="hidden" :name="`budgets[${index}][id]`"
-                                            :value="activeUtility === 'gas' ? gasData[index].id : electricityData[index].id">
-
-                                        <input type="hidden" :name="`budgets[${index}][month]`" :value="index + 1">
-
-                                        <input type="hidden" :name="`budgets[${index}][gas_target_m3]`"
-                                            :value="gasData[index].value" x-model="gasData[index].value">
-
-                                        <input type="hidden" :name="`budgets[${index}][electricity_target_kwh]`"
-                                            :value="electricityData[index].value"
-                                            x-model="electricityData[index].value">
-
-                                        <!-- Slider -->
-                                        <input type="range"
-                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                            :min="0" :max="getMaximumValue()" step="0.1"
-                                            :value="activeUtility === 'gas' ? gasData[index].value : electricityData[index]
-                                                .value"
-                                            :disabled="activeUtility === 'gas' ? gasData[index].locked : electricityData[
-                                                index].locked"
-                                            @input="handleSliderChange(index, $event.target.value)">
-
-                                        <!-- Lock toggle -->
-                                        <div class="flex items-center justify-center mt-2">
-                                            <button type="button" class="w-4 h-4 rounded-sm"
-                                                :class="(activeUtility === 'gas' ? gasData[index].locked : electricityData[
-                                                    index].locked) ? 'bg-gray-400' : 'bg-white border border-gray-300'"
-                                                @click="toggleLock(index)"></button>
-                                        </div>
+                <!-- Section 3: Monthly Budget (Right Panel) -->
+                <div class="md:col-span-2">
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg relative">
+                        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                            <!-- Monthly Budget Header -->
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="font-semibold text-lg">{{ __('Maandelijks budget') }}</h3>
+                                <div class="relative">
+                                    <button type="button" id="utilityToggleButton"
+                                        class="px-4 py-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-md shadow-sm w-40 text-center font-medium">
+                                        <span id="activeUtilityText" class="text-sm font-medium dark:text-gray-200">kWh</span>
+                                    </button>
+                                    <div class="absolute top-0 right-0 mt-1 mr-1">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">4.</span>
                                     </div>
-                                </template>
+                                </div>
                             </div>
 
-                            <!-- Control Buttons (2) -->
-                            <div class="flex justify-between">
-                                <button type="button" @click="resetCurrentUtility()"
-                                    class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md text-sm">
-                                    Reset
-                                </button>
-                                <button type="submit"
-                                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm">
-                                    Opslaan
-                                </button>
-                                <div class="absolute bottom-0 right-0 mb-1 mr-1 text-xs text-gray-500">3.</div>
+                            <!-- Slider Range Controls -->
+                            <div class="mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Sliderweergave: </span>
+                                        <select id="sliderRangeMode" class="text-sm border border-gray-300 dark:border-gray-600 rounded p-1 dark:bg-gray-700 dark:text-gray-300 ml-2 min-w-[10rem]">
+                                            <option value="normal">Automatisch</option>
+                                            <option value="balanced">Gebalanceerd</option>
+                                            <option value="full">Volledig bereik</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="text-sm">
+                                        <span class="text-blue-600 dark:text-blue-400 font-medium">Huidig bereik: </span>
+                                        <span id="sliderRangeDisplay">0 - 500</span>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
+
+                            <!-- Budget Progress and Indicator -->
+                            <div class="mb-4">
+                                <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
+                                    <span>Jaarlijks budget: <span id="yearlyTotal">3500</span> <span id="totalUnit">kWh</span></span>
+                                    <span>Gebruikt: <span id="usedTotal">3500</span> <span id="usedUnit">kWh</span> (<span id="usedPercentage">100</span>%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
+                                    <div id="budgetProgressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
+                                </div>
+                                <div id="budgetWarning" class="text-sm text-yellow-500 dark:text-yellow-400 hidden">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Maandelijkse waardes mogen niet meer dan het jaarbudget zijn.
+                                </div>
+                            </div>
+
+                            <!-- Monthly Budget Sliders Grid with Vertical Sliders -->
+                            <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6" id="monthlySliders">
+                                <!-- Sliders will be generated dynamically by JavaScript -->
+                            </div>
+
+                            <div class="absolute bottom-0 right-0 p-1">
+                                <span class="text-xs text-gray-500 dark:text-gray-400">3.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
-    @push('scripts')
-        <script>
-            function monthlyBudget() {
-                return {
-                    activeUtility: 'electricity', // 'gas' or 'electricity'
-                    months: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'],
+    <!-- Hidden form for monthly budget submission -->
+    <form id="monthlyBudgetForm" method="POST" action="{{ route('budget.monthly.update') }}" class="hidden">
+        @csrf
+        <div id="monthlyBudgetInputs">
+            <!-- Inputs will be generated by JavaScript -->
+        </div>
+    </form>
 
-                    gasData: @json(
-                        $monthlyBudgets
-                            ? array_map(function ($budget) {
-                                return [
-                                    'id' => $budget->id ?? null,
-                                    'month' => $budget->month ?? null,
-                                    'value' => $budget->gas_target_m3 ?? 0,
-                                    'locked' => false,
-                                ];
-                            }, $monthlyBudgets->toArray())
-                            : array_map(function ($month) {
-                                return ['id' => null, 'month' => $month, 'value' => 0, 'locked' => false];
-                            }, range(1, 12))),
+    <style>
+        /* Vertical slider styling */
+        .vertical-slider-container {
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        
+        .vertical-slider {
+            height: 100%;
+            position: relative;
+            width: 20px;
+        }
+        
+        .range-vertical {
+            transform: rotate(270deg);
+            transform-origin: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-left: -75px; /* Half the width of the rotated slider */
+            margin-top: -10px; /* Half the height of the slider */
+            width: 150px;
+            height: 20px;
+            background: transparent;
+        }
+        
+        .range-vertical::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3B82F6;
+            cursor: pointer;
+        }
+        
+        .range-vertical::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3B82F6;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .range-vertical::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #E5E7EB;
+            border-radius: 4px;
+        }
+        
+        .range-vertical::-moz-range-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #E5E7EB;
+            border-radius: 4px;
+        }
+        
+        /* Dark mode adjustments */
+        .dark .range-vertical::-webkit-slider-runnable-track {
+            background: #4B5563;
+        }
+        
+        .dark .range-vertical::-moz-range-track {
+            background: #4B5563;
+        }
 
-                    electricityData: @json(
-                        $monthlyBudgets
-                            ? array_map(function ($budget) {
-                                return [
-                                    'id' => $budget->id ?? null,
-                                    'month' => $budget->month ?? null,
-                                    'value' => $budget->electricity_target_kwh ?? 0,
-                                    'locked' => false,
-                                ];
-                            }, $monthlyBudgets->toArray())
-                            : array_map(function ($month) {
-                                return ['id' => null, 'month' => $month, 'value' => 0, 'locked' => false];
-                            }, range(1, 12))),
+        /* Utility specific colors */
+        .electricity .range-vertical::-webkit-slider-thumb {
+            background: #3B82F6; /* Blue for electricity */
+        }
+        
+        .electricity .range-vertical::-moz-range-thumb {
+            background: #3B82F6; /* Blue for electricity */
+        }
+        
+        .gas .range-vertical::-webkit-slider-thumb {
+            background: #F59E0B; /* Yellow/Amber for gas */
+        }
+        
+        .gas .range-vertical::-moz-range-thumb {
+            background: #F59E0B; /* Yellow/Amber for gas */
+        }
+    </style>
 
-                    yearlyGasBudget: @json($yearlyBudget->gas_target_m3 ?? 1200),
-                    yearlyElectricityBudget: @json($yearlyBudget->electricity_target_kwh ?? 3500),
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuration
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+            let activeUtility = 'electricity'; // 'electricity' or 'gas'
+            let sliderRangeMode = 'normal'; // 'normal', 'balanced', or 'full'
+            
+            const initialData = {
+                electricity: {
+                    yearly: {{ $yearlyBudget->electricity_target_kwh ?? 3500 }},
+                    // Initialize with evenly distributed values (yearly ÷ 12)
+                    monthly: Array(12).fill().map(() => ({ 
+                        value: {{ ($yearlyBudget->electricity_target_kwh ?? 3500) / 12 }},
+                        locked: false
+                    }))
+                },
+                gas: {
+                    yearly: {{ $yearlyBudget->gas_target_m3 ?? 1200 }},
+                    // Initialize with evenly distributed values (yearly ÷ 12)
+                    monthly: Array(12).fill().map(() => ({ 
+                        value: {{ ($yearlyBudget->gas_target_m3 ?? 1200) / 12 }},
+                        locked: false
+                    }))
+                }
+            };
 
-                    init() {
-                        // Initialize with evenly distributed values if no values exist
-                        if (this.getTotalUsed() === 0) {
-                            this.resetCurrentUtility();
-                        }
+            // Initialize budget data from existing monthly data if available
+            const budgetData = JSON.parse(JSON.stringify(initialData)); // Deep clone
+            @if($monthlyBudgets && count($monthlyBudgets) === 12)
+                @foreach($monthlyBudgets as $index => $budget)
+                    budgetData.electricity.monthly[{{ $index }}].value = {{ $budget->electricity_target_kwh }};
+                    budgetData.gas.monthly[{{ $index }}].value = {{ $budget->gas_target_m3 }};
+                @endforeach
+            @endif
 
-                        // Monitor yearly budget inputs to update sliders
-                        document.getElementById('yearly_electricity_budget').addEventListener('change', (e) => {
-                            this.yearlyElectricityBudget = parseFloat(e.target.value);
-                            if (this.activeUtility === 'electricity') {
-                                this.redistributeProportionally();
-                            }
-                        });
+            // DOM Elements
+            const utilityToggleButton = document.getElementById('utilityToggleButton');
+            const activeUtilityText = document.getElementById('activeUtilityText');
+            const yearlyTotal = document.getElementById('yearlyTotal');
+            const totalUnit = document.getElementById('totalUnit');
+            const usedTotal = document.getElementById('usedTotal');
+            const usedUnit = document.getElementById('usedUnit');
+            const usedPercentage = document.getElementById('usedPercentage');
+            const budgetProgressBar = document.getElementById('budgetProgressBar');
+            const budgetWarning = document.getElementById('budgetWarning');
+            const monthlySliders = document.getElementById('monthlySliders');
+            const resetButton = document.getElementById('resetButton');
+            const electricityInput = document.getElementById('electricity_input');
+            const gasInput = document.getElementById('gas_input');
+            const sliderRangeModeSelect = document.getElementById('sliderRangeMode');
+            const sliderRangeDisplay = document.getElementById('sliderRangeDisplay');
+            const yearlyBudgetForm = document.getElementById('yearlyBudgetForm');
+            const monthlyBudgetForm = document.getElementById('monthlyBudgetForm');
+            const monthlyBudgetInputs = document.getElementById('monthlyBudgetInputs');
 
-                        document.getElementById('yearly_gas_budget').addEventListener('change', (e) => {
-                            this.yearlyGasBudget = parseFloat(e.target.value);
-                            if (this.activeUtility === 'gas') {
-                                this.redistributeProportionally();
-                            }
-                        });
+            // Initialize UI
+            renderMonthlySliders();
+            updateBudgetDisplay();
 
-                        document.getElementById('resetButton').addEventListener('click', () => {
-                            // Reset both yearly inputs
-                            document.getElementById('yearly_electricity_budget').value = 3500;
-                            document.getElementById('yearly_gas_budget').value = 1200;
-                            this.yearlyElectricityBudget = 3500;
-                            this.yearlyGasBudget = 1200;
+            // Event Listeners
+            utilityToggleButton.addEventListener('click', toggleUtility);
+            resetButton.addEventListener('click', resetAllData);
+            electricityInput.addEventListener('change', updateElectricityYearly);
+            gasInput.addEventListener('change', updateGasYearly);
+            sliderRangeModeSelect.addEventListener('change', changeSliderRangeMode);
+            
+            // For demonstration, let's hook up an event to sync the monthly data with the yearly total
+            yearlyBudgetForm.addEventListener('submit', function(e) {
+                // Add monthly data to the form before submission
+                prepareMonthlyBudgetData();
+                
+                // For this example, we're submitting the yearly form which will also handle monthly data
+                // You may want to adjust your backend to handle this combined approach
+                monthlyBudgetForm.submit();
+            });
 
-                            // Reset all monthly data
-                            this.resetAllData();
-                        });
-                    },
-
-                    toggleUtility() {
-                        this.activeUtility = this.activeUtility === 'gas' ? 'electricity' : 'gas';
-                    },
-
-                    handleSliderChange(index, newValue) {
-                        const data = this.activeUtility === 'gas' ? this.gasData : this.electricityData;
-
-                        // Store original value to calculate difference
-                        const originalValue = data[index].value;
-
-                        // Update with new value
-                        data[index].value = parseFloat(newValue);
-
-                        // Check if we're exceeding yearly budget
-                        this.redistributeExcess();
-                    },
-
-                    toggleLock(index) {
-                        if (this.activeUtility === 'gas') {
-                            this.gasData[index].locked = !this.gasData[index].locked;
-                        } else {
-                            this.electricityData[index].locked = !this.electricityData[index].locked;
-                        }
-                    },
-
-                    resetCurrentUtility() {
-                        const data = this.activeUtility === 'gas' ? this.gasData : this.electricityData;
-                        const yearlyBudget = this.activeUtility === 'gas' ? this.yearlyGasBudget : this.yearlyElectricityBudget;
-
-                        // Set all values to yearlyBudget / 12 and unlock them
-                        const defaultValue = yearlyBudget / 12;
-                        data.forEach((month, index) => {
-                            data[index].value = parseFloat(defaultValue.toFixed(1));
-                            data[index].locked = false;
-                        });
-                    },
-
-                    resetAllData() {
-                        // Reset both gas and electricity data
-                        const defaultElectricityValue = this.yearlyElectricityBudget / 12;
-                        const defaultGasValue = this.yearlyGasBudget / 12;
-
-                        this.electricityData.forEach((month, index) => {
-                            this.electricityData[index].value = parseFloat(defaultElectricityValue.toFixed(1));
-                            this.electricityData[index].locked = false;
-                        });
-
-                        this.gasData.forEach((month, index) => {
-                            this.gasData[index].value = parseFloat(defaultGasValue.toFixed(1));
-                            this.gasData[index].locked = false;
-                        });
-                    },
-
-                    getMaximumValue() {
-                        // Set max to approximately half of yearly budget
-                        const yearlyBudget = this.activeUtility === 'gas' ? this.yearlyGasBudget : this.yearlyElectricityBudget;
-                        return yearlyBudget / 6; // Allow sliders to go significantly higher than average
-                    },
-
-                    getTotalUsed() {
-                        const data = this.activeUtility === 'gas' ? this.gasData : this.electricityData;
-                        const total = data.reduce((sum, month) => sum + parseFloat(month.value), 0);
-                        return parseFloat(total.toFixed(1));
-                    },
-
-                    formatValue(value) {
-                        return this.activeUtility === 'gas' ?
-                            `${parseFloat(value).toFixed(1)} m³` :
-                            `${parseFloat(value).toFixed(1)} kWh`;
-                    },
-
-                    redistributeExcess() {
-                        const data = this.activeUtility === 'gas' ? this.gasData : this.electricityData;
-                        const yearlyBudget = this.activeUtility === 'gas' ? this.yearlyGasBudget : this.yearlyElectricityBudget;
-
-                        // Calculate current total
-                        const currentTotal = data.reduce((sum, month) => sum + parseFloat(month.value), 0);
-
-                        // Check if we're over budget
-                        if (currentTotal <= yearlyBudget) return;
-
-                        // Calculate excess
-                        const excess = currentTotal - yearlyBudget;
-
-                        // Count unlocked months
-                        const unlockedMonths = data.filter(month => !month.locked);
-
-                        if (unlockedMonths.length === 0) return; // All locked, can't redistribute
-
-                        // Calculate current total of unlocked months
-                        const unlockedTotal = unlockedMonths.reduce((sum, month) => sum + parseFloat(month.value), 0);
-
-                        // Redistribute excess proportionally among unlocked months
-                        data.forEach((month, index) => {
-                            if (!month.locked) {
-                                const share = month.value / unlockedTotal;
-                                const reduction = excess * share;
-                                data[index].value = Math.max(0, parseFloat((month.value - reduction).toFixed(1)));
-                            }
-                        });
-                    },
-
-                    redistributeProportionally() {
-                        const data = this.activeUtility === 'gas' ? this.gasData : this.electricityData;
-                        const yearlyBudget = this.activeUtility === 'gas' ? this.yearlyGasBudget : this.yearlyElectricityBudget;
-
-                        // Calculate current total
-                        const currentTotal = data.reduce((sum, month) => sum + parseFloat(month.value), 0);
-
-                        // Skip if current total is 0 (initial state)
-                        if (currentTotal === 0) {
-                            this.resetCurrentUtility();
-                            return;
-                        }
-
-                        // Calculate factor to adjust all values
-                        const adjustmentFactor = yearlyBudget / currentTotal;
-
-                        // Apply factor to all months
-                        data.forEach((month, index) => {
-                            if (!month.locked) {
-                                data[index].value = parseFloat((month.value * adjustmentFactor).toFixed(1));
-                            }
-                        });
-
-                        // Check if we need to redistribute locked values
-                        this.redistributeExcess();
-                    }
-                };
+            // Functions
+            function toggleUtility() {
+                // Toggle between electricity and gas
+                activeUtility = activeUtility === 'electricity' ? 'gas' : 'electricity';
+                
+                // Update UI to reflect the active utility
+                if (activeUtility === 'electricity') {
+                    activeUtilityText.textContent = 'kWh';
+                    totalUnit.textContent = 'kWh';
+                    usedUnit.textContent = 'kWh';
+                    budgetProgressBar.classList.remove('bg-yellow-500');
+                    budgetProgressBar.classList.add('bg-blue-600');
+                } else {
+                    activeUtilityText.textContent = 'm³';
+                    totalUnit.textContent = 'm³';
+                    usedUnit.textContent = 'm³';
+                    budgetProgressBar.classList.remove('bg-blue-600');
+                    budgetProgressBar.classList.add('bg-yellow-500');
+                }
+                
+                // Re-render the sliders with the new active utility
+                renderMonthlySliders();
+                updateBudgetDisplay();
             }
-        </script>
-    @endpush
+
+            function changeSliderRangeMode() {
+                sliderRangeMode = sliderRangeModeSelect.value;
+                renderMonthlySliders();
+                updateSliderRangeDisplay();
+            }
+
+            function updateSliderRangeDisplay() {
+                const maxValue = getSliderMaxValue();
+                sliderRangeDisplay.textContent = `0 - ${maxValue}`;
+            }
+
+            function getSliderMaxValue() {
+                const yearlyValue = budgetData[activeUtility].yearly;
+                
+                // Determine the appropriate max value based on the current mode
+                switch(sliderRangeMode) {
+                    case 'normal':
+                        // Approximately double the average monthly value for normal distribution
+                        return Math.ceil(yearlyValue / 6);
+                    case 'balanced':
+                        // About half the yearly value - allows significant variation but still usable
+                        return Math.ceil(yearlyValue / 2);
+                    case 'full':
+                        // Full yearly budget - allows allocating everything to one month
+                        return yearlyValue;
+                    default:
+                        return Math.ceil(yearlyValue / 6);
+                }
+            }
+
+            function getSliderAppearanceValue(actualValue) {
+                // This function maps the actual value to what is displayed on the slider
+                // This way, we can have sliders with smaller ranges while still allowing the full range
+                const maxValue = getSliderMaxValue();
+                const yearlyValue = budgetData[activeUtility].yearly;
+                
+                if (actualValue > maxValue) {
+                    // If value exceeds the slider's visual range, cap it for display purposes
+                    return maxValue;
+                }
+                
+                return actualValue;
+            }
+
+            function getActualValueFromSlider(sliderValue) {
+                // Convert displayed slider value back to actual value if needed
+                return parseFloat(sliderValue);
+            }
+
+            function renderMonthlySliders() {
+                // Clear existing sliders
+                monthlySliders.innerHTML = '';
+                
+                // Get current utility data
+                const data = budgetData[activeUtility].monthly;
+                const yearlyBudgetValue = budgetData[activeUtility].yearly;
+                const unit = activeUtility === 'electricity' ? 'kWh' : 'm³';
+                const maxSliderValue = getSliderMaxValue();
+                
+                // Update the slider range display
+                updateSliderRangeDisplay();
+                
+                // Create sliders for each month
+                months.forEach((month, index) => {
+                    const monthlyValue = parseFloat(data[index].value.toFixed(1));
+                    const sliderValue = getSliderAppearanceValue(monthlyValue);
+                    const isLocked = data[index].locked;
+                    
+                    // Create month container
+                    const monthDiv = document.createElement('div');
+                    monthDiv.className = `bg-gray-50 dark:bg-gray-700 rounded-lg p-3 flex flex-col items-center ${activeUtility}`;
+                    
+                    // Month name
+                    const monthName = document.createElement('span');
+                    monthName.className = 'font-medium dark:text-white text-sm';
+                    monthName.textContent = month;
+                    monthDiv.appendChild(monthName);
+                    
+                    // Vertical slider container
+                    const sliderContainer = document.createElement('div');
+                    sliderContainer.className = 'vertical-slider-container';
+                    
+                    const sliderDiv = document.createElement('div');
+                    sliderDiv.className = 'vertical-slider';
+                    
+                    // Slider input
+                    const slider = document.createElement('input');
+                    slider.type = 'range';
+                    slider.min = '0';
+                    slider.max = maxSliderValue;
+                    slider.value = sliderValue;
+                    slider.className = 'range-vertical';
+                    slider.dataset.month = index;
+                    slider.dataset.actualValue = monthlyValue;
+                    slider.disabled = isLocked;
+                    
+                    // Add event listener to update data when slider changes
+                    slider.addEventListener('input', function() {
+                        const actualValue = getActualValueFromSlider(this.value);
+                        handleSliderChange(index, actualValue);
+                    });
+                    
+                    sliderDiv.appendChild(slider);
+                    sliderContainer.appendChild(sliderDiv);
+                    monthDiv.appendChild(sliderContainer);
+                    
+                    // Value display
+                    const valueDisplay = document.createElement('span');
+                    valueDisplay.className = 'text-sm dark:text-gray-300 mt-1';
+                    valueDisplay.id = `value-${index}`;
+                    valueDisplay.textContent = `${monthlyValue} ${unit}`;
+                    monthDiv.appendChild(valueDisplay);
+                    
+                    // Lock button
+                    const lockButton = document.createElement('button');
+                    lockButton.type = 'button';
+                    lockButton.className = `w-4 h-4 rounded-sm mt-2 ${isLocked ? 'bg-gray-400 dark:bg-gray-500' : 'bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500'}`;
+                    lockButton.addEventListener('click', function() {
+                        toggleLock(index);
+                    });
+                    monthDiv.appendChild(lockButton);
+                    
+                    // Add to grid
+                    monthlySliders.appendChild(monthDiv);
+                });
+            }
+
+            function handleSliderChange(monthIndex, newValue) {
+                const data = budgetData[activeUtility].monthly;
+                const yearlyBudgetValue = budgetData[activeUtility].yearly;
+                const currentTotal = calculateTotalUsed();
+                const currentValue = data[monthIndex].value;
+                const proposedValue = parseFloat(newValue);
+                const unit = activeUtility === 'electricity' ? 'kWh' : 'm³';
+                
+                // Calculate what the new total would be
+                const proposedTotal = currentTotal - currentValue + proposedValue;
+                
+                // Check if the proposed change would exceed the yearly budget
+                if (proposedTotal > yearlyBudgetValue) {
+                    // If it would exceed, calculate the maximum allowed value for this slider
+                    const maxAllowed = yearlyBudgetValue - (currentTotal - currentValue);
+                    
+                    // Update with the maximum allowed value instead
+                    data[monthIndex].value = maxAllowed;
+                    
+                    // Show the warning
+                    budgetWarning.classList.remove('hidden');
+                    
+                    // Update the display value
+                    const valueDisplay = document.getElementById(`value-${monthIndex}`);
+                    if (valueDisplay) {
+                        valueDisplay.textContent = `${maxAllowed.toFixed(1)} ${unit}`;
+                    }
+                    
+                    // Also update the slider value to reflect the constraint
+                    const slider = document.querySelector(`input[data-month="${monthIndex}"]`);
+                    if (slider) {
+                        const displayValue = getSliderAppearanceValue(maxAllowed);
+                        slider.value = displayValue;
+                        slider.dataset.actualValue = maxAllowed;
+                    }
+                } else {
+                    // Otherwise update with the proposed value
+                    data[monthIndex].value = proposedValue;
+                    
+                    // Hide the warning if we're back within budget
+                    if (proposedTotal <= yearlyBudgetValue) {
+                        budgetWarning.classList.add('hidden');
+                    }
+                    
+                    // Update the display value
+                    const valueDisplay = document.getElementById(`value-${monthIndex}`);
+                    if (valueDisplay) {
+                        valueDisplay.textContent = `${proposedValue.toFixed(1)} ${unit}`;
+                    }
+                    
+                    // Update the slider's actual value data attribute
+                    const slider = document.querySelector(`input[data-month="${monthIndex}"]`);
+                    if (slider) {
+                        slider.dataset.actualValue = proposedValue;
+                    }
+                }
+                
+                // Update budget display
+                updateBudgetDisplay();
+            }
+
+            function toggleLock(monthIndex) {
+                // Toggle the lock state
+                budgetData[activeUtility].monthly[monthIndex].locked = !budgetData[activeUtility].monthly[monthIndex].locked;
+                
+                // Re-render to update the UI
+                renderMonthlySliders();
+            }
+
+            function updateBudgetDisplay() {
+                const data = budgetData[activeUtility];
+                const yearlyValue = data.yearly;
+                const usedValue = calculateTotalUsed();
+                const percentage = (usedValue / yearlyValue) * 100;
+                
+                // Update the text displays
+                yearlyTotal.textContent = yearlyValue.toFixed(0);
+                usedTotal.textContent = usedValue.toFixed(0);
+                usedPercentage.textContent = percentage.toFixed(0);
+                
+                // Update progress bar
+                budgetProgressBar.style.width = `${Math.min(percentage, 100)}%`;
+                
+                // Show warning if we're at or over budget
+                if (usedValue >= yearlyValue) {
+                    budgetWarning.classList.remove('hidden');
+                } else {
+                    budgetWarning.classList.add('hidden');
+                }
+                
+                // Change progress bar color based on percentage
+                if (percentage > 95) {
+                    budgetProgressBar.classList.add('bg-red-500');
+                    budgetProgressBar.classList.remove('bg-yellow-500', 'bg-blue-600');
+                } else if (activeUtility === 'electricity') {
+                    budgetProgressBar.classList.add('bg-blue-600');
+                    budgetProgressBar.classList.remove('bg-red-500', 'bg-yellow-500');
+                } else {
+                    budgetProgressBar.classList.add('bg-yellow-500');
+                    budgetProgressBar.classList.remove('bg-red-500', 'bg-blue-600');
+                }
+            }
+
+            function calculateTotalUsed() {
+                // Sum all monthly values
+                return budgetData[activeUtility].monthly.reduce((sum, month) => sum + month.value, 0);
+            }
+
+            function resetAllData() {
+                // Reset to initial data
+                Object.assign(budgetData, JSON.parse(JSON.stringify(initialData)));
+                
+                // Reset input fields
+                electricityInput.value = initialData.electricity.yearly;
+                gasInput.value = initialData.gas.yearly;
+                
+                // Update UI
+                renderMonthlySliders();
+                updateBudgetDisplay();
+                
+                // Hide any warnings
+                budgetWarning.classList.add('hidden');
+            }
+
+            function updateElectricityYearly() {
+                const newYearly = parseFloat(electricityInput.value) || initialData.electricity.yearly;
+                budgetData.electricity.yearly = newYearly;
+                
+                // If the active utility is electricity, update the display
+                if (activeUtility === 'electricity') {
+                    updateBudgetDisplay();
+                    renderMonthlySliders(); // Re-render to update max values on sliders
+                }
+            }
+
+            function updateGasYearly() {
+                const newYearly = parseFloat(gasInput.value) || initialData.gas.yearly;
+                budgetData.gas.yearly = newYearly;
+                
+                // If the active utility is gas, update the display
+                if (activeUtility === 'gas') {
+                    updateBudgetDisplay();
+                    renderMonthlySliders(); // Re-render to update max values on sliders
+                }
+            }
+
+            function prepareMonthlyBudgetData() {
+                // Clear previous inputs
+                monthlyBudgetInputs.innerHTML = '';
+                
+                // Add monthly data for both electricity and gas
+                budgetData.electricity.monthly.forEach((month, index) => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = `budgets[${index}][electricity_target_kwh]`;
+                    input.value = month.value;
+                    monthlyBudgetInputs.appendChild(input);
+                    
+                    const monthInput = document.createElement('input');
+                    monthInput.type = 'hidden';
+                    monthInput.name = `budgets[${index}][month]`;
+                    monthInput.value = index + 1;
+                    monthlyBudgetInputs.appendChild(monthInput);
+                });
+                
+                budgetData.gas.monthly.forEach((month, index) => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = `budgets[${index}][gas_target_m3]`;
+                    input.value = month.value;
+                    monthlyBudgetInputs.appendChild(input);
+                });
+            }
+        });
+    </script>
 </x-app-layout>
