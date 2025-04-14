@@ -28,23 +28,72 @@
         </div>
     </div>
    
-    <!-- Progress bar met animatie -->
+    <!-- Progress bar met animatie en dynamische zwarte streep -->
     <div class="mt-4">
-        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-            <div class="h-4 rounded-full transition-all duration-1000 ease-out
-                    {{ $status === 'goed' ? 'bg-green-500' :
-                       ($status === 'waarschuwing' ? 'bg-yellow-500' : 'bg-red-500') }}"
-                 style="width: {{ min($percentage, 100) }}%">
-            </div>
+        @php
+            // Bereken de positie van de zwarte streep en de kleurzones
+            if ($percentage <= 100) {
+                // Als onder 100%, dan is de streeppositie gelijk aan het percentage
+                $dividerPosition = $percentage;
+                $greenZoneWidth = $percentage;
+                $redZoneWidth = 0;
+            } else {
+                // Als boven 100%, dan beweegt de streep naar links, 
+                // tot maximaal 75% naar links (dus minimaal 25% positie)
+                $overshootPercentage = $percentage - 100; // hoeveel over 100%
+                $maxShift = 75; // maximale verschuiving in procenten (naar links)
+                
+                // Bereken verschuiving op basis van overschrijding (meer overschrijding = meer verschuiving)
+                // Bij 0% overschrijding = 0% verschuiving
+                // Bij zeer grote overschrijding = maximale verschuiving van 75%
+                $shift = min($maxShift, ($overshootPercentage / 100) * $maxShift);
+                
+                // Bereken uiteindelijke positie (100% - verschuiving)
+                // Minimum positie is 25% (bij 75% verschuiving)
+                $dividerPosition = max(25, 100 - $shift);
+                
+                // De groene zone loopt tot aan de streep
+                $greenZoneWidth = $dividerPosition;
+                
+                // De rode zone loopt vanaf de streep tot 100%
+                $redZoneWidth = 100 - $dividerPosition;
+            }
+        @endphp
+        
+        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden relative">
+            <!-- Groene deel (loopt tot aan zwarte streep) -->
+            <div 
+                class="absolute h-full transition-all duration-1000 ease-out bg-green-500"
+                style="width: {{ $greenZoneWidth }}%; left: 0;"
+            ></div>
+            
+            <!-- Rode deel (loopt vanaf zwarte streep tot 100%) -->
+            @if($percentage > 100)
+                <div 
+                    class="absolute h-full transition-all duration-1000 ease-out bg-red-500"
+                    style="width: {{ $redZoneWidth }}%; left: {{ $greenZoneWidth }}%;"
+                ></div>
+            @endif
+            
+            <!-- Zwarte streep op 100% markering -->
+            <div 
+                class="absolute top-0 bottom-0 w-1 bg-black z-10 transition-all duration-1000 ease-out"
+                style="left: {{ $dividerPosition }}%;"
+            ></div>
         </div>
-        <div class="flex justify-between mt-1">
+        
+        <div class="flex justify-between mt-1 relative">
             <span class="text-sm text-gray-600 dark:text-white">0%</span>
+            
+            <!-- 100% label onder de zwarte streep -->
+            <span class="text-sm text-gray-600 dark:text-white absolute transform -translate-x-1/2"
+                  style="left: {{ $dividerPosition }}%;">100%</span>
+            
             <span class="text-sm font-medium
                     {{ $status === 'goed' ? 'text-green-700' :
                        ($status === 'waarschuwing' ? 'text-yellow-700' : 'text-red-700') }}">
                 {{ number_format($percentage, 1) }}%
             </span>
-            <span class="text-sm text-gray-600 dark:text-white">100%</span>
         </div>
     </div>
    
