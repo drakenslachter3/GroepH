@@ -50,36 +50,61 @@
         </div>
     </div>
    
-    <!-- Verbeterde progressbar met kleurverloop en beperkte overflow indicator -->
+    <!-- Progressbar met dynamische zwarte streep -->
     <div class="mt-4">
         <!-- Container voor progressbar met duidelijke begrenzing -->
         <div class="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden relative">
             @php
-            // Bereken het percentage voor de weergave, maximaal 100% voor de primaire balk
-            $displayWidth = min($percentage, 100);
-            
-            // Bereken de kleur gebaseerd op het percentage
-            // Van groen (0%) naar geel (50%) naar rood (100%)
-            if ($percentage <= 50) {
-                // Groen naar geel (0-50%)
-                $red = round(($percentage / 50) * 255);
-                $green = 255;
-                $blue = 0;
+            // Bereken de positie van de zwarte streep en de kleurzones
+            if ($percentage <= 100) {
+                // Als onder 100%, dan is de streeppositie gelijk aan het percentage
+                $dividerPosition = $percentage;
+                $greenZoneWidth = $percentage;
+                $redZoneWidth = 0;
             } else {
-                // Geel naar rood (50-100%)
-                $red = 255;
-                $green = round(255 - (($percentage - 50) / 50) * 255);
-                $blue = 0;
+                // Als boven 100%, dan beweegt de streep naar links, 
+                // tot maximaal 75% naar links (dus minimaal 25% positie)
+                $overshootPercentage = $percentage - 100; // hoeveel over 100%
+                $maxShift = 75; // maximale verschuiving in procenten (naar links)
+                
+                // Bereken verschuiving op basis van overschrijding (meer overschrijding = meer verschuiving)
+                // Bij 0% overschrijding = 0% verschuiving
+                // Bij zeer grote overschrijding = maximale verschuiving van 75%
+                $shift = min($maxShift, ($overshootPercentage / 100) * $maxShift);
+                
+                // Bereken uiteindelijke positie (100% - verschuiving)
+                // Minimum positie is 25% (bij 75% verschuiving)
+                $dividerPosition = max(25, 100 - $shift);
+                
+                // De groene zone loopt tot aan de streep
+                $greenZoneWidth = $dividerPosition;
+                
+                // De rode zone loopt vanaf de streep tot 100%
+                $redZoneWidth = 100 - $dividerPosition;
             }
-            $barColor = "rgb($red, $green, $blue)";
             @endphp
             
-            <!-- Primaire balk (0-100%) -->
-            <div class="h-full rounded-lg transition-all duration-1000 ease-out"
-                 style="width: {{ $displayWidth }}%; background-color: {{ $barColor }};">
-            </div>
+            <!-- Groene deel (loopt tot aan zwarte streep) -->
+            <div 
+                class="absolute h-full transition-all duration-1000 ease-out bg-green-500"
+                style="width: {{ $greenZoneWidth }}%; left: 0;"
+            ></div>
             
-            <!-- Overflow indicator (voor waarden >100%, maar maximaal 20% extra) -->
+            <!-- Rode deel (loopt vanaf zwarte streep tot 100%) -->
+            @if($percentage > 100)
+                <div 
+                    class="absolute h-full transition-all duration-1000 ease-out bg-red-600"
+                    style="width: {{ $redZoneWidth }}%; left: {{ $greenZoneWidth }}%;"
+                ></div>
+            @endif
+            
+            <!-- Zwarte streep op positie -->
+            <div 
+                class="absolute top-0 bottom-0 w-1 bg-black z-10 transition-all duration-1000 ease-out"
+                style="left: {{ $dividerPosition }}%;"
+            ></div>
+            
+            <!-- Behoud ook de originele overflow indicator voor >100% -->
             @if($percentage > 100)
                 @php
                     // Beperk de overflow tot maximaal 20% extra
@@ -99,15 +124,21 @@
         </div>
         
         <!-- Labels voor de balk -->
-        <div class="flex justify-between mt-1">
+        <div class="flex justify-between mt-1 relative">
             <span class="text-xs text-gray-600 dark:text-gray-400">0%</span>
-            <span class="text-xs font-medium" style="color: {{ $percentage > 100 ? '#DC2626' : $barColor }}">
+            
+            <!-- 100% label onder de zwarte streep -->
+            <span class="text-xs text-gray-600 dark:text-gray-400 absolute transform -translate-x-1/2"
+                  style="left: {{ $dividerPosition }}%;">100%</span>
+            
+            <span class="text-xs font-medium 
+                    {{ $status === 'goed' ? 'text-green-700 dark:text-green-400' :
+                       ($status === 'waarschuwing' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400') }}">
                 {{ number_format($percentage, 1) }}%
                 @if($percentage > 100)
                 <span class="ml-1 inline-block">!</span>
                 @endif
             </span>
-            <span class="text-xs text-gray-600 dark:text-gray-400">100%</span>
         </div>
         
         <!-- Status bericht -->
