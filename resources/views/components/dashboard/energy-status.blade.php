@@ -57,10 +57,14 @@
             @php
             // Bereken de positie van de zwarte streep en de kleurzones
             if ($percentage <= 100) {
-                // Als onder 100%, dan is de streeppositie gelijk aan het percentage
+                // Als onder 100%, dan staat de streep op het huidige percentage
                 $dividerPosition = $percentage;
                 $greenZoneWidth = $percentage;
                 $redZoneWidth = 0;
+                
+                // Labels voor onder/boven 100%
+                $streepLabel = number_format($percentage, 1) . '%'; // Label onder de streep
+                $rightLabel = '100%'; // Label rechts
             } else {
                 // Als boven 100%, dan beweegt de streep naar links, 
                 // tot maximaal 75% naar links (dus minimaal 25% positie)
@@ -81,6 +85,10 @@
                 
                 // De rode zone loopt vanaf de streep tot 100%
                 $redZoneWidth = 100 - $dividerPosition;
+                
+                // Labels voor onder/boven 100%
+                $streepLabel = '100%'; // Label onder de streep
+                $rightLabel = number_format($percentage, 1) . '%'; // Label rechts
             }
             @endphp
             
@@ -124,17 +132,19 @@
         </div>
         
         <!-- Labels voor de balk -->
+        <!-- Labels voor de balk -->
         <div class="flex justify-between mt-1 relative">
             <span class="text-xs text-gray-600 dark:text-gray-400">0%</span>
             
-            <!-- 100% label onder de zwarte streep -->
+            <!-- Label onder de zwarte streep (percentage of 100%) -->
             <span class="text-xs text-gray-600 dark:text-gray-400 absolute transform -translate-x-1/2"
-                  style="left: {{ $dividerPosition }}%;">100%</span>
+                  style="left: {{ $dividerPosition }}%;">{{ $streepLabel }}</span>
             
+            <!-- Rechter label (percentage of 100%) -->
             <span class="text-xs font-medium 
                     {{ $status === 'goed' ? 'text-green-700 dark:text-green-400' :
                        ($status === 'waarschuwing' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400') }}">
-                {{ number_format($percentage, 1) }}%
+                {{ $rightLabel }}
                 @if($percentage > 100)
                 <span class="ml-1 inline-block">!</span>
                 @endif
