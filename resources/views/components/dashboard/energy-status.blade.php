@@ -90,6 +90,9 @@
                 $streepLabel = '100%'; // Label onder de streep
                 $rightLabel = number_format($percentage, 1) . '%'; // Label rechts
             }
+            
+            // Bepaal of er een risico is op overlap van labels
+            $labelOverlapRisk = $percentage > 100 && $dividerPosition > 70;
             @endphp
             
             <!-- Groene deel (loopt tot aan zwarte streep) -->
@@ -131,8 +134,7 @@
             @endif
         </div>
         
-        <!-- Labels voor de balk -->
-        <!-- Labels voor de balk -->
+        <!-- Labels voor de balk met verbeterde positionering -->
         <div class="flex justify-between mt-1 relative">
             <span class="text-xs text-gray-600 dark:text-gray-400">0%</span>
             
@@ -140,15 +142,22 @@
             <span class="text-xs text-gray-600 dark:text-gray-400 absolute transform -translate-x-1/2"
                   style="left: {{ $dividerPosition }}%;">{{ $streepLabel }}</span>
             
-            <!-- Rechter label (percentage of 100%) -->
-            <span class="text-xs font-medium 
-                    {{ $status === 'goed' ? 'text-green-700 dark:text-green-400' :
-                       ($status === 'waarschuwing' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400') }}">
-                {{ $rightLabel }}
-                @if($percentage > 100)
-                <span class="ml-1 inline-block">!</span>
-                @endif
-            </span>
+            <!-- Rechter label (percentage of 100%) met aangepaste positie -->
+            @if($percentage > 100)
+                <span class="text-xs font-medium absolute 
+                        {{ $status === 'goed' ? 'text-green-700 dark:text-green-400' :
+                           ($status === 'waarschuwing' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400') }}"
+                      style="right: -5%; transform: translateX(0);">
+                    {{ $rightLabel }}
+                    <span class="ml-1 inline-block">!</span>
+                </span>
+            @else
+                <span class="text-xs font-medium
+                        {{ $status === 'goed' ? 'text-green-700 dark:text-green-400' :
+                           ($status === 'waarschuwing' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400') }}">
+                    {{ $rightLabel }}
+                </span>
+            @endif
         </div>
         
         <!-- Status bericht -->
@@ -165,30 +174,7 @@
                 <span class="text-red-600 dark:text-red-400">Alert: Je overschrijdt je target aanzienlijk!</span>
             @endif
         </div>
-        
-        <!-- Periode aanduiding -->
-        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            @if(isset($period))
-                @switch($period)
-                    @case('day')
-                        Dagelijks verbruik
-                        @break
-                    @case('month')
-                        Maandelijks verbruik
-                        @break
-                    @case('year')
-                        Jaarlijks verbruik
-                        @break
-                    @default
-                        Verbruik
-                @endswitch
-            @else
-                Verbruik
-            @endif
-        </div>
+      
     </div>
    
     <!-- Historische vergelijking -->
