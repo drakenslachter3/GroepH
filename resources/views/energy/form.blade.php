@@ -25,7 +25,7 @@
                     <!-- Section 1: Yearly Budget -->
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6 border-b border-gray-200 dark:border-gray-700 relative">
-                            <h3 class="font-semibold text-lg mb-4">{{ __('Jaarbudget') }}</h3>
+                            <h3 class="font-semibold text-lg mb-4 dark:text-gray-200">{{ __('Jaarbudget') }}</h3>
 
                             <!-- Yearly Budget Form -->
                             <form id="yearlyBudgetForm" method="POST" action="{{ route('budget.store') }}">
@@ -97,7 +97,7 @@
                         <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                             <!-- Monthly Budget Header -->
                             <div class="flex justify-between items-center mb-6">
-                                <h3 class="font-semibold text-lg">{{ __('Maandelijks budget') }}</h3>
+                                <h3 class="font-semibold text-lg dark:text-gray-200">{{ __('Maandelijks budget') }}</h3>
                                 <div class="relative">
                                     <button type="button" id="utilityToggleButton"
                                         class="px-4 py-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-md shadow-sm w-40 text-center font-medium">
@@ -128,7 +128,7 @@
                                     <div class="text-sm">
                                         <span class="text-blue-600 dark:text-blue-400 font-medium">Huidig bereik:
                                         </span>
-                                        <span id="sliderRangeDisplay">0 - 500</span>
+                                        <span id="sliderRangeDisplay" class="dark:text-gray-200">0 - 500</span>
                                     </div>
                                 </div>
                             </div>
@@ -268,6 +268,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            
             // Configuration
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
             let activeUtility = 'electricity'; // 'electricity' or 'gas'
@@ -483,6 +484,8 @@
                     slider.dataset.month = index;
                     slider.dataset.actualValue = monthlyValue;
                     slider.disabled = isLocked;
+                    slider.setAttribute('aria-label', `${month} ${unit} slider`);
+                    slider.setAttribute('id', `slider-${index}`);
 
                     // Add event listener to update data when slider changes
                     slider.addEventListener('input', function() {
@@ -494,12 +497,42 @@
                     sliderContainer.appendChild(sliderDiv);
                     monthDiv.appendChild(sliderContainer);
 
-                    // Value display
-                    const valueDisplay = document.createElement('span');
-                    valueDisplay.className = 'text-sm dark:text-gray-300 mt-1';
-                    valueDisplay.id = `value-${index}`;
-                    valueDisplay.textContent = `${monthlyValue} ${unit}`;
-                    monthDiv.appendChild(valueDisplay);
+                    // Value display and input field
+                    const valueContainer = document.createElement('div');
+                    valueContainer.className = 'mt-1 flex flex-col items-center w-full';
+                    
+                    // Add numeric input field for accessibility
+                    const valueInput = document.createElement('input');
+                    valueInput.type = 'number';
+                    valueInput.min = '0';
+                    valueInput.max = yearlyBudgetValue;
+                    valueInput.step = '0.1';
+                    valueInput.value = monthlyValue;
+                    valueInput.className = 'text-sm dark:text-gray-300 mt-1 p-1 border dark:border-gray-600 rounded w-full text-center dark:bg-gray-700';
+                    valueInput.disabled = isLocked;
+                    valueInput.setAttribute('aria-label', `${month} ${unit} input`);
+                    valueInput.setAttribute('id', `input-${index}`);
+                    
+                    // Add event listener to update when input changes
+                    valueInput.addEventListener('change', function() {
+                        const newValue = parseFloat(this.value) || 0;
+                        handleSliderChange(index, newValue);
+                        
+                        // Also update slider position
+                        const slider = document.getElementById(`slider-${index}`);
+                        if (slider) {
+                            slider.value = getSliderAppearanceValue(newValue);
+                        }
+                    });
+                    
+                    // Add unit label below input
+                    const unitLabel = document.createElement('span');
+                    unitLabel.className = 'text-sm dark:text-gray-300 mt-1';
+                    unitLabel.textContent = unit;
+                    
+                    valueContainer.appendChild(valueInput);
+                    valueContainer.appendChild(unitLabel);
+                    monthDiv.appendChild(valueContainer);
 
                     // Lock button
                     const lockButton = document.createElement('button');
@@ -509,6 +542,7 @@
                     lockButton.addEventListener('click', function() {
                         toggleLock(index);
                     });
+                    lockButton.setAttribute('aria-label', `${isLocked ? 'Unlock' : 'Lock'} ${month} value`);
                     monthDiv.appendChild(lockButton);
 
                     // Add to grid
@@ -538,14 +572,14 @@
                     // Show the warning
                     budgetWarning.classList.remove('hidden');
 
-                    // Update the display value
-                    const valueDisplay = document.getElementById(`value-${monthIndex}`);
-                    if (valueDisplay) {
-                        valueDisplay.textContent = `${maxAllowed.toFixed(1)} ${unit}`;
+                    // Update both the display and input values
+                    const valueInput = document.getElementById(`input-${monthIndex}`);
+                    if (valueInput) {
+                        valueInput.value = maxAllowed.toFixed(1);
                     }
 
                     // Also update the slider value to reflect the constraint
-                    const slider = document.querySelector(`input[data-month="${monthIndex}"]`);
+                    const slider = document.getElementById(`slider-${monthIndex}`);
                     if (slider) {
                         const displayValue = getSliderAppearanceValue(maxAllowed);
                         slider.value = displayValue;
@@ -560,16 +594,17 @@
                         budgetWarning.classList.add('hidden');
                     }
 
-                    // Update the display value
-                    const valueDisplay = document.getElementById(`value-${monthIndex}`);
-                    if (valueDisplay) {
-                        valueDisplay.textContent = `${proposedValue.toFixed(1)} ${unit}`;
+                    // Update the input value
+                    const valueInput = document.getElementById(`input-${monthIndex}`);
+                    if (valueInput) {
+                        valueInput.value = proposedValue.toFixed(1);
                     }
 
                     // Update the slider's actual value data attribute
-                    const slider = document.querySelector(`input[data-month="${monthIndex}"]`);
+                    const slider = document.getElementById(`slider-${monthIndex}`);
                     if (slider) {
                         slider.dataset.actualValue = proposedValue;
+                        slider.value = getSliderAppearanceValue(proposedValue);
                     }
                 }
 
@@ -608,15 +643,14 @@
                 }
 
                 // Change progress bar color based on percentage
+                budgetProgressBar.classList.remove('bg-red-500', 'bg-yellow-500', 'bg-amber-500', 'bg-blue-600');
+                
                 if (percentage > 95) {
                     budgetProgressBar.classList.add('bg-red-500');
-                    budgetProgressBar.classList.remove('bg-yellow-500', 'bg-blue-600');
-                } else if (activeUtility === 'electricity') {
-                    budgetProgressBar.classList.add('bg-blue-600');
-                    budgetProgressBar.classList.remove('bg-red-500', 'bg-yellow-500');
+                } else if (percentage > 80) {
+                    budgetProgressBar.classList.add('bg-amber-500');
                 } else {
-                    budgetProgressBar.classList.add('bg-yellow-500');
-                    budgetProgressBar.classList.remove('bg-red-500', 'bg-blue-600');
+                    budgetProgressBar.classList.add('bg-blue-600');
                 }
             }
 
@@ -662,6 +696,15 @@
                     renderMonthlySliders(); // Re-render to update max values on sliders
                 }
             }
+            const successAlert = document.querySelector('.bg-green-100');
+        const errorAlert = document.querySelector('.bg-red-100');
+
+        if (successAlert || errorAlert) {
+            setTimeout(() => {
+                if (successAlert) successAlert.style.display = 'none';
+                if (errorAlert) errorAlert.style.display = 'none';
+            }, 5000);
+        }
         });
     </script>
 </x-app-layout>

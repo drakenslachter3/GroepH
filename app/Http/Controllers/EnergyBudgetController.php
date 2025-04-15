@@ -132,7 +132,7 @@ class EnergyBudgetController extends Controller
             $this->createDefaultMonthlyBudgets($budget);
         }
         
-        return redirect()->route('dashboard')
+        return redirect()->route('budget.form')
             ->with('success', 'Energiebudget succesvol opgeslagen!');
     }
     
