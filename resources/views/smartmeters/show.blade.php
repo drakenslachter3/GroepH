@@ -1,3 +1,4 @@
+{{-- resources/views/smartmeters/show.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
@@ -8,13 +9,13 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold">Slimme Meter Details</h2>
                     <div class="flex space-x-2">
-                        <a href="{{ route('smartmeters.edit', $smartMeter->id) }}" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md shadow-sm flex items-center">
+                        <a href="{{ route('smartmeters.edit', ['smartmeter' => $smartMeter->id]) }}" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md shadow-sm flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Bewerken
                         </a>
-                        <form method="POST" action="{{ route('smartmeters.destroy', $smartMeter->id) }}" style="display: inline;">
+                        <form method="POST" action="{{ route('smartmeters.destroy', ['smartmeter' => $smartMeter->id]) }}" style="display: inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" onclick="return confirm('Weet je zeker dat je deze slimme meter wilt verwijderen?');" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md shadow-sm flex items-center">
@@ -43,8 +44,18 @@
 
                     <div class="mb-4">
                         <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
-                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Type:</span>
-                            <span class="mt-1">{{ ucfirst($smartMeter->type) }}</span>
+                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Metingen:</span>
+                            <div class="flex space-x-2 mt-1">
+                                @if($smartMeter->measures_electricity ?? false)
+                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Elektriciteit</span>
+                                @endif
+                                @if($smartMeter->measures_gas ?? false)
+                                    <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Gas</span>
+                                @endif
+                                @if(!isset($smartMeter->measures_electricity) && !isset($smartMeter->measures_gas))
+                                    <span class="mt-1">{{ ucfirst($smartMeter->type ?? 'onbekend') }}</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
 
@@ -117,7 +128,7 @@
 
                 <!-- Latest Meter Readings Section -->
                 @php
-                    $latestReading = $smartMeter->readings()->latest('timestamp')->first();
+                    $latestReading = $smartMeter->latestReading;
                 @endphp
 
                 <div class="mt-8">
@@ -127,6 +138,7 @@
                         <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <!-- Electricity Readings -->
+                                @if($smartMeter->measures_electricity ?? false)
                                 <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
                                     <h4 class="font-medium text-blue-700 dark:text-blue-300 mb-2">Elektriciteit</h4>
                                     <div class="space-y-2">
@@ -158,8 +170,10 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif
 
                                 <!-- Gas Readings -->
+                                @if($smartMeter->measures_gas ?? false)
                                 <div class="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg">
                                     <h4 class="font-medium text-yellow-700 dark:text-yellow-300 mb-2">Gas</h4>
                                     <div class="space-y-2">
@@ -169,6 +183,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif
 
                                 <!-- Additional Data -->
                                 <div class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
