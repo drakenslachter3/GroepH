@@ -589,10 +589,8 @@
                     // Otherwise update with the proposed value
                     data[monthIndex].value = proposedValue;
 
-                    // Hide the warning if we're back within budget
-                    if (proposedTotal <= yearlyBudgetValue) {
-                        budgetWarning.classList.add('hidden');
-                    }
+                    // Hide the warning - we're within budget
+                    budgetWarning.classList.add('hidden');
 
                     // Update the input value
                     const valueInput = document.getElementById(`input-${monthIndex}`);
@@ -635,12 +633,8 @@
                 // Update progress bar
                 budgetProgressBar.style.width = `${Math.min(percentage, 100)}%`;
 
-                // Show warning if we're at or over budget
-                if (usedValue >= yearlyValue) {
-                    budgetWarning.classList.remove('hidden');
-                } else {
-                    budgetWarning.classList.add('hidden');
-                }
+                // Don't automatically show warning based on total
+                // The warning should only show when actively trying to exceed budget in handleSliderChange
 
                 // Change progress bar color based on percentage
                 budgetProgressBar.classList.remove('bg-red-500', 'bg-yellow-500', 'bg-amber-500', 'bg-blue-600');
@@ -697,14 +691,14 @@
                 }
             }
             const successAlert = document.querySelector('.bg-green-100');
-        const errorAlert = document.querySelector('.bg-red-100');
+            const errorAlert = document.querySelector('.bg-red-100');
 
-        if (successAlert || errorAlert) {
-            setTimeout(() => {
-                if (successAlert) successAlert.style.display = 'none';
-                if (errorAlert) errorAlert.style.display = 'none';
-            }, 5000);
-        }
+            if (successAlert || errorAlert) {
+                setTimeout(() => {
+                    if (successAlert) successAlert.style.display = 'none';
+                    if (errorAlert) errorAlert.style.display = 'none';
+                }, 5000);
+            }
         });
     </script>
 </x-app-layout>
