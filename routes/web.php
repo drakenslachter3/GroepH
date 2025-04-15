@@ -1,17 +1,24 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EnergyBudgetController;
+use App\Http\Controllers\EnergyVisualizationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EnergyBudgetController;
-use App\Http\Controllers\EnergyVisualizationController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-
+Route::prefix('admin')->group(function () {
+    Route::get('/password-reset-requests', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'adminIndex'])
+        ->name('password.admin.inbox');
+    Route::post('/password-reset-requests/{resetRequest}/approve', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'approve'])
+        ->name('password.admin.approve');
+    Route::post('/password-reset-requests/{resetRequest}/deny', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'deny'])
+        ->name('password.admin.deny');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
@@ -42,4 +49,4 @@ Route::middleware('auth')->group(function () {
     Route::post('/delete-user/{user}', [UserController::class, 'destroy'])->name('users.delete');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
