@@ -6,9 +6,14 @@ document.addEventListener('alpine:init', () => {
         smartMeters: [],
         
         init() {
-            if (this.initialMeter) {
-                this.selectedMeter = this.initialMeter;
-                this.search = this.selectedMeter.meter_id + ' - ' + this.selectedMeter.location;
+            this.smartMeters = JSON.parse(this.$el.getAttribute('data-smart-meters'));
+            
+            const initialMeterId = this.$el.getAttribute('data-selected-meter-id');
+            if (initialMeterId) {
+                this.selectedMeter = this.smartMeters.find(meter => meter.id == initialMeterId);
+                if (this.selectedMeter) {
+                    this.search = this.selectedMeter.meter_id + ' - ' + this.selectedMeter.location;
+                }
             }
         },
         
