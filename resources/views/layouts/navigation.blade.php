@@ -21,7 +21,9 @@
                     </x-etc.nav-link>
                 </div>
             </div>
-
+            <div class="mr-3">
+                <x-admin-notification-inbox />
+            </div>
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-etc.dropdown align="right" width="48">
