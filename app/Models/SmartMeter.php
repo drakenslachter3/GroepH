@@ -68,4 +68,9 @@ class SmartMeter extends Model
     {
         return !is_null($this->account_id);
     }
+
+    public static function getAllSmartMetersForCurrentUser()
+    {
+        return self::where('account_id', auth()->id())->get();
+    }
 }

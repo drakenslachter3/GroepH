@@ -34,6 +34,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/set-widget', [DashboardController::class, 'setWidget'])->name('dashboard.setWidget');
     Route::post('/dashboard/reset-layout', [DashboardController::class, 'resetLayout'])->name('dashboard.resetLayout');
     Route::post('/dashboard/set-time', [DashboardController::class, 'setTime'])->name('dashboard.setTime');
+
+    // Opslaan geselecteerde meter dashboard route
+    Route::post('/dashboard', [DashboardController::class, 'saveSelectedMeter'])->name('dashboard.saveSelectedMeter');
 });
 
 Route::middleware('auth')->group(function () {
