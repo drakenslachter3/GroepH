@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Password Reset Request</title>
+    <title>Wachtwoord Reset Aanvraag</title>
     <style>
         body {
             font-family: Arial, sans-serif;

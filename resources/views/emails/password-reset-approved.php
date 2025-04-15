@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Password Reset Request Approved</title>
+    <title>Wacthwoord reset geaccepteerd</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -52,7 +52,7 @@
             <p>Hello,</p>
             <p>Uw verzoek tot het resetten van uw wachtwoord is goedgekeurd door ons team, klik hieronder om uw wachtwoord aan te passen:</p>
             <div style="text-align: center;">
-                <a href="{{ route('password.reset.form', $resetRequest->token) }}" class="button">Reset Your Password</a>
+                <a href="{{ route('password.reset.form', $resetRequest->token) }}" class="button">Reset je wachtwoord</a>
             </div>
             <p>Als u dit niet was, contacteer ons dan direct.</p>
         </div>
