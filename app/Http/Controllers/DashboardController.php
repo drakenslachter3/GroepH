@@ -22,6 +22,10 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        
+        // Load user's smart meters with latest readings
+        $user->load(['smartMeters', 'smartMeters.latestReading']);
+        
         $energydashboard_data = $this->energyVisController->dashboard($request);
 
         $userGridLayoutModel = UserGridLayout::firstOrCreate(
@@ -37,6 +41,9 @@ class DashboardController extends Controller
         
         // Add last refresh time information
         $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
+        
+        // Include the user with smart meters data
+        $energydashboard_data['user'] = $user;
 
         return view('dashboard', $energydashboard_data);
     }

@@ -15,7 +15,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('smartMeter')->paginate(10);
+        $users = User::withCount('smartMeters')->paginate(10);
         return view('users.index', compact('users'));
     }
 
@@ -24,8 +24,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        $smartMeters = SmartMeter::whereDoesntHave('user')->get();
-        return view('users.form', compact('smartMeters'));
+        return view('users.form');
     }
 
     /**
@@ -44,13 +43,6 @@ class UserController extends Controller
         // Maak de gebruiker aan
         $user = User::create($validated);
         
-        // Koppel de smart meter indien geselecteerd
-        if (!empty($validated['smart_meter_id'])) {
-            $smartMeter = SmartMeter::findOrFail($validated['smart_meter_id']);
-            $smartMeter->account_id = $user->id;
-            $smartMeter->save();
-        }
-        
         return redirect()->route('users.index')
             ->with('status', 'Gebruiker succesvol aangemaakt!');
     }
@@ -60,6 +52,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        $user->load('smartMeters');
         return view('users.show', compact('user'));
     }
 
@@ -68,13 +61,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        // Haal slimme meters op die niet gekoppeld zijn OF gekoppeld aan deze gebruiker
-        $smartMeters = SmartMeter::where(function($query) use ($user) {
-            $query->whereDoesntHave('user')
-                  ->orWhere('account_id', $user->id);
-        })->get();
-        
-        return view('users.form', compact('user', 'smartMeters'));
+        return view('users.form', compact('user'));
     }
 
     /**
@@ -97,22 +84,6 @@ class UserController extends Controller
         // Update de gebruiker
         $user->update($validated);
         
-        // Update smart meter koppeling
-        if (isset($validated['smart_meter_id'])) {
-            // Als er een smart meter was gekoppeld, maak deze los
-            if ($user->smartMeter) {
-                $user->smartMeter->account_id = null;
-                $user->smartMeter->save();
-            }
-            
-            // Als er een nieuwe smart meter is geselecteerd, koppel deze
-            if (!empty($validated['smart_meter_id'])) {
-                $smartMeter = SmartMeter::findOrFail($validated['smart_meter_id']);
-                $smartMeter->account_id = $user->id;
-                $smartMeter->save();
-            }
-        }   
-        
         return redirect()->route('users.show', $user->id)
             ->with('status', 'Gebruiker succesvol bijgewerkt!');
     }
@@ -122,10 +93,10 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        // Als de gebruiker een slimme meter heeft, ontkoppel deze
-        if ($user->smartMeter) {
-            $user->smartMeter->account_id = null;
-            $user->smartMeter->save();
+        // Als de gebruiker slimme meters heeft, ontkoppel deze
+        foreach ($user->smartMeters as $meter) {
+            $meter->account_id = null;
+            $meter->save();
         }
         
         // Verwijder de gebruiker
@@ -153,7 +124,6 @@ class UserController extends Controller
             'postal_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'role' => 'required|in:user,admin,owner',
-            'smart_meter_id' => 'nullable|exists:smart_meters,id',
         ];
         
         // Als het een nieuwe gebruiker is of als er een wachtwoord is opgegeven

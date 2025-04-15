@@ -38,9 +38,9 @@
                                     <th scope="col" class="py-3 px-6">ID</th>
                                     <th scope="col" class="py-3 px-6">Naam</th>
                                     <th scope="col" class="py-3 px-6">Email</th>
-                                    <th scope="col" class="py-3 px-6">Slimme Meter</th>
-                                    <th scope="col" class="py-3 px-6">Aangemaakt</th>
-                                    <th scope="col" class="py-3 px-6">Laatst bijgewerkt</th>
+                                    <th scope="col" class="py-3 px-6">Slimme Meters</th>
+                                    <th scope="col" class="py-3 px-6">Rol</th>
+                                    <th scope="col" class="py-3 px-6">Status</th>
                                     <th scope="col" class="py-3 px-6">Acties</th>
                                 </tr>
                             </thead>
@@ -52,16 +52,37 @@
                                         <td class="py-4 px-6">{{ $user->name }}</td>
                                         <td class="py-4 px-6">{{ $user->email }}</td>
                                         <td class="py-4 px-6">
-                                            @if ($user->smartMeter)
-                                                <span
-                                                    class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{{ $user->smartMeter->meter_id }}</span>
+                                            <div class="flex items-center">
+                                                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                                    {{ $user->smart_meters_count ?? 0 }}
+                                                </span>
+                                                @if($user->smart_meters_count > 0)
+                                                    <a href="{{ route('smartmeters.userMeters', $user->id) }}" class="ml-2 text-blue-600 hover:underline">
+                                                        Beheren
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('smartmeters.userMeters', $user->id) }}" class="ml-2 text-blue-600 hover:underline">
+                                                        Toevoegen
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            @if($user->role == 'owner')
+                                                <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Eigenaar</span>
+                                            @elseif($user->role == 'admin')
+                                                <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Beheerder</span>
                                             @else
-                                                <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Niet
-                                                    gekoppeld</span>
+                                                <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Gebruiker</span>
                                             @endif
                                         </td>
-                                        <td class="py-4 px-6">{{ $user->created_at->format('d-m-Y H:i') }}</td>
-                                        <td class="py-4 px-6">{{ $user->updated_at->format('d-m-Y H:i') }}</td>
+                                        <td class="py-4 px-6">
+                                            @if($user->active)
+                                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Actief</span>
+                                            @else
+                                                <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Inactief</span>
+                                            @endif
+                                        </td>
                                         <td class="py-4 px-6">
                                             <div class="flex space-x-2">
                                                 <a href="{{ route('users.show', $user->id) }}"

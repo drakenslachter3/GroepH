@@ -118,26 +118,6 @@
 
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
-                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Slimme Meter:</span>
-                                <div class="mt-1">
-                                    @if($user->smartMeter)
-                                        <div class="flex items-center">
-                                            <span
-                                                class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 mr-2">Gekoppeld</span>
-                                            <span>{{ $user->smartMeter->meter_id }} -
-                                                {{ $user->smartMeter->location }}</span>
-                                        </div>
-                                    @else
-                                        <span
-                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Niet
-                                            gekoppeld</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aangemaakt op:</span>
                                 <span class="mt-1">{{ $user->created_at->format('d-m-Y H:i') }}</span>
                             </div>
@@ -149,6 +129,55 @@
                                 <span class="mt-1">{{ $user->updated_at->format('d-m-Y H:i') }}</span>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Slimme Meters Sectie -->
+                    <div class="mt-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium">Gekoppelde Slimme Meters</h3>
+                            <a href="{{ route('smartmeters.userMeters', $user->id) }}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Meters beheren
+                            </a>
+                        </div>
+
+                        @if($user->smartMeters->count() > 0)
+                            <div class="overflow-x-auto relative">
+                                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                        <tr>
+                                            <th scope="col" class="py-3 px-6">Meter ID</th>
+                                            <th scope="col" class="py-3 px-6">Type</th>
+                                            <th scope="col" class="py-3 px-6">Locatie</th>
+                                            <th scope="col" class="py-3 px-6">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($user->smartMeters as $meter)
+                                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                                <td class="py-4 px-6">{{ $meter->meter_id }}</td>
+                                                <td class="py-4 px-6">{{ ucfirst($meter->type) }}</td>
+                                                <td class="py-4 px-6">{{ $meter->location ?: 'Niet gespecificeerd' }}</td>
+                                                <td class="py-4 px-6">
+                                                    @if($meter->active)
+                                                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Actief</span>
+                                                    @else
+                                                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Inactief</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-center">
+                                <p>Deze gebruiker heeft nog geen slimme meters gekoppeld.</p>
+                                <a href="{{ route('smartmeters.userMeters', $user->id) }}" class="inline-block mt-2 text-blue-600 hover:underline">Klik hier om meters te koppelen</a>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="mt-8">
