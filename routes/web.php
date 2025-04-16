@@ -11,14 +11,6 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-Route::prefix('admin')->group(function () {
-    Route::get('/password-reset-requests', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'adminIndex'])
-        ->name('password.admin.inbox');
-    Route::post('/password-reset-requests/{resetRequest}/approve', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'approve'])
-        ->name('password.admin.approve');
-    Route::post('/password-reset-requests/{resetRequest}/deny', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'deny'])
-        ->name('password.admin.deny');
-});
 
 Route::middleware('auth')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
