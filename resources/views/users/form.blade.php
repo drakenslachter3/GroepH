@@ -75,7 +75,7 @@
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Slimme Meter</label>
                         
-                        <div class="relative" x-data="{ open: false, selectedMeter: null, search: '' }">
+                        <div class="relative" x-data="smartMeterSelector">
                             <!-- Hidden input to store the selected smart meter ID -->
                             <input type="hidden" name="smart_meter_id" :value="selectedMeter ? selectedMeter.id : ''" />
                             
