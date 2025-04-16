@@ -270,7 +270,8 @@
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="blue"
                             :chartData="$chartData"
-                            :period="$period" />
+                            :period="$period" 
+                            :date="$date" />
                         @break
 
                         @case('energy-chart-gas')
