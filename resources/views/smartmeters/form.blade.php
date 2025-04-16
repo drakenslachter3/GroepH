@@ -18,7 +18,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ isset($smartMeter) ? route('smartmeters.update', $smartMeter->id) : route('smartmeters.store') }}">
+                <form method="POST" action="{{ isset($smartmeter) ? route('smartmeters.update', $smartmeter->id) : route('smartmeters.store') }}">
                     @csrf
                     @if(isset($smartMeter))
                         @method('PUT')

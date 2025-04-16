@@ -189,4 +189,24 @@ class SmartMeter extends Model
         
         return $metrics;
     }
+
+    /**
+ * Get a display-friendly name for the meter type.
+ *
+ * @return string
+ */
+public function getTypeDisplayName()
+{
+    $types = [];
+    
+    if ($this->measures_electricity) {
+        $types[] = 'Elektriciteit';
+    }
+    
+    if ($this->measures_gas) {
+        $types[] = 'Gas';
+    }
+    
+    return empty($types) ? 'Onbekend' : implode(' & ', $types);
+}
 }

@@ -119,25 +119,25 @@ class SmartMeterController extends Controller
     /**
      * Toon formulier om een meter te bewerken
      */
-    public function edit(SmartMeter $smartMeter)
+    public function edit(SmartMeter $smartmeter) // Changed from $smartMeter to $smartmeter
     {
         $this->checkAdminAccess();
         
         $users = User::orderBy('name')->get();
-        $selectedUser = $smartMeter->user;
+        $selectedUser = $smartmeter->user;
         
-        return view('smartmeters.form', compact('smartMeter', 'users', 'selectedUser'));
+        return view('smartmeters.form', compact('smartmeter', 'users', 'selectedUser'));
     }
 
     /**
      * Update een meter
      */
-    public function update(Request $request, SmartMeter $smartMeter)
+    public function update(Request $request, SmartMeter $smartmeter) // Changed from $smartMeter to $smartmeter
     {
         $this->checkAdminAccess();
         
         $validated = $request->validate([
-            'meter_id' => ['required', 'string', 'max:255', Rule::unique('smart_meters')->ignore($smartMeter->id)],
+            'meter_id' => ['required', 'string', 'max:255', Rule::unique('smart_meters')->ignore($smartmeter->id)],
             'location' => ['nullable', 'string', 'max:255'],
             'measures_electricity' => ['boolean'],
             'measures_gas' => ['boolean'],
@@ -164,10 +164,10 @@ class SmartMeterController extends Controller
         
         DB::beginTransaction();
         try {
-            $smartMeter->update($validated);
+            $smartmeter->update($validated);
             DB::commit();
             
-            return redirect()->route('smartmeters.show', $smartMeter->id)
+            return redirect()->route('smartmeters.show', $smartmeter->id)
                 ->with('status', 'Slimme meter succesvol bijgewerkt!');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -181,33 +181,43 @@ class SmartMeterController extends Controller
      * Verwijder een meter
      */
     public function destroy(SmartMeter $smartMeter)
-    {
-        $this->checkAdminAccess();
+{
+    $this->checkAdminAccess();
+    
+    try {
+        // Log the attempt to delete this meter
+        \Log::info('Attempting to delete meter ID: ' . $smartMeter->id);
         
-        try {
-            // Controleer of er afhankelijke metingen zijn die verwijderd moeten worden
-            $readingsCount = $smartMeter->readings()->count();
-            
-            DB::beginTransaction();
-            
-            // Verwijder eerst alle metingen indien aanwezig
-            if ($readingsCount > 0) {
-                $smartMeter->readings()->delete();
-            }
-            
-            // Verwijder daarna de meter zelf
-            $smartMeter->delete();
-            
-            DB::commit();
-            
-            return redirect()->route('smartmeters.index')
-                ->with('status', "Slimme meter succesvol verwijderd! ($readingsCount metingen verwijderd)");
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Fout bij het verwijderen van de meter: ' . $e->getMessage());
+        // Controleer of er afhankelijke metingen zijn die verwijderd moeten worden
+        $readingsCount = $smartMeter->readings()->count();
+        \Log::info('Found ' . $readingsCount . ' readings to delete');
+        
+        DB::beginTransaction();
+        
+        // Verwijder eerst alle metingen indien aanwezig
+        if ($readingsCount > 0) {
+            $smartMeter->readings()->delete();
+            \Log::info('Readings deleted successfully');
         }
+        
+        // Verwijder daarna de meter zelf
+        $smartMeter->delete();
+        \Log::info('Smart meter deleted successfully');
+        
+        DB::commit();
+        
+        return redirect()->route('smartmeters.index')
+            ->with('status', "Slimme meter succesvol verwijderd! ($readingsCount metingen verwijderd)");
+    } catch (\Exception $e) {
+        DB::rollBack();
+        // Enhanced error logging
+        \Log::error('Error deleting smart meter: ' . $e->getMessage());
+        \Log::error('Exception stack trace: ' . $e->getTraceAsString());
+        
+        return redirect()->back()
+            ->with('error', 'Fout bij het verwijderen van de meter: ' . $e->getMessage());
     }
+}
 
     /**
      * Toon een gebruiker met zijn gekoppelde meters
@@ -301,4 +311,6 @@ class SmartMeterController extends Controller
             
         return response()->json($meters);
     }
+
+    
 }
