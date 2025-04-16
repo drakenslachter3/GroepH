@@ -17,7 +17,7 @@
                     </x-etc.nav-link>
 
                     <x-etc.nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
-                        {{ __('Budget Form') }}
+                        {{ __('Budget Instellen') }}
                     </x-etc.nav-link>
                 </div>
             </div>
@@ -49,7 +49,7 @@
 
                         <x-slot name="content">
                             <x-etc.dropdown-link :href="route('profile.edit')">
-                                {{ __('Profile') }}
+                                {{ __('Profiel') }}
                             </x-etc.dropdown-link>
 
                             <!-- Authentication -->
@@ -59,7 +59,7 @@
                                 <x-etc.dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
-                                    {{ __('Log Out') }}
+                                    {{ __('Log uit') }}
                                 </x-etc.dropdown-link>
                             </form>
                         </x-slot>
