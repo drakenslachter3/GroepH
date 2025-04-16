@@ -12,6 +12,7 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+
 Route::middleware('auth')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
     Route::post('/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
@@ -25,10 +26,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/energy/budget', [EnergyBudgetController::class, 'index'])->name('budget.form');
     Route::post('/energy/budget/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
     Route::post('/energy/budget/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
-
-    Route::get('/energy/monthly-budget', [MonthlyEnergyBudgetController::class, 'index'])->name('budget.monthly');
-    Route::post('/energy/monthly-budget/update', [MonthlyEnergyBudgetController::class, 'update'])->name('budget.monthly.update');
-    Route::post('/energy/monthly-budget/reset', [MonthlyEnergyBudgetController::class, 'reset'])->name('budget.monthly.reset');
 
     // Energie visualisatie routes
     Route::get('/energy/visualization', [EnergyVisualizationController::class, 'dashboard'])->name('energy.dashboard');

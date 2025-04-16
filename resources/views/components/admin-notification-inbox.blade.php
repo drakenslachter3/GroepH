@@ -21,7 +21,7 @@
     <button x-ref="button" x-on:click="toggle()" :aria-expanded="open" :aria-controls="$id('dropdown-button')"
         type="button"
         class="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
-        <span class="sr-only">Notifications</span>
+        <span class="sr-only">Berichten</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
             stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -44,12 +44,12 @@
         class="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
         <div class="p-2">
             <div class="border-b pb-2 mb-2">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Password Reset Requests</h3>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Wachtwoord reset verzoeken</h3>
             </div>
 
             @if ($pendingCount === 0)
                 <div class="py-4 text-center text-gray-500 dark:text-gray-400">
-                    <p>No pending requests</p>
+                    <p>Geen nieuwe verzoeken</p>
                 </div>
             @else
                 <div class="max-h-80 overflow-y-auto">
@@ -60,7 +60,7 @@
                                     <p class="font-medium text-gray-900 dark:text-white">{{ $request->user->name }}</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ $request->email }}</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        Requested {{ $request->created_at->diffForHumans() }}
+                                        {{ $request->created_at->diffForHumans() }}
                                     </p>
                                 </div>
                                 <div class="flex space-x-2">
@@ -69,7 +69,7 @@
                                         @csrf
                                         <button type="submit"
                                             class="text-xs px-2 py-1 bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 rounded hover:bg-green-200 dark:hover:bg-green-700 transition">
-                                            Approve
+                                            Accepteren 
                                         </button>
                                     </form>
 
@@ -78,7 +78,7 @@
                                         @csrf
                                         <button type="submit"
                                             class="text-xs px-2 py-1 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded hover:bg-red-200 dark:hover:bg-red-700 transition">
-                                            Deny
+                                            Afwijzen
                                         </button>
                                     </form>
                                 </div>
@@ -86,15 +86,6 @@
                         </div>
                     @endforeach
                 </div>
-
-                @if ($pendingCount > 5)
-                    <div class="pt-2 border-t text-center">
-                        <a href="{{ route('password.admin.inbox') }}"
-                            class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                            View all requests
-                        </a>
-                    </div>
-                @endif
             @endif
         </div>
     </div>

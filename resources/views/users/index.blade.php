@@ -38,6 +38,7 @@
                                     <th scope="col" class="py-3 px-6">ID</th>
                                     <th scope="col" class="py-3 px-6">Naam</th>
                                     <th scope="col" class="py-3 px-6">Email</th>
+                                    <th scope="col" class="py-3 px-6">Beschrijving</th>
                                     <th scope="col" class="py-3 px-6">Slimme Meters</th>
                                     <th scope="col" class="py-3 px-6">Rol</th>
                                     <th scope="col" class="py-3 px-6">Status</th>
@@ -51,6 +52,15 @@
                                         <td class="py-4 px-6">{{ $user->id }}</td>
                                         <td class="py-4 px-6">{{ $user->name }}</td>
                                         <td class="py-4 px-6">{{ $user->email }}</td>
+                                        <td class="py-4 px-6">
+                                            @if($user->description)
+                                                <span class="line-clamp-1 max-w-xs" title="{{ $user->description }}">
+                                                    {{ $user->description }}
+                                                </span>
+                                            @else
+                                                <span class="text-gray-400 italic">Geen beschrijving</span>
+                                            @endif
+                                        </td>
                                         <td class="py-4 px-6">
                                             <div class="flex items-center">
                                                 <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
@@ -122,7 +132,7 @@
                                     </tr>
                                 @empty
                                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                        <td colspan="7" class="py-4 px-6 text-center">Geen gebruikers gevonden</td>
+                                        <td colspan="8" class="py-4 px-6 text-center">Geen gebruikers gevonden</td>
                                     </tr>
                                 @endforelse
                             </tbody>

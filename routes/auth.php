@@ -4,9 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
-use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
@@ -53,5 +51,21 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+});
+
+Route::prefix('admin')->group(function () {
+
+    Route::get('/password-reset-requests', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'adminIndex'])
+
+        ->name('password.admin.inbox');
+
+    Route::post('/password-reset-requests/{resetRequest}/approve', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'approve'])
+
+        ->name('password.admin.approve');
+
+    Route::post('/password-reset-requests/{resetRequest}/deny', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'deny'])
+
+        ->name('password.admin.deny');
 
 });

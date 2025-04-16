@@ -17,7 +17,7 @@
                     </x-etc.nav-link>
 
                     <x-etc.nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
-                        {{ __('Energiebudget') }}
+                        {{ __('Budget Instellen') }}
                     </x-etc.nav-link>
                     
                     @if(Auth::user()->hasRole(['admin', 'owner']))
@@ -69,7 +69,7 @@
                                 <x-etc.dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
-                                    {{ __('Uitloggen') }}
+                                    {{ __('Log uit') }}
                                 </x-etc.dropdown-link>
                             </form>
                         </x-slot>

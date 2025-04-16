@@ -119,10 +119,8 @@ class UserController extends Controller
                 'max:255',
                 $id ? Rule::unique('users')->ignore($id) : Rule::unique('users'),
             ],
+            'description' => 'nullable|string|max:1000',
             'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:20',
-            'city' => 'nullable|string|max:100',
             'role' => 'required|in:user,admin,owner',
         ];
         

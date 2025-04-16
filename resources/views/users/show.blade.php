@@ -97,22 +97,8 @@
 
                         <div class="mb-4">
                             <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
-                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Adres:</span>
-                                <span class="mt-1">{{ $user->address ?: 'Niet opgegeven' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
-                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Postcode:</span>
-                                <span class="mt-1">{{ $user->postal_code ?: 'Niet opgegeven' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
-                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Stad:</span>
-                                <span class="mt-1">{{ $user->city ?: 'Niet opgegeven' }}</span>
+                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Beschrijving:</span>
+                                <span class="mt-1">{{ $user->description ?: 'Niet opgegeven' }}</span>
                             </div>
                         </div>
 
