@@ -6,6 +6,11 @@
     </x-slot>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <!-- Display smart meters for the user -->
+            @if(Auth::check())
+                @include('components.user-meter-readings', ['user' => Auth::user()])
+            @endif
+            
             <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4 border-gray-200">
@@ -265,7 +270,8 @@
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="blue"
                             :chartData="$chartData"
-                            :period="$period" />
+                            :period="$period" 
+                            :date="$date" />
                         @break
 
                         @case('energy-chart-gas')

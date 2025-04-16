@@ -1,4 +1,4 @@
-@props(['type', 'usage', 'target', 'cost', 'percentage', 'status', 'unit', 'date' => null, 'period' => null])
+@props(['type', 'usage', 'target', 'percentage', 'status', 'unit', 'date' => null, 'period' => null])
 
 <div class="p-4">
     <div class="flex justify-between items-start mb-4">
@@ -30,7 +30,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span class="tooltiptext invisible absolute z-10 px-3 py-2 text-sm bg-gray-800 text-white rounded shadow-lg -right-4 -bottom-20 w-48">
-                Dit toont uw {{ strtolower($type) }}verbruik ten opzichte van uw budget. Een lager percentage is beter voor het milieu en uw portemonnee.
+                Dit toont uw {{ strtolower($type) }}verbruik ten opzichte van uw budget. Een lager percentage is beter voor het milieu.
             </span>
         </div>
     </div>
@@ -43,10 +43,6 @@
         <div class="flex justify-between items-center">
             <span class="text-gray-700 dark:text-gray-300">Target:</span>
             <span class="font-bold dark:text-white">{{ number_format($target, 2) }} {{ $unit }}</span>
-        </div>
-        <div class="flex justify-between items-center">
-            <span class="text-gray-700 dark:text-gray-300">Kosten:</span>
-            <span class="font-bold dark:text-white">€ {{ number_format($cost, 2) }}</span>
         </div>
     </div>
    

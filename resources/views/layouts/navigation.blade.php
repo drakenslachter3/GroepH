@@ -19,6 +19,16 @@
                     <x-etc.nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
                         {{ __('Budget Instellen') }}
                     </x-etc.nav-link>
+                    
+                    @if(Auth::user()->hasRole(['admin', 'owner']))
+                        <x-etc.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                            {{ __('Gebruikers') }}
+                        </x-etc.nav-link>
+                        
+                        <x-etc.nav-link :href="route('smartmeters.index')" :active="request()->routeIs('smartmeters.*')">
+                            {{ __('Slimme Meters') }}
+                        </x-etc.nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -88,6 +98,20 @@
             <x-etc.responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-etc.responsive-nav-link>
+            
+            <x-etc.responsive-nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
+                {{ __('Energiebudget') }}
+            </x-etc.responsive-nav-link>
+            
+            @if(Auth::user()->hasRole(['admin', 'owner']))
+                <x-etc.responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    {{ __('Gebruikers') }}
+                </x-etc.responsive-nav-link>
+                
+                <x-etc.responsive-nav-link :href="route('smartmeters.index')" :active="request()->routeIs('smartmeters.*')">
+                    {{ __('Slimme Meters') }}
+                </x-etc.responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
@@ -99,7 +123,7 @@
 
             <div class="mt-3 space-y-1">
                 <x-etc.responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
+                    {{ __('Profiel') }}
                 </x-etc.responsive-nav-link>
 
                 <!-- Authentication -->
@@ -109,7 +133,7 @@
                     <x-etc.responsive-nav-link :href="route('logout')"
                         onclick="event.preventDefault();
                                         this.closest('form').submit();">
-                        {{ __('Log Out') }}
+                        {{ __('Uitloggen') }}
                     </x-etc.responsive-nav-link>
                 </form>
             </div>

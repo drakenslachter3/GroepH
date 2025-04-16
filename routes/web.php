@@ -5,6 +5,7 @@ use App\Http\Controllers\EnergyBudgetController;
 use App\Http\Controllers\EnergyVisualizationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SmartMeterController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,9 +37,23 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    // Gebruikersbeheer routes (vervangt accountbeheer)
+    // Gebruikersbeheer routes
     Route::resource('users', UserController::class);
     Route::post('/delete-user/{user}', [UserController::class, 'destroy'])->name('users.delete');
+    
+    // Slimme meter beheer routes
+    Route::resource('smartmeters', SmartMeterController::class);
+    Route::get('/users/{user}/meters', [SmartMeterController::class, 'userMeters'])->name('smartmeters.userMeters');
+    Route::post('/users/{user}/meters/link', [SmartMeterController::class, 'linkMeter'])->name('smartmeters.linkMeter');
+    Route::post('/users/{user}/meters/{smartmeter}/unlink', [SmartMeterController::class, 'unlinkMeter'])->name('smartmeters.unlinkMeter');
+    Route::post('/smartmeters/{smartmeter}/delete', [SmartMeterController::class, 'destroy'])->name('smartmeters.delete');
 });
 
+// API route for smart meter search (used by AJAX)
+Route::middleware('auth')->prefix('api')->group(function () {
+    Route::get('/smartmeters/search', [SmartMeterController::class, 'search'])->name('api.smartmeters.search');
+});
+
+
 require __DIR__ . '/auth.php';
+

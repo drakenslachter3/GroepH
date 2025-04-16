@@ -11,6 +11,11 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
+        User::where('email', 'gebruiker@example.com')->delete();
+        User::where('email', 'admin@example.com')->delete();
+        SmartMeter::where('meter_id', 'SM001')->delete();
+        SmartMeter::where('meter_id', 'SM002')->delete();
+
         // Create a test user
         $user = User::create([
             'name' => 'Test Gebruiker',
@@ -34,16 +39,20 @@ class UserSeeder extends Seeder
         // Create some smart meters
         $meter1 = SmartMeter::create([
             'meter_id' => 'SM001',
+            'name' => 'smoothie',
             'location' => 'Woonkamer',
-            'type' => 'electricity',
+            'measures_electricity' => true,
+            'measures_gas' => false,
             'installation_date' => now(),
             'active' => true,
         ]);
 
         $meter2 = SmartMeter::create([
             'meter_id' => 'SM002',
+            'name' => 'koffiezetter',
             'location' => 'Keuken',
-            'type' => 'gas',
+            'measures_electricity' => false,
+            'measures_gas' => true,
             'installation_date' => now(),
             'active' => true,
         ]);
