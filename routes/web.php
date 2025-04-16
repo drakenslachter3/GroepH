@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EnergyBudgetController;
 use App\Http\Controllers\EnergyVisualizationController;
+use App\Http\Controllers\EnergyBudgetMarginController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -34,6 +35,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/set-widget', [DashboardController::class, 'setWidget'])->name('dashboard.setWidget');
     Route::post('/dashboard/reset-layout', [DashboardController::class, 'resetLayout'])->name('dashboard.resetLayout');
     Route::post('/dashboard/set-time', [DashboardController::class, 'setTime'])->name('dashboard.setTime');
+
+    Route::post('/energy-budget/margin', [EnergyBudgetMarginController::class, 'updateMargin']);
+    Route::post('/energy-budget/budgets', [EnergyBudgetMarginController::class, 'updateBudgets']);
+    Route::get('/energy-budget/margin', [EnergyBudgetMarginController::class, 'getMarginSettings']);
+    Route::get('/energy-budget/budgets', [EnergyBudgetMarginController::class, 'getDailyBudgets']);
 });
 
 Route::middleware('auth')->group(function () {
