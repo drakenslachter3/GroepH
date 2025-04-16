@@ -145,7 +145,7 @@
                                     <div id="budgetProgressBar" class="bg-blue-600 h-2.5 rounded-full"
                                         style="width: 100%"></div>
                                 </div>
-                                <div id="budgetWarning" class="text-sm text-yellow-500 dark:text-yellow-400 hidden">
+                                <div id="budgetWarning" class="text-sm text-yellow-500 dark:text-yellow-400" style="visibility: hidden; min-height: 1.5rem;">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1"
                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -153,6 +153,7 @@
                                     </svg>
                                     Maandelijkse waardes mogen niet meer dan het jaarbudget zijn.
                                 </div>
+
                             </div>
 
                             <!-- Monthly Budget Sliders Grid with Vertical Sliders -->
@@ -570,7 +571,7 @@
                     data[monthIndex].value = maxAllowed;
 
                     // Show the warning
-                    budgetWarning.classList.remove('hidden');
+                    budgetWarning.style.visibility = "visible";
 
                     // Update both the display and input values
                     const valueInput = document.getElementById(`input-${monthIndex}`);
@@ -590,7 +591,7 @@
                     data[monthIndex].value = proposedValue;
 
                     // Hide the warning - we're within budget
-                    budgetWarning.classList.add('hidden');
+                    budgetWarning.style.visibility = "hidden";
 
                     // Update the input value
                     const valueInput = document.getElementById(`input-${monthIndex}`);
@@ -666,7 +667,7 @@
                 updateBudgetDisplay();
 
                 // Hide any warnings
-                budgetWarning.classList.add('hidden');
+                budgetWarning.style.visibility = "hidden";
             }
 
             function updateElectricityYearly() {
