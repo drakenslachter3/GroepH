@@ -88,7 +88,7 @@ class SmartMeterController extends Controller
         
         DB::beginTransaction();
         try {
-            $smartMeter = SmartMeter::create($validated);
+            $smartmeter = SmartMeter::create($validated);
             DB::commit();
             
             if ($request->filled('account_id')) {
@@ -109,11 +109,11 @@ class SmartMeterController extends Controller
     /**
      * Toon details van een meter
      */
-    public function show(SmartMeter $smartMeter)
+    public function show(SmartMeter $smartmeter)
     {
         $this->checkAdminAccess();
         
-        return view('smartmeters.show', compact('smartMeter'));
+        return view('smartmeters.show', compact('smartmeter'));
     }
 
     /**
@@ -180,28 +180,28 @@ class SmartMeterController extends Controller
     /**
      * Verwijder een meter
      */
-    public function destroy(SmartMeter $smartMeter)
+    public function destroy(SmartMeter $smartmeter)
 {
     $this->checkAdminAccess();
     
     try {
         // Log the attempt to delete this meter
-        \Log::info('Attempting to delete meter ID: ' . $smartMeter->id);
+        \Log::info('Attempting to delete meter ID: ' . $smartmeter->id);
         
         // Controleer of er afhankelijke metingen zijn die verwijderd moeten worden
-        $readingsCount = $smartMeter->readings()->count();
+        $readingsCount = $smartmeter->readings()->count();
         \Log::info('Found ' . $readingsCount . ' readings to delete');
         
         DB::beginTransaction();
         
         // Verwijder eerst alle metingen indien aanwezig
         if ($readingsCount > 0) {
-            $smartMeter->readings()->delete();
+            $smartmeter->readings()->delete();
             \Log::info('Readings deleted successfully');
         }
         
         // Verwijder daarna de meter zelf
-        $smartMeter->delete();
+        $smartmeter->delete();
         \Log::info('Smart meter deleted successfully');
         
         DB::commit();
@@ -269,18 +269,18 @@ class SmartMeterController extends Controller
     /**
      * Ontkoppel een meter van een gebruiker
      */
-    public function unlinkMeter(Request $request, User $user, SmartMeter $smartMeter)
+    public function unlinkMeter(Request $request, User $user, SmartMeter $smartmeter)
     {
         $this->checkAdminAccess();
         
-        if ($smartMeter->account_id != $user->id) {
+        if ($smartmeter->account_id != $user->id) {
             return redirect()->back()
                 ->with('error', 'Deze meter is niet gekoppeld aan deze gebruiker.');
         }
         
         try {
-            $smartMeter->account_id = null;
-            $smartMeter->save();
+            $smartmeter->account_id = null;
+            $smartmeter->save();
             
             return redirect()->route('smartmeters.userMeters', $user->id)
                 ->with('status', 'Slimme meter succesvol ontkoppeld!');
