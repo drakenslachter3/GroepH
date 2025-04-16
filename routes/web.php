@@ -48,8 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('smartmeters', SmartMeterController::class);
     Route::get('/users/{user}/meters', [SmartMeterController::class, 'userMeters'])->name('smartmeters.userMeters');
     Route::post('/users/{user}/meters/link', [SmartMeterController::class, 'linkMeter'])->name('smartmeters.linkMeter');
-    Route::post('/users/{user}/meters/{smartMeter}/unlink', [SmartMeterController::class, 'unlinkMeter'])->name('smartmeters.unlinkMeter');
-    Route::post('/smartmeters/{smartMeter}/delete', [SmartMeterController::class, 'destroy'])->name('smartmeters.delete');
+    Route::post('/users/{user}/meters/{smartmeter}/unlink', [SmartMeterController::class, 'unlinkMeter'])->name('smartmeters.unlinkMeter');
+    Route::post('/smartmeters/{smartmeter}/delete', [SmartMeterController::class, 'destroy'])->name('smartmeters.delete');
 });
 
 // API route for smart meter search (used by AJAX)
