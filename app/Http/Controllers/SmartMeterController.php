@@ -35,7 +35,7 @@ class SmartMeterController extends Controller
     public function index()
     {
         $this->checkAdminAccess();
-        
+
         $smartMeters = SmartMeter::with('user')->paginate(10);
         return view('smartmeters.index', compact('smartMeters'));
     }
@@ -46,15 +46,15 @@ class SmartMeterController extends Controller
     public function create(Request $request)
     {
         $this->checkAdminAccess();
-        
+
         // Als er een user_id parameter is, haal de gebruiker op
         $selectedUser = null;
         if ($request->has('user_id')) {
             $selectedUser = User::find($request->user_id);
         }
-        
+
         $users = User::orderBy('name')->get();
-        
+
         return view('smartmeters.form', compact('users', 'selectedUser'));
     }
 
@@ -64,9 +64,10 @@ class SmartMeterController extends Controller
     public function store(Request $request)
     {
         $this->checkAdminAccess();
-        
+
         $validated = $request->validate([
             'meter_id' => ['required', 'string', 'max:255', 'unique:smart_meters'],
+            'name' => ['nullable', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
             'measures_electricity' => ['boolean'],
             'measures_gas' => ['boolean'],
@@ -85,17 +86,17 @@ class SmartMeterController extends Controller
         $validated['active'] = $request->has('active') ? 1 : 0;
         $validated['measures_electricity'] = $request->has('measures_electricity') ? 1 : 0;
         $validated['measures_gas'] = $request->has('measures_gas') ? 1 : 0;
-        
+
         DB::beginTransaction();
         try {
             $smartmeter = SmartMeter::create($validated);
             DB::commit();
-            
+
             if ($request->filled('account_id')) {
                 return redirect()->route('smartmeters.userMeters', $validated['account_id'])
                     ->with('status', 'Slimme meter succesvol aangemaakt en gekoppeld!');
             }
-            
+
             return redirect()->route('smartmeters.index')
                 ->with('status', 'Slimme meter succesvol aangemaakt!');
         } catch (\Exception $e) {
@@ -112,7 +113,7 @@ class SmartMeterController extends Controller
     public function show(SmartMeter $smartmeter)
     {
         $this->checkAdminAccess();
-        
+
         return view('smartmeters.show', compact('smartmeter'));
     }
 
@@ -122,10 +123,10 @@ class SmartMeterController extends Controller
     public function edit(SmartMeter $smartmeter) // Changed from $smartMeter to $smartmeter
     {
         $this->checkAdminAccess();
-        
+
         $users = User::orderBy('name')->get();
         $selectedUser = $smartmeter->user;
-        
+
         return view('smartmeters.form', compact('smartmeter', 'users', 'selectedUser'));
     }
 
@@ -135,7 +136,7 @@ class SmartMeterController extends Controller
     public function update(Request $request, SmartMeter $smartmeter) // Changed from $smartMeter to $smartmeter
     {
         $this->checkAdminAccess();
-        
+
         $validated = $request->validate([
             'meter_id' => ['required', 'string', 'max:255', Rule::unique('smart_meters')->ignore($smartmeter->id)],
             'location' => ['nullable', 'string', 'max:255'],
@@ -156,17 +157,17 @@ class SmartMeterController extends Controller
         $validated['active'] = $request->has('active') ? 1 : 0;
         $validated['measures_electricity'] = $request->has('measures_electricity') ? 1 : 0;
         $validated['measures_gas'] = $request->has('measures_gas') ? 1 : 0;
-        
+
         // Als er geen account_id is, zet deze op null
         if (!$request->filled('account_id')) {
             $validated['account_id'] = null;
         }
-        
+
         DB::beginTransaction();
         try {
             $smartmeter->update($validated);
             DB::commit();
-            
+
             return redirect()->route('smartmeters.show', $smartmeter->id)
                 ->with('status', 'Slimme meter succesvol bijgewerkt!');
         } catch (\Exception $e) {
@@ -183,16 +184,16 @@ class SmartMeterController extends Controller
     public function destroy(SmartMeter $smartmeter)
 {
     $this->checkAdminAccess();
-    
+
     try {
         DB::beginTransaction();
-        
+
         // Verwijder daarna de meter zelf
         $smartmeter->delete();
         \Log::info('Smart meter deleted successfully');
-        
+
         DB::commit();
-        
+
         return redirect()->route('smartmeters.index')
             ->with('status', "Slimme meter succesvol verwijderd!");
     } catch (\Exception $e) {
@@ -200,7 +201,7 @@ class SmartMeterController extends Controller
         // Enhanced error logging
         \Log::error('Error deleting smart meter: ' . $e->getMessage());
         \Log::error('Exception stack trace: ' . $e->getTraceAsString());
-        
+
         return redirect()->back()
             ->with('error', 'Fout bij het verwijderen van de meter: ' . $e->getMessage());
     }
@@ -212,12 +213,12 @@ class SmartMeterController extends Controller
     public function userMeters(User $user)
     {
         $this->checkAdminAccess();
-        
+
         $user->load('smartMeters');
         $availableMeters = SmartMeter::whereNull('account_id')
             ->orWhere('account_id', $user->id)
             ->get();
-            
+
         return view('smartmeters.user-meters', compact('user', 'availableMeters'));
     }
 
@@ -227,24 +228,24 @@ class SmartMeterController extends Controller
     public function linkMeter(Request $request, User $user)
     {
         $this->checkAdminAccess();
-        
+
         $validated = $request->validate([
             'meter_id' => ['required', 'exists:smart_meters,id'],
         ]);
-        
+
         $meter = SmartMeter::findOrFail($validated['meter_id']);
-        
+
         // Als de meter al gekoppeld is aan een andere gebruiker, dan geven we een foutmelding
         if ($meter->account_id && $meter->account_id != $user->id) {
             return redirect()->back()
                 ->with('error', 'Deze meter is al gekoppeld aan een andere gebruiker.');
         }
-        
+
         try {
             // Koppel de meter aan de gebruiker
             $meter->account_id = $user->id;
             $meter->save();
-            
+
             return redirect()->route('smartmeters.userMeters', $user->id)
                 ->with('status', 'Slimme meter succesvol gekoppeld!');
         } catch (\Exception $e) {
@@ -259,16 +260,16 @@ class SmartMeterController extends Controller
     public function unlinkMeter(Request $request, User $user, SmartMeter $smartmeter)
     {
         $this->checkAdminAccess();
-        
+
         if ($smartmeter->account_id != $user->id) {
             return redirect()->back()
                 ->with('error', 'Deze meter is niet gekoppeld aan deze gebruiker.');
         }
-        
+
         try {
             $smartmeter->account_id = null;
             $smartmeter->save();
-            
+
             return redirect()->route('smartmeters.userMeters', $user->id)
                 ->with('status', 'Slimme meter succesvol ontkoppeld!');
         } catch (\Exception $e) {
@@ -283,21 +284,21 @@ class SmartMeterController extends Controller
     public function search(Request $request)
     {
         $this->checkAdminAccess();
-        
+
         $query = $request->get('query');
-        
+
         $meters = SmartMeter::where('meter_id', 'like', '%' . $query . '%')
             ->whereNull('account_id')
             ->limit(10)
             ->get(['id', 'meter_id', 'location', 'measures_electricity', 'measures_gas']);
-        
+
         // Converteer de meettype-velden naar een leesbare string
         $meters->each(function($meter) {
             $meter->type_description = $meter->getMeasurementTypeString();
         });
-            
+
         return response()->json($meters);
     }
 
-    
+
 }

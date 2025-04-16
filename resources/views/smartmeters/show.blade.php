@@ -44,6 +44,13 @@
 
                     <div class="mb-4">
                         <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
+                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Naam:</span>
+                            <span class="mt-1">{{ $smartmeter->name ?? 'Niet gespecificeerd' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
                             <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Metingen:</span>
                             <div class="flex space-x-2 mt-1">
                                 @if($smartmeter->measures_electricity ?? false)

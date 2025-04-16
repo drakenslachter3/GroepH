@@ -37,6 +37,7 @@
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
                                     <th scope="col" class="py-3 px-6">Meter ID</th>
+                                    <th scope="col" class="py-3 px-6">Naam</th>
                                     <th scope="col" class="py-3 px-6">Meet Types</th>
                                     <th scope="col" class="py-3 px-6">Locatie</th>
                                     <th scope="col" class="py-3 px-6">Gekoppelde Gebruiker</th>
@@ -49,6 +50,7 @@
                                     <tr
                                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                         <td class="py-4 px-6">{{ $meter->meter_id }}</td>
+                                        <td class="py-4 px-6">{{ $meter->name ?? 'Niet gespecificeerd' }}</td>
                                         <td class="py-4 px-6">
                                             <div class="flex space-x-2">
                                                 @if($meter->measures_electricity ?? false)
