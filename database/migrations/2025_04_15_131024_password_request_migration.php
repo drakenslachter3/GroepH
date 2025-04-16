@@ -19,7 +19,7 @@ return new class extends Migration
             $table->enum('status', ['pending', 'approved', 'denied'])->default('pending');
             $table->timestamp('approved_at')->nullable();
             $table->timestamp('denied_at')->nullable();
-            $table->timestamp('expires_at');
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
     }
