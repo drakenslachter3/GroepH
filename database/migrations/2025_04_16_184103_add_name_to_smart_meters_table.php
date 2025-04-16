@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('smart_meters', function (Blueprint $table) {
-            $table->string('name')->after('meter_id')->nullable();
+            $table->string('name')->after('meter_id')->require();
         });
     }
 

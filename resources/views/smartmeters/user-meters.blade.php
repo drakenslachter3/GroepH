@@ -33,39 +33,73 @@
                     
                     <form method="POST" action="{{ route('smartmeters.linkMeter', $user->id) }}" class="space-y-4">
                         @csrf
-                        <div class="relative">
-                            <label for="meter_search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Zoek meter op ID</label>
-                            <input type="text" id="meter_search" 
-                                class="block w-full p-2 pl-10 border-gray-300 rounded-md dark:bg-gray-800 dark:text-white dark:border-gray-600" 
-                                placeholder="Begin met typen om te zoeken..." autocomplete="off">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" style="top: 24px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                        <!-- Alpine.js Smart Meter Selector -->
+                        <div class="relative" x-data="smartMeterSelector">
+                            <!-- Hidden input to store the selected smart meter ID -->
+                            <input type="hidden" name="meter_id" :value="selectedMeter ? selectedMeter.id : ''" />
+                            
+                            <!-- Search input field -->
+                            <div class="flex">
+                                <input 
+                                    type="text" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="Zoek een slimme meter... (ID of locatie)"
+                                    @focus="open = true"
+                                    @click.outside="open = false"
+                                    x-model="search"
+                                    :value="selectedMeter ? selectedMeter.meter_id + ' - ' + selectedMeter.location : ''"
+                                />
+                                <button type="button" class="ml-2 mt-1 bg-indigo-600 p-2 rounded-md text-white" @click="open = !open">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
                             </div>
-                            <!-- Dropdown resultaten -->
-                            <div id="search_results" class="hidden absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg max-h-60 overflow-auto"></div>
-                        </div>
-                        
-                        <!-- Geselecteerde meter -->
-                        <div id="selected_meter" class="hidden border dark:border-gray-700 p-4 rounded-md bg-blue-50 dark:bg-blue-900">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <p class="font-medium"><span id="selected_meter_id"></span></p>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300"><span id="selected_meter_location"></span> - <span id="selected_meter_type"></span></p>
+                            
+                            <!-- Results dropdown -->
+                            <div 
+                                x-show="open" 
+                                class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg rounded-md py-1 text-base overflow-auto focus:outline-none max-h-60"
+                                style="display: none;"
+                            >
+                                <div x-show="!filteredMeters().length" class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                                    Geen slimme meters gevonden
                                 </div>
-                                <button type="button" id="clear_selection" class="text-red-500 hover:text-red-700">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                
+                                <template x-for="meter in filteredMeters()" :key="meter.id">
+                                    <div 
+                                        @click="selectedMeter = meter; open = false; search = meter.meter_id + ' - ' + meter.location;"
+                                        class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-100 dark:hover:bg-indigo-900"
+                                        :class="selectedMeter && selectedMeter.id === meter.id ? 'bg-indigo-50 dark:bg-indigo-800' : ''"
+                                    >
+                                        <div class="flex items-center">
+                                            <span class="block truncate text-gray-900 dark:text-white" x-text="meter.meter_id + ' - ' + meter.location"></span>
+                                        </div>
+                                        <span 
+                                            x-show="selectedMeter && selectedMeter.id === meter.id" 
+                                            class="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600 dark:text-indigo-400"
+                                        >
+                                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </template>
+                            </div>
+                            
+                            <!-- Selected smart meter display -->
+                            <div x-show="selectedMeter" class="mt-2 p-2 bg-indigo-50 dark:bg-indigo-900 rounded-md flex justify-between items-center">
+                                <span class="text-sm text-gray-700 dark:text-gray-300" x-text="selectedMeter ? 'Geselecteerd: ' + selectedMeter.meter_id + ' - ' + selectedMeter.location : ''"></span>
+                                <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800" @click="selectedMeter = null; search = '';">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                                     </svg>
                                 </button>
                             </div>
                         </div>
                         
-                        <input type="hidden" id="meter_id" name="meter_id">
-                        
                         <div>
-                            <button type="submit" id="submit_button" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" x-bind:disabled="!selectedMeter">
                                 Koppel meter aan gebruiker
                             </button>
                         </div>
@@ -81,7 +115,8 @@
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
                                     <th scope="col" class="py-3 px-6">Meter ID</th>
-                                    <th scope="col" class="py-3 px-6">Type</th>
+                                    <th scope="col" class="py-3 px-6">Naam</th>
+                                    <th scope="col" class="py-3 px-6">Meet Types</th>
                                     <th scope="col" class="py-3 px-6">Locatie</th>
                                     <th scope="col" class="py-3 px-6">Status</th>
                                     <th scope="col" class="py-3 px-6">Acties</th>
@@ -91,7 +126,22 @@
                                 @foreach($user->smartMeters as $meter)
                                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                         <td class="py-4 px-6">{{ $meter->meter_id }}</td>
-                                        <td class="py-4 px-6">{{ ucfirst($meter->type) }}</td>
+                                        <td class="py-4 px-6">{{ $meter->name ?? 'Niet gespecificeerd' }}</td>
+                                        <td class="py-4 px-6">
+                                            <div class="flex space-x-2">
+                                                @if($meter->measures_electricity ?? false)
+                                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Elektriciteit</span>
+                                                @endif
+                                                @if($meter->measures_gas ?? false)
+                                                    <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Gas</span>
+                                                @endif
+                                                @if(!($meter->measures_electricity ?? false) && !($meter->measures_gas ?? false))
+                                                    <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                                                        {{ $meter->type ?? 'Onbekend' }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td class="py-4 px-6">{{ $meter->location ?: 'Niet gespecificeerd' }}</td>
                                         <td class="py-4 px-6">
                                             @if($meter->active)
@@ -133,104 +183,50 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const meterSearchInput = document.getElementById('meter_search');
-        const searchResults = document.getElementById('search_results');
-        const selectedMeter = document.getElementById('selected_meter');
-        const selectedMeterId = document.getElementById('selected_meter_id');
-        const selectedMeterLocation = document.getElementById('selected_meter_location');
-        const selectedMeterType = document.getElementById('selected_meter_type');
-        const meterIdInput = document.getElementById('meter_id');
-        const clearSelectionBtn = document.getElementById('clear_selection');
-        const submitButton = document.getElementById('submit_button');
-        
-        let debounceTimer;
-        
-        // Event listener voor input in zoekveld
-        meterSearchInput.addEventListener('input', function() {
-            clearTimeout(debounceTimer);
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('smartMeterSelector', () => ({
+            init() {
+                // Leave this empty as we'll fetch meters dynamically
+            },
+            open: false,
+            selectedMeter: null,
+            search: '',
+            smartMeters: [],
             
-            const query = this.value.trim();
+            // Fetch meters when dropdown opens
+            async fetchMeters() {
+                if (this.smartMeters.length === 0) {
+                    try {
+                        const response = await fetch('/api/smartmeters/search?query=' + encodeURIComponent(this.search));
+                        const data = await response.json();
+                        this.smartMeters = data.map(meter => ({
+                            id: meter.id,
+                            name: meter.name,
+                            meter_id: meter.meter_id, 
+                            location: meter.location || 'Geen locatie',
+                            type: meter.type
+                        }));
+                    } catch (error) {
+                        console.error('Error fetching smart meters:', error);
+                    }
+                }
+            },
             
-            if (query.length < 2) {
-                searchResults.innerHTML = '';
-                searchResults.classList.add('hidden');
-                return;
+            filteredMeters() {
+                // Fetch meters if we open the dropdown and have none
+                if (this.open && this.smartMeters.length === 0) {
+                    this.fetchMeters();
+                }
+                
+                if (!this.search) return this.smartMeters;
+                
+                const searchLower = this.search.toLowerCase();
+                return this.smartMeters.filter(meter => 
+                    meter.meter_id.toLowerCase().includes(searchLower) || 
+                    meter.location.toLowerCase().includes(searchLower)
+                );
             }
-            
-            debounceTimer = setTimeout(() => {
-                fetchResults(query);
-            }, 300);
-        });
-        
-        // Functie om resultaten op te halen
-        function fetchResults(query) {
-            fetch(`/api/smartmeters/search?query=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    displayResults(data);
-                })
-                .catch(error => {
-                    console.error('Error fetching results:', error);
-                });
-        }
-        
-        // Functie om resultaten weer te geven
-        function displayResults(meters) {
-            searchResults.innerHTML = '';
-            
-            if (meters.length === 0) {
-                const noResults = document.createElement('div');
-                noResults.className = 'p-2 text-sm text-gray-700 dark:text-gray-300';
-                noResults.textContent = 'Geen beschikbare meters gevonden';
-                searchResults.appendChild(noResults);
-            } else {
-                meters.forEach(meter => {
-                    const resultItem = document.createElement('div');
-                    resultItem.className = 'p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700';
-                    resultItem.innerHTML = `
-                        <div class="font-medium">${meter.meter_id}</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">${meter.location || 'Geen locatie'} - ${meter.type === 'electricity' ? 'Elektriciteit' : 'Gas'}</div>
-                    `;
-                    
-                    resultItem.addEventListener('click', () => {
-                        selectMeter(meter);
-                    });
-                    
-                    searchResults.appendChild(resultItem);
-                });
-            }
-            
-            searchResults.classList.remove('hidden');
-        }
-        
-        // Functie om een meter te selecteren
-        function selectMeter(meter) {
-            meterIdInput.value = meter.id;
-            selectedMeterId.textContent = meter.meter_id;
-            selectedMeterLocation.textContent = meter.location || 'Geen locatie';
-            selectedMeterType.textContent = meter.type === 'electricity' ? 'Elektriciteit' : 'Gas';
-            
-            selectedMeter.classList.remove('hidden');
-            searchResults.classList.add('hidden');
-            meterSearchInput.value = '';
-            
-            submitButton.disabled = false;
-        }
-        
-        // Event listener voor het wissen van de selectie
-        clearSelectionBtn.addEventListener('click', function() {
-            meterIdInput.value = '';
-            selectedMeter.classList.add('hidden');
-            submitButton.disabled = true;
-        });
-        
-        // Sluiten van resultaten wanneer ergens anders wordt geklikt
-        document.addEventListener('click', function(event) {
-            if (!meterSearchInput.contains(event.target) && !searchResults.contains(event.target)) {
-                searchResults.classList.add('hidden');
-            }
-        });
+        }));
     });
 </script>
 @endpush

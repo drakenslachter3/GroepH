@@ -135,7 +135,8 @@
                                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                         <tr>
                                             <th scope="col" class="py-3 px-6">Meter ID</th>
-                                            <th scope="col" class="py-3 px-6">Type</th>
+                                            <th scope="col" class="py-3 px-6">Naam</th>
+                                            <th scope="col" class="py-3 px-6">Meet Types</th>
                                             <th scope="col" class="py-3 px-6">Locatie</th>
                                             <th scope="col" class="py-3 px-6">Status</th>
                                         </tr>
@@ -144,7 +145,22 @@
                                         @foreach($user->smartMeters as $meter)
                                             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                                 <td class="py-4 px-6">{{ $meter->meter_id }}</td>
-                                                <td class="py-4 px-6">{{ ucfirst($meter->type) }}</td>
+                                                <td class="py-4 px-6">{{ $meter->name ?? 'Niet gespecificeerd' }}</td>
+                                                <td class="py-4 px-6">
+                                                    <div class="flex space-x-2">
+                                                        @if($meter->measures_electricity ?? false)
+                                                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Elektriciteit</span>
+                                                        @endif
+                                                        @if($meter->measures_gas ?? false)
+                                                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Gas</span>
+                                                        @endif
+                                                        @if(!($meter->measures_electricity ?? false) && !($meter->measures_gas ?? false))
+                                                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                                                                {{ $meter->type ?? 'Onbekend' }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </td>
                                                 <td class="py-4 px-6">{{ $meter->location ?: 'Niet gespecificeerd' }}</td>
                                                 <td class="py-4 px-6">
                                                     @if($meter->active)

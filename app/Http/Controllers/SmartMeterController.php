@@ -67,7 +67,7 @@ class SmartMeterController extends Controller
 
         $validated = $request->validate([
             'meter_id' => ['required', 'string', 'max:255', 'unique:smart_meters'],
-            'name' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
             'measures_electricity' => ['boolean'],
             'measures_gas' => ['boolean'],

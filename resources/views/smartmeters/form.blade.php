@@ -69,7 +69,7 @@
                                 <div class="flex items-center">
                                     <input
                                         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-                                        type="checkbox" id="measures_electricity" name="measures_electricity" value="1" {{ old('measures_electricity', isset($smartMeter) ? $smartMeter->measures_electricity : '1') ? 'checked' : '' }}>
+                                        type="checkbox" id="measures_electricity" name="measures_electricity" value="1" {{ old('measures_electricity', isset($smartmeter) ? $smartmeter->measures_electricity : '1') ? 'checked' : '' }}>
                                     <label class="ml-2 block text-sm text-gray-700 dark:text-gray-300"
                                         for="measures_electricity">
                                         Elektriciteit
@@ -78,7 +78,7 @@
                                 <div class="flex items-center">
                                     <input
                                         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-                                        type="checkbox" id="measures_gas" name="measures_gas" value="1" {{ old('measures_gas', isset($smartMeter) ? $smartMeter->measures_gas : '1') ? 'checked' : '' }}>
+                                        type="checkbox" id="measures_gas" name="measures_gas" value="1" {{ old('measures_gas', isset($smartmeter) ? $smartmeter->measures_gas : '1') ? 'checked' : '' }}>
                                     <label class="ml-2 block text-sm text-gray-700 dark:text-gray-300" for="measures_gas">
                                         Gas
                                     </label>

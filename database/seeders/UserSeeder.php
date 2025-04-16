@@ -39,6 +39,7 @@ class UserSeeder extends Seeder
         // Create some smart meters
         $meter1 = SmartMeter::create([
             'meter_id' => 'SM001',
+            'name' => 'smoothie',
             'location' => 'Woonkamer',
             'measures_electricity' => true,
             'measures_gas' => false,
@@ -48,6 +49,7 @@ class UserSeeder extends Seeder
 
         $meter2 = SmartMeter::create([
             'meter_id' => 'SM002',
+            'name' => 'koffiezetter',
             'location' => 'Keuken',
             'measures_electricity' => false,
             'measures_gas' => true,
