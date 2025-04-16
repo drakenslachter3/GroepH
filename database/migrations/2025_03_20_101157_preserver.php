@@ -19,18 +19,6 @@ return new class extends Migration
                 $table->string('phone')->nullable();
             }
             
-            if (!Schema::hasColumn('users', 'address')) {
-                $table->string('address')->nullable();
-            }
-            
-            if (!Schema::hasColumn('users', 'postal_code')) {
-                $table->string('postal_code')->nullable();
-            }
-            
-            if (!Schema::hasColumn('users', 'city')) {
-                $table->string('city')->nullable();
-            }
-            
             if (!Schema::hasColumn('users', 'role')) {
                 $table->string('role')->default('user');
             }
@@ -52,9 +40,6 @@ return new class extends Migration
             // Drop the columns when rolling back
             $table->dropColumn([
                 'phone',
-                'address',
-                'postal_code',
-                'city',
                 'role',
                 'active'
             ]);
