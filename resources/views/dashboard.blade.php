@@ -57,6 +57,7 @@
                                         <option value="trend-analysis">Trend Analyse</option>
                                         <option value="energy-suggestions">Energiebesparingstips</option>
                                         <option value="budget-alert">Budget Waarschuwing</option>
+                                        <option value="daily-budgets">Dagelijkse budgetten</option>
                                     </select>
                                 </div>
 
@@ -289,6 +290,10 @@
                             :usagePattern="$usagePattern ?? 'avond'"
                             :housingType="$housingType"
                             :season="date('n') >= 3 && date('n') <= 5 ? 'lente' : (date('n') >= 6 && date('n') <= 8 ? 'zomer' : (date('n') >= 9 && date('n') <= 11 ? 'herfst' : 'winter'))" />
+                        @break
+
+                        @case('daily-budgets')
+                        <x-dashboard.daily-budgets/>
                         @break
 
                         @default
