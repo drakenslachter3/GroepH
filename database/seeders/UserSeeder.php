@@ -17,9 +17,6 @@ class UserSeeder extends Seeder
             'email' => 'gebruiker@example.com',
             'password' => Hash::make('password'),
             'phone' => '0612345678',
-            'address' => 'Teststraat 123',
-            'postal_code' => '1234 AB',
-            'city' => 'Amsterdam',
             'role' => 'user',
             'active' => true,
         ]);
@@ -30,9 +27,6 @@ class UserSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'phone' => '0687654321',
-            'address' => 'Adminstraat 456',
-            'postal_code' => '5678 CD',
-            'city' => 'Rotterdam',
             'role' => 'admin',
             'active' => true,
         ]);
