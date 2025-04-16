@@ -42,7 +42,7 @@ class PasswordResetRequestController extends Controller
             ->first();
 
         if ($existingRequest) {
-            return back()->with('status', 'A password reset request has already been submitted. Please wait for admin approval.');
+            return back()->with('status', 'Er is al een verzoek ingediend om het wachtwoord opnieuw in te stellen. Wacht op goedkeuring van de beheerder.');
         }
 
         // Create a new password reset request
@@ -57,7 +57,7 @@ class PasswordResetRequestController extends Controller
         //Hier zou je een mail sturen naar de admin om te resetten
         // Mail::to(ADMIN EMAIL HIER)->send(new PasswordResetRequested($resetRequest));
 
-        return back()->with('status', 'Your password reset request has been submitted and is pending admin approval.');
+        return back()->with('status', 'Je verzoek om je wachtwoord opnieuw in te stellen is ingediend en wacht op goedkeuring van de beheerder.');
     }
 
     /**
@@ -78,7 +78,7 @@ class PasswordResetRequestController extends Controller
     public function approve(PasswordResetRequest $resetRequest)
     {
         if (!$resetRequest->isPending() || $resetRequest->isExpired()) {
-            return back()->with('error', 'This password reset request cannot be approved.');
+            return back()->with('error', 'Dit verzoek om het wachtwoord opnieuw in te stellen kan niet worden goedgekeurd.');
         }
 
         $resetRequest->approve();
@@ -86,7 +86,7 @@ class PasswordResetRequestController extends Controller
         // Send email to user with reset link
         Mail::to($resetRequest->email)->send(new PasswordResetApproved($resetRequest));
 
-        return back()->with('status', 'Password reset request has been approved and email sent to the user.');
+        return back()->with('status', 'Het verzoek om het wachtwoord opnieuw in te stellen is goedgekeurd en er is een e-mail naar de gebruiker verzonden.');
     }
 
     /**
@@ -95,7 +95,7 @@ class PasswordResetRequestController extends Controller
     public function deny(PasswordResetRequest $resetRequest)
     {
         if (!$resetRequest->isPending() || $resetRequest->isExpired()) {
-            return back()->with('error', 'This password reset request cannot be denied.');
+            return back()->with('error', 'Dit verzoek om het wachtwoord opnieuw in te stellen kan niet worden geweigerd.');
         }
 
         $resetRequest->deny();
@@ -103,7 +103,7 @@ class PasswordResetRequestController extends Controller
         // Send email to user notifying of denial
         Mail::to($resetRequest->email)->send(new PasswordResetDenied($resetRequest));
 
-        return back()->with('status', 'Password reset request has been denied and email sent to the user.');
+        return back()->with('status', 'Wachtwoord reset verzoek is geweigerd en e-mail verstuurd naar de gebruiker.');
     }
 
     /**
@@ -118,7 +118,7 @@ class PasswordResetRequestController extends Controller
 
         if (!$resetRequest) {
             return redirect()->route('password.request')
-                ->with('error', 'This password reset link is invalid or has expired.');
+                ->with('error', 'Deze wachtwoord reset link is ongeldig of verlopen.');
         }
 
         return view('auth.reset-password', ['token' => $token, 'email' => $resetRequest->email]);
@@ -143,7 +143,7 @@ class PasswordResetRequestController extends Controller
 
         if (!$resetRequest) {
             return redirect()->route('password.request')
-                ->with('error', 'This password reset link is invalid or has expired.');
+                ->with('error', 'Deze wachtwoord reset link is ongeldig of verlopen.');
         }
 
         $user = User::find($resetRequest->user_id);
@@ -151,9 +151,8 @@ class PasswordResetRequestController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Delete all reset requests for this user
         PasswordResetRequest::where('user_id', $user->id)->delete();
 
-        return redirect()->route('login')->with('status', 'Your password has been reset successfully.');
+        return redirect()->route('login')->with('status', 'Je wachtwoord is succesvol gereset.');
     }
 }

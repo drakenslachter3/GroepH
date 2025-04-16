@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Request a password reset. Your request will be reviewed by an administrator.') }}
+        {{ __('Vraag een reset verzoek aan. Je verzoek moet worden geaccepteerd door een beheerder.') }}
     </div>
 
     <!-- Session Status -->
@@ -25,7 +25,7 @@
 
         <div class="flex items-center justify-end mt-4">
             <x-primary-button>
-                {{ __('Request Password Reset') }}
+                {{ __('Vraag aan') }}
             </x-primary-button>
         </div>
     </form>

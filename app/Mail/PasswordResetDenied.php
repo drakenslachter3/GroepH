@@ -27,7 +27,7 @@ class PasswordResetDenied extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Password Reset Request Has Been Denied',
+            subject: 'Uw verzoek om het wachtwoord opnieuw in te stellen is afgewezen',
         );
     }
 

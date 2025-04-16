@@ -27,7 +27,7 @@ class PasswordResetRequested extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Password Reset Request',
+            subject: 'Wachtwoord opnieuw instellen',
         );
     }
 
