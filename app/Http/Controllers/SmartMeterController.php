@@ -185,20 +185,7 @@ class SmartMeterController extends Controller
     $this->checkAdminAccess();
     
     try {
-        // Log the attempt to delete this meter
-        \Log::info('Attempting to delete meter ID: ' . $smartmeter->id);
-        
-        // Controleer of er afhankelijke metingen zijn die verwijderd moeten worden
-        $readingsCount = $smartmeter->readings()->count();
-        \Log::info('Found ' . $readingsCount . ' readings to delete');
-        
         DB::beginTransaction();
-        
-        // Verwijder eerst alle metingen indien aanwezig
-        if ($readingsCount > 0) {
-            $smartmeter->readings()->delete();
-            \Log::info('Readings deleted successfully');
-        }
         
         // Verwijder daarna de meter zelf
         $smartmeter->delete();
@@ -207,7 +194,7 @@ class SmartMeterController extends Controller
         DB::commit();
         
         return redirect()->route('smartmeters.index')
-            ->with('status', "Slimme meter succesvol verwijderd! ($readingsCount metingen verwijderd)");
+            ->with('status', "Slimme meter succesvol verwijderd!");
     } catch (\Exception $e) {
         DB::rollBack();
         // Enhanced error logging
