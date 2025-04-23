@@ -21,9 +21,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
-        'address',
-        'postal_code',
-        'city',
+        'description',
         'role',
         'active'
     ];
@@ -53,11 +51,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get de smart meter die aan deze gebruiker is gekoppeld.
+     * Get de smart meters die aan deze gebruiker zijn gekoppeld.
      */
-    public function smartMeter()
+    public function smartMeters()
     {
-        return $this->hasOne(SmartMeter::class, 'account_id');
+        return $this->hasMany(SmartMeter::class, 'account_id');
     }
 
     /**

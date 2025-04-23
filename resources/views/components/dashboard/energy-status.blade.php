@@ -1,4 +1,4 @@
-@props(['type', 'usage', 'target', 'cost', 'percentage', 'status', 'unit', 'date' => null, 'period' => null])
+@props(['type', 'usage', 'target', 'percentage', 'status', 'unit', 'date' => null, 'period' => null])
 
 <div class="p-4">
     <div class="flex justify-between items-start mb-4">
@@ -30,7 +30,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span class="tooltiptext invisible absolute z-10 px-3 py-2 text-sm bg-gray-800 text-white rounded shadow-lg -right-4 -bottom-20 w-48">
-                Dit toont uw {{ strtolower($type) }}verbruik ten opzichte van uw budget. Een lager percentage is beter voor het milieu en uw portemonnee.
+                Dit toont uw {{ strtolower($type) }}verbruik ten opzichte van uw budget. Een lager percentage is beter voor het milieu.
             </span>
         </div>
     </div>
@@ -44,42 +44,74 @@
             <span class="text-gray-700 dark:text-gray-300">Target:</span>
             <span class="font-bold dark:text-white">{{ number_format($target, 2) }} {{ $unit }}</span>
         </div>
-        <div class="flex justify-between items-center">
-            <span class="text-gray-700 dark:text-gray-300">Kosten:</span>
-            <span class="font-bold dark:text-white">€ {{ number_format($cost, 2) }}</span>
-        </div>
     </div>
    
-    <!-- Verbeterde progressbar met kleurverloop en beperkte overflow indicator -->
+    <!-- Progressbar met dynamische zwarte streep -->
     <div class="mt-4">
         <!-- Container voor progressbar met duidelijke begrenzing -->
         <div class="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden relative">
             @php
-            // Bereken het percentage voor de weergave, maximaal 100% voor de primaire balk
-            $displayWidth = min($percentage, 100);
-            
-            // Bereken de kleur gebaseerd op het percentage
-            // Van groen (0%) naar geel (50%) naar rood (100%)
-            if ($percentage <= 50) {
-                // Groen naar geel (0-50%)
-                $red = round(($percentage / 50) * 255);
-                $green = 255;
-                $blue = 0;
+            // Bereken de positie van de zwarte streep en de kleurzones
+            if ($percentage <= 100) {
+                // Als onder 100%, dan staat de streep op het huidige percentage
+                $dividerPosition = $percentage;
+                $greenZoneWidth = $percentage;
+                $redZoneWidth = 0;
+                
+                // Labels voor onder/boven 100%
+                $streepLabel = number_format($percentage, 1) . '%'; // Label onder de streep
+                $rightLabel = '100%'; // Label rechts
             } else {
-                // Geel naar rood (50-100%)
-                $red = 255;
-                $green = round(255 - (($percentage - 50) / 50) * 255);
-                $blue = 0;
+                // Als boven 100%, dan beweegt de streep naar links, 
+                // tot maximaal 75% naar links (dus minimaal 25% positie)
+                $overshootPercentage = $percentage - 100; // hoeveel over 100%
+                $maxShift = 75; // maximale verschuiving in procenten (naar links)
+                
+                // Bereken verschuiving op basis van overschrijding (meer overschrijding = meer verschuiving)
+                // Bij 0% overschrijding = 0% verschuiving
+                // Bij zeer grote overschrijding = maximale verschuiving van 75%
+                $shift = min($maxShift, ($overshootPercentage / 100) * $maxShift);
+                
+                // Bereken uiteindelijke positie (100% - verschuiving)
+                // Minimum positie is 25% (bij 75% verschuiving)
+                $dividerPosition = max(25, 100 - $shift);
+                
+                // De groene zone loopt tot aan de streep
+                $greenZoneWidth = $dividerPosition;
+                
+                // De rode zone loopt vanaf de streep tot 100%
+                $redZoneWidth = 100 - $dividerPosition;
+                
+                // Labels voor onder/boven 100%
+                $streepLabel = '100%'; // Label onder de streep
+                $rightLabel = number_format($percentage, 1) . '%'; // Label rechts
             }
-            $barColor = "rgb($red, $green, $blue)";
+            
+            // Bepaal of er een risico is op overlap van labels
+            $labelOverlapRisk = $percentage > 100 && $dividerPosition > 70;
             @endphp
             
-            <!-- Primaire balk (0-100%) -->
-            <div class="h-full rounded-lg transition-all duration-1000 ease-out"
-                 style="width: {{ $displayWidth }}%; background-color: {{ $barColor }};">
-            </div>
+            <!-- Groene deel (loopt tot aan zwarte streep) -->
+            <div 
+                class="absolute h-full transition-all duration-1000 ease-out bg-green-500"
+                style="width: {{ $greenZoneWidth }}%; left: 0;"
+            ></div>
             
-            <!-- Overflow indicator (voor waarden >100%, maar maximaal 20% extra) -->
+            <!-- Rode deel (loopt vanaf zwarte streep tot 100%) -->
+            @if($percentage > 100)
+                <div 
+                    class="absolute h-full transition-all duration-1000 ease-out bg-red-600"
+                    style="width: {{ $redZoneWidth }}%; left: {{ $greenZoneWidth }}%;"
+                ></div>
+            @endif
+            
+            <!-- Zwarte streep op positie -->
+            <div 
+                class="absolute top-0 bottom-0 w-1 bg-black z-10 transition-all duration-1000 ease-out"
+                style="left: {{ $dividerPosition }}%;"
+            ></div>
+            
+            <!-- Behoud ook de originele overflow indicator voor >100% -->
             @if($percentage > 100)
                 @php
                     // Beperk de overflow tot maximaal 20% extra
@@ -98,16 +130,30 @@
             @endif
         </div>
         
-        <!-- Labels voor de balk -->
-        <div class="flex justify-between mt-1">
+        <!-- Labels voor de balk met verbeterde positionering -->
+        <div class="flex justify-between mt-1 relative">
             <span class="text-xs text-gray-600 dark:text-gray-400">0%</span>
-            <span class="text-xs font-medium" style="color: {{ $percentage > 100 ? '#DC2626' : $barColor }}">
-                {{ number_format($percentage, 1) }}%
-                @if($percentage > 100)
-                <span class="ml-1 inline-block">!</span>
-                @endif
-            </span>
-            <span class="text-xs text-gray-600 dark:text-gray-400">100%</span>
+            
+            <!-- Label onder de zwarte streep (percentage of 100%) -->
+            <span class="text-xs text-gray-600 dark:text-gray-400 absolute transform -translate-x-1/2"
+                  style="left: {{ $dividerPosition }}%;">{{ $streepLabel }}</span>
+            
+            <!-- Rechter label (percentage of 100%) met aangepaste positie -->
+            @if($percentage > 100)
+                <span class="text-xs font-medium absolute 
+                        {{ $status === 'goed' ? 'text-green-700 dark:text-green-400' :
+                           ($status === 'waarschuwing' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400') }}"
+                      style="right: -5%; transform: translateX(0);">
+                    {{ $rightLabel }}
+                    <span class="ml-1 inline-block">!</span>
+                </span>
+            @else
+                <span class="text-xs font-medium
+                        {{ $status === 'goed' ? 'text-green-700 dark:text-green-400' :
+                           ($status === 'waarschuwing' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400') }}">
+                    {{ $rightLabel }}
+                </span>
+            @endif
         </div>
         
         <!-- Status bericht -->
@@ -124,30 +170,7 @@
                 <span class="text-red-600 dark:text-red-400">Alert: Je overschrijdt je target aanzienlijk!</span>
             @endif
         </div>
-        
-        <!-- Periode aanduiding -->
-        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            @if(isset($period))
-                @switch($period)
-                    @case('day')
-                        Dagelijks verbruik
-                        @break
-                    @case('month')
-                        Maandelijks verbruik
-                        @break
-                    @case('year')
-                        Jaarlijks verbruik
-                        @break
-                    @default
-                        Verbruik
-                @endswitch
-            @else
-                Verbruik
-            @endif
-        </div>
+      
     </div>
    
     <!-- Historische vergelijking -->

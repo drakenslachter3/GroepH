@@ -11,15 +11,17 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
+        User::where('email', 'gebruiker@example.com')->delete();
+        User::where('email', 'admin@example.com')->delete();
+        SmartMeter::where('meter_id', 'SM001')->delete();
+        SmartMeter::where('meter_id', 'SM002')->delete();
+
         // Create a test user
         $user = User::create([
             'name' => 'Test Gebruiker',
             'email' => 'gebruiker@example.com',
             'password' => Hash::make('password'),
             'phone' => '0612345678',
-            'address' => 'Teststraat 123',
-            'postal_code' => '1234 AB',
-            'city' => 'Amsterdam',
             'role' => 'user',
             'active' => true,
         ]);
@@ -30,9 +32,6 @@ class UserSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'phone' => '0687654321',
-            'address' => 'Adminstraat 456',
-            'postal_code' => '5678 CD',
-            'city' => 'Rotterdam',
             'role' => 'admin',
             'active' => true,
         ]);
@@ -40,16 +39,20 @@ class UserSeeder extends Seeder
         // Create some smart meters
         $meter1 = SmartMeter::create([
             'meter_id' => 'SM001',
+            'name' => 'smoothie',
             'location' => 'Woonkamer',
-            'type' => 'electricity',
+            'measures_electricity' => true,
+            'measures_gas' => false,
             'installation_date' => now(),
             'active' => true,
         ]);
 
         $meter2 = SmartMeter::create([
             'meter_id' => 'SM002',
+            'name' => 'koffiezetter',
             'location' => 'Keuken',
-            'type' => 'gas',
+            'measures_electricity' => false,
+            'measures_gas' => true,
             'installation_date' => now(),
             'active' => true,
         ]);

@@ -39,8 +39,17 @@
                         @enderror
                     </div>
 
+                    <!-- New Description Field -->
                     <div class="mb-4">
-                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Wachtwoord {!! isset($account) ? '' : '<span class="text-red-600">*</span>' !!}</label>
+                        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Beschrijving</label>
+                        <textarea class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="description" name="description" rows="3">{{ old('description', isset($user) ? $user->description : '') }}</textarea>
+                        @error('description')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="mb-4">
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Wachtwoord {!! isset($user) ? '' : '<span class="text-red-600">*</span>' !!}</label>
                         <input type="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="password" name="password" {{ isset($user) ? '' : 'required' }}>
                         @if(isset($user))
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Laat leeg om het huidige wachtwoord te behouden</p>
@@ -51,7 +60,7 @@
                     </div>
 
                     <div class="mb-4">
-                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bevestig wachtwoord {!! isset($account) ? '' : '<span class="text-red-600">*</span>' !!}</label>
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bevestig wachtwoord {!! isset($user) ? '' : '<span class="text-red-600">*</span>' !!}</label>
                         <input type="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="password_confirmation" name="password_confirmation" {{ isset($user) ? '' : 'required' }}>
                     </div>
 
@@ -59,45 +68,6 @@
                         <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefoonnummer</label>
                         <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="phone" name="phone" value="{{ old('phone', isset($user) ? $user->phone : '') }}">
                         @error('phone')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Adres</label>
-                        <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="address" name="address" value="{{ old('address', isset($user) ? $user->address : '') }}">
-                        @error('address')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="postal_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Postcode</label>
-                        <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="postal_code" name="postal_code" value="{{ old('postal_code', isset($user) ? $user->postal_code : '') }}">
-                        @error('postal_code')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="city" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stad</label>
-                        <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="city" name="city" value="{{ old('city', isset($user) ? $user->city : '') }}">
-                        @error('city')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="smart_meter_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Slimme Meter ID</label>
-                        <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="smart_meter_id" name="smart_meter_id">
-                            <option value="">-- Selecteer een slimme meter --</option>
-                            @foreach($smartMeters as $meter)
-                                <option value="{{ $meter->id }}" {{ (old('smart_meter_id', isset($user) && $user->smartMeter ? $user->smartMeter->id : '') == $meter->id) ? 'selected' : '' }}>
-                                    {{ $meter->meter_id }} - {{ $meter->location }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('smart_meter_id')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -139,4 +109,5 @@
         </div>
     </div>
 </div>
+
 @endsection
