@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnergyBudgetController;
+use App\Http\Controllers\EnergyPredictionController;
 use App\Http\Controllers\EnergyVisualizationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
@@ -29,6 +30,7 @@ Route::middleware('auth')->group(function () {
 
     // Energie visualisatie routes
     Route::get('/energy/visualization', [EnergyVisualizationController::class, 'dashboard'])->name('energy.dashboard');
+    Route::get('/energy/predictions', [EnergyPredictionController::class, 'showPredictions'])->name('energy.predictions');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/set-widget', [DashboardController::class, 'setWidget'])->name('dashboard.setWidget');
