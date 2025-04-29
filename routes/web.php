@@ -7,6 +7,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmartMeterController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InfluxDataController;
+
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -57,3 +59,7 @@ Route::middleware('auth')->prefix('api')->group(function () {
 
 require __DIR__ . '/auth.php';
 
+Route::get('/influx', [InfluxDataController::class, 'index'])->name('influx.index');
+Route::get('/influx/create', [InfluxDataController::class, 'create'])->name('influx.create');
+Route::post('/influx', [InfluxDataController::class, 'store'])->name('influx.store');
+Route::get('/influx/test-connection', [InfluxDataController::class, 'testConnection'])->name('influx.test-connection');
