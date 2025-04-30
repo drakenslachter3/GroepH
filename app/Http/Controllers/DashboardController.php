@@ -153,6 +153,7 @@ class DashboardController extends Controller
     private function getDefaultLayout()
     {
         return [
+            'switch-meter',
             'energy-status-electricity',
             'energy-status-gas',
             'energy-chart-electricity',
@@ -163,5 +164,19 @@ class DashboardController extends Controller
             'trend-analysis',
             'energy-suggestions'
         ];
+    }
+
+    public function saveSelectedMeter(Request $request){
+        $meterId = $request->meter;
+        $layout = UserGridLayout::where('user_id', auth()->id())->first();
+
+        if ($layout) {
+            $layout->selected_smartmeter = $meterId;
+            $layout->save();
+        } else {
+            throw new \Exception('[SaveSelectedMeter, DashboardController]: meter kan niet opgeslagen worden, omdat user_grid_layout nog niet bestaat voor deze gebruiker!');
+        }
+
+        return redirect()->route('dashboard')->with('status', 'Meterkeuze doorgevoerd - het dashboard is nu up-to-date!');
     }
 }

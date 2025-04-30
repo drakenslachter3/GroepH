@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Session\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -34,5 +35,10 @@ class UserGridLayout extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public static function getSelectedSmartMeterForCurrentUser(){   
+
+        return self::where('user_id', auth()->id())->value('selected_smartmeter');
     }
 }

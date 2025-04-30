@@ -135,6 +135,11 @@ class SmartMeter extends Model
         return !is_null($this->account_id);
     }
 
+    public static function getAllSmartMetersForCurrentUser()
+    {
+        return self::where('account_id', auth()->id())->get();
+    }
+
     /**
      * Beschrijf wat deze meter kan meten
      */
@@ -196,18 +201,18 @@ class SmartMeter extends Model
  *
  * @return string
  */
-public function getTypeDisplayName()
-{
-    $types = [];
+    public function getTypeDisplayName()
+    {
+        $types = [];
 
-    if ($this->measures_electricity) {
-        $types[] = 'Elektriciteit';
+        if ($this->measures_electricity) {
+            $types[] = 'Elektriciteit';
+        }
+
+        if ($this->measures_gas) {
+            $types[] = 'Gas';
+        }
+
+        return empty($types) ? 'Onbekend' : implode(' & ', $types);
     }
-
-    if ($this->measures_gas) {
-        $types[] = 'Gas';
-    }
-
-    return empty($types) ? 'Onbekend' : implode(' & ', $types);
-}
 }

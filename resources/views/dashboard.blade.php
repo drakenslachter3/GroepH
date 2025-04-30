@@ -6,6 +6,13 @@
     </x-slot>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+            @if (session('status'))
+                    <div id="status-message" class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-6 transition-opacity duration-1000 ease-out opacity-100">
+                        {{ session('status') }}
+                    </div>
+             @endif
+
             <!-- Display smart meters for the user -->
             {{-- @if(Auth::check())
                 @include('components.user-meter-readings', ['user' => Auth::user()])
@@ -48,7 +55,7 @@
                                             <option value="{{ $i }}">Positie {{ $i + 1 }}</option>
                                         @endfor
                                     </select>
-                                </div>
+                                </div> 
 
                                 <div class="space-y-2">
                                     <label for="widget-type" class="block text-sm font-medium text-gray-700 dark:text-white">Widget Type:</label>
@@ -62,10 +69,11 @@
                                         <option value="trend-analysis">Trend Analyse</option>
                                         <option value="energy-suggestions">Energiebesparingstips</option>
                                         <option value="budget-alert">Budget Waarschuwing</option>
+                                        <option value="switch-meter">Selecteer meter</option>
                                     </select>
                                 </div>
 
-                                <button type="submit" class="w-full py-3 px-4 bg-green-500 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
+                                <button type="submit" class="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
                                     Widget Toevoegen
                                 </button>
                             </form>
@@ -78,7 +86,7 @@
                                     </button>
                                 </form>
 
-                                <button onclick="window.location.href='{{ route('budget.form') }}'" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-purple-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
+                                <button onclick="window.location.href='{{ route('budget.form') }}'" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
                                     Budget Aanpassen
                                 </button>
                             </div>
@@ -297,6 +305,12 @@
                             :season="date('n') >= 3 && date('n') <= 5 ? 'lente' : (date('n') >= 6 && date('n') <= 8 ? 'zomer' : (date('n') >= 9 && date('n') <= 11 ? 'herfst' : 'winter'))" />
                         @break
 
+                        @case('switch-meter')
+                        <x-dashboard.switch-meter 
+                            :meters="\App\Models\SmartMeter::getAllSmartMetersForCurrentUser()"
+                            :selectedMeterId="\App\Models\UserGridLayout::getSelectedSmartMeterForCurrentUser()" />
+                        @break
+
                         @default
                         <p>Unknown widget type</p>
                         @endswitch
@@ -451,6 +465,19 @@
     
     // Roep de initiële setup aan
     initDatePickerListener();
+
+    // Status-message verwijderen na 5 seconden
+    setTimeout(() => {
+        const msg = document.getElementById('status-message');
+        if (msg) {
+            msg.classList.remove('opacity-100');
+            msg.classList.add('opacity-0');
+
+            setTimeout(() => {
+                msg.remove();
+            }, 1000);
+        }
+    }, 5000);
 });
     </script>
     @stack('chart-scripts')
