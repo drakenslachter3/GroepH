@@ -2,8 +2,26 @@
 
 namespace App\Services;
 
+/**
+ * Class EnergyPredictionService
+ * 
+ * Service for predicting energy usage based on historical data
+ */
 class EnergyPredictionService
 {
+    /**
+     * Prediction line generator
+     */
+    private $lineGenerator;
+    
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->lineGenerator = new EnergyPredictionLineGenerator();
+    }
+    
     /**
      * Voorspel het elektriciteitsverbruik voor de komende periode op basis van historische gegevens.
      *
@@ -165,15 +183,22 @@ class EnergyPredictionService
             $marginPercentage = min($marginPercentage, 0.35); // Cap at 35% for month/year
         }
         
-        // Calculate best and worst case scenarios
+        // Calculate best and worst case scenarios based on margin
         $bestCaseUsage = $predictedTotalUsage * (1 - $marginPercentage);
         $worstCaseUsage = $predictedTotalUsage * (1 + $marginPercentage);
         
         // Generate trend lines for visualization with proper scaling for the period
         $actualData = $this->generateActualData($historicalData, $period);
-        $predictionLine = $this->generatePredictionLine($actualData, $predictedTotalUsage, $period, $type);
-        $bestCaseLine = $this->generatePredictionLine($actualData, $bestCaseUsage, $period, $type);
-        $worstCaseLine = $this->generatePredictionLine($actualData, $worstCaseUsage, $period, $type);
+        
+        // Use the new prediction line generator for each scenario
+        $predictionLine = $this->lineGenerator->generateLine(
+            $actualData, $predictedTotalUsage, $period, $type, 'expected');
+        
+        $bestCaseLine = $this->lineGenerator->generateLine(
+            $actualData, $bestCaseUsage, $period, $type, 'best');
+            
+        $worstCaseLine = $this->lineGenerator->generateLine(
+            $actualData, $worstCaseUsage, $period, $type, 'worst');
         
         // Enhanced return data with all required information for visualization
         return [
@@ -228,8 +253,7 @@ class EnergyPredictionService
         }
         
         return $value;
-    }
-    
+    } 
     
     /**
      * Generate actual data points based on historical data and period type
@@ -357,350 +381,6 @@ class EnergyPredictionService
                 ];
                 return $monthPatterns[$index % 12];
         }
-    }
-    
-    /**
-     * Generate prediction line for chart visualization
-     * with smooth connection to historical data and realistic scaling
-     * 
-     * @param array $actualData Actual usage data
-     * @param float $predictedTotal Predicted total usage
-     * @param string $period Period type
-     * @param string $type Energy type (optional)
-     * @return array Prediction line values
-     */
-    private function generatePredictionLine(array $actualData, float $predictedTotal, string $period, string $type = 'electricity'): array
-    {
-        $periodLength = $this->getPeriodLength($period);
-        $currentPoint = $this->getCurrentPositionInPeriod($period);
-        $predictionLine = array_fill(0, $periodLength, null);
-        
-        // Find last valid actual data point
-        $lastActualValue = null;
-        $lastActualIndex = $currentPoint;
-        
-        // Look back up to 3 points to find actual data
-        for ($i = $currentPoint; $i >= max(0, $currentPoint - 3); $i--) {
-            if (!is_null($actualData[$i])) {
-                $lastActualValue = $actualData[$i];
-                $lastActualIndex = $i;
-                break;
-            }
-        }
-        
-        // If we couldn't find any actual data, estimate based on period averages
-        if ($lastActualValue === null) {
-            $lastActualValue = $this->getEstimatedValue($period, $type);
-            $lastActualIndex = max(0, $currentPoint - 1);
-        }
-        
-        // Calculate the sum of actual data up to current point
-        $actualSum = 0;
-        for ($i = 0; $i <= $currentPoint; $i++) {
-            $actualSum += $actualData[$i] ?? 0;
-        }
-        
-        // Calculate remaining usage to be distributed
-        $remainingUsage = max(0, $predictedTotal - $actualSum); // Ensure it's not negative
-        $remainingPeriods = $periodLength - $currentPoint - 1;
-        
-        if ($remainingPeriods <= 0) {
-            return $predictionLine; // No future periods to predict
-        }
-        
-        // Apply pattern factors to distribute the remaining usage realistically
-        $patternFactors = [];
-        
-        // Start with the known actual value
-        $predictionLine[$lastActualIndex] = $lastActualValue;
-        
-        // Get pattern factors for remaining periods
-        for ($i = $lastActualIndex + 1; $i < $periodLength; $i++) {
-            $patternFactor = $this->getPatternMultiplier($period, $i);
-            $patternFactors[$i] = $patternFactor;
-        }
-        
-        // Normalize pattern factors to distribute remaining usage
-        $factorSum = array_sum($patternFactors);
-        if ($factorSum == 0) $factorSum = 1; // Avoid division by zero
-        
-        // SPECIAL HANDLING FOR YEAR VIEW - to prevent the large jumps in the prediction line
-        if ($period === 'year') {
-            // Calculate the average monthly value from actual data
-            $actualValues = array_filter($actualData, function($val) { return $val !== null; });
-            $avgMonthlyValue = !empty($actualValues) ? array_sum($actualValues) / count($actualValues) : 300;
-            
-            // Use this as basis for prediction, with seasonal variations
-            $lastValue = $lastActualValue;
-            $monthlyPatterns = $type === 'electricity' 
-                ? [1.1, 1.0, 0.9, 0.8, 0.9, 1.0, 1.1, 1.1, 1.0, 1.1, 1.2, 1.3]  // Electricity seasonal pattern
-                : [1.8, 1.6, 1.4, 1.0, 0.6, 0.4, 0.3, 0.3, 0.5, 0.9, 1.4, 1.8]; // Gas seasonal pattern
-                
-            for ($i = $currentPoint + 1; $i < $periodLength; $i++) {
-                // Apply seasonal pattern but keep within reasonable variation of average
-                $seasonalFactor = $monthlyPatterns[$i % 12];
-                $predictedValue = $avgMonthlyValue * $seasonalFactor;
-                
-                // Ensure smooth transition from last actual value
-                if ($i === $currentPoint + 1) {
-                    // First prediction point should be close to last actual
-                    $predictedValue = ($lastValue * 0.7) + ($predictedValue * 0.3);
-                } else if ($i === $currentPoint + 2) {
-                    // Second prediction point - smoother transition
-                    $predictedValue = ($lastValue * 0.4) + ($predictedValue * 0.6);
-                }
-                
-                $predictionLine[$i] = $predictedValue;
-                $lastValue = $predictedValue;
-            }
-            
-            return $predictionLine;
-        }
-        
-        // For other views (day, month), use the existing approach
-        // For day view, scale values more carefully to avoid unrealistic hourly predictions
-        $maxValuePerUnit = ($period === 'day') ? 
-            ($type === 'electricity' ? 1.2 : 0.6) : // Max hourly kWh or m³
-            ($type === 'electricity' ? 20 : 10);    // Higher value for month/year
-        
-        // Smooth transition from actual to predicted
-        $cumulativeUsage = $actualSum;
-        
-        // For the transition point (if different from last actual)
-        if ($currentPoint > $lastActualIndex) {
-            // Create a smooth transition between last actual and first prediction
-            $transitionSlope = $this->calculateTransitionSlope($lastActualValue, $patternFactors, $remainingUsage, $period);
-            
-            // Ensure transition slope isn't making values too high for hourly
-            if ($period === 'day') {
-                $transitionSlope = min($transitionSlope, $maxValuePerUnit * 0.1);
-            }
-            
-            // Fill transition points
-            for ($i = $lastActualIndex + 1; $i <= $currentPoint; $i++) {
-                $steps = $i - $lastActualIndex;
-                $predictionLine[$i] = min($lastActualValue + ($transitionSlope * $steps), $maxValuePerUnit);
-                $cumulativeUsage = $predictionLine[$i];
-            }
-        }
-        
-        // For day view, ensure the predictions remain realistic for hourly usage
-        if ($period === 'day') {
-            // Calculate values for future points with realistic pattern but capped values
-            $avgPerHour = $remainingUsage / $remainingPeriods;
-            $avgPerHour = min($avgPerHour, $maxValuePerUnit * 0.5); // Cap the average at a reasonable level
-            
-            $lastValue = $predictionLine[$currentPoint] ?? $lastActualValue;
-            
-            for ($i = $currentPoint + 1; $i < $periodLength; $i++) {
-                $relativeFactor = $patternFactors[$i] / max(array_sum($patternFactors) / count($patternFactors), 0.1);
-                // This creates a pattern but keeps values in reasonable range
-                $incrementalValue = $avgPerHour * $relativeFactor;
-                
-                // Limit increases between consecutive hours
-                $maxIncrease = 0.5; // maximum kWh increase per hour
-                $proposedValue = $lastValue + min($incrementalValue - $lastValue, $maxIncrease);
-                
-                // Apply maximum cap for hourly values
-                $predictionLine[$i] = min($proposedValue, $maxValuePerUnit);
-                $lastValue = $predictionLine[$i];
-            }
-        } else {
-            // For month, use the normal cumulative approach
-            // Calculate values for future points using standard method
-            $usagePerUnit = $remainingUsage / $factorSum;
-            
-            for ($i = $currentPoint + 1; $i < $periodLength; $i++) {
-                $incrementalUsage = $usagePerUnit * $patternFactors[$i];
-                $cumulativeUsage += $incrementalUsage;
-                $predictionLine[$i] = $cumulativeUsage;
-            }
-        }
-        
-        // Apply curve smoothing
-        $predictionLine = $this->smoothPredictionCurve($predictionLine, $currentPoint, $period);
-        
-        return $predictionLine;
-    }
-    
-    /**
-     * Calculate appropriate slope for transition between actual and predicted values
-     * 
-     * @param float $lastActualValue Last recorded actual value
-     * @param array $patternFactors Pattern factors for remaining periods
-     * @param float $remainingUsage Remaining usage to distribute
-     * @param string $period Period type
-     * @return float Slope value for transition
-     */
-    private function calculateTransitionSlope($lastActualValue, $patternFactors, $remainingUsage, $period) {
-        if (empty($patternFactors)) {
-            return 0;
-        }
-        
-        // Get first pattern factor
-        $firstKey = array_key_first($patternFactors);
-        $firstPatternFactor = $patternFactors[$firstKey];
-        
-        // Calculate average usage per factor
-        $factorSum = array_sum($patternFactors);
-        if ($factorSum == 0) $factorSum = 1; // Avoid division by zero
-        
-        $avgUsagePerFactor = $remainingUsage / $factorSum;
-        
-        // Calculate expected next value based on pattern
-        $expectedNextValue = $avgUsagePerFactor * $firstPatternFactor;
-        
-        // Calculate a gentle slope that's a fraction of the difference
-        $difference = $expectedNextValue - $lastActualValue;
-        
-        // Return a gentler slope for smoother transition (fraction of difference)
-        return $difference * 0.3;
-    }
-    
-    /**
-     * Smooth prediction curve to make it more natural looking
-     * 
-     * @param array $predictionLine Original prediction line
-     * @param int $currentPoint Current position in the period
-     * @param string $period Period type
-     * @return array Smoothed prediction line
-     */
-    private function smoothPredictionCurve(array $predictionLine, int $currentPoint, string $period): array {
-        $smoothed = $predictionLine;
-        $startPoint = $currentPoint + 1;
-        $endPoint = count($predictionLine) - 1;
-        
-        // Not enough points to smooth
-        if ($endPoint - $startPoint < 2) {
-            return $predictionLine;
-        }
-        
-        // Apply local weighted smoothing
-        for ($i = $startPoint; $i <= $endPoint; $i++) {
-            // Skip null values
-            if ($predictionLine[$i] === null) continue;
-            
-            $weightSum = 0;
-            $valueSum = 0;
-            
-            // Use 5-point weighted average for smoothing
-            for ($j = max($startPoint, $i - 2); $j <= min($endPoint, $i + 2); $j++) {
-                if ($predictionLine[$j] === null) continue;
-                
-                // Calculate weight based on distance (closer points have higher weights)
-                $distance = abs($i - $j);
-                $weight = $distance == 0 ? 1.0 : 1.0 / (2 * $distance);
-                
-                $weightSum += $weight;
-                $valueSum += $predictionLine[$j] * $weight;
-            }
-            
-            // Calculate weighted average
-            if ($weightSum > 0) {
-                $smoothed[$i] = $valueSum / $weightSum;
-            }
-        }
-        
-        // Ensure the curve still goes through key points
-        if ($period == 'year') {
-            // For yearly data, ensure seasonal peaks remain
-            $winterPeaks = [0, 1, 11]; // Jan, Feb, Dec
-            $summerPeaks = [6, 7]; // Jul, Aug
-            
-            foreach ($winterPeaks as $month) {
-                if ($month > $currentPoint && isset($predictionLine[$month]) && isset($smoothed[$month])) {
-                    // Restore 80% of the winter peak
-                    $smoothed[$month] = ($smoothed[$month] * 0.2) + ($predictionLine[$month] * 0.8);
-                }
-            }
-            
-            foreach ($summerPeaks as $month) {
-                if ($month > $currentPoint && isset($predictionLine[$month]) && isset($smoothed[$month])) {
-                    // Restore 60% of the summer peak for electricity
-                    $smoothed[$month] = ($smoothed[$month] * 0.4) + ($predictionLine[$month] * 0.6);
-                }
-            }
-        }
-        
-        return $smoothed;
-    }
-    
-    /**
-     * Get estimated value based on period averages when no actual data is available
-     * 
-     * @param string $period Period type
-     * @param string $type Energy type
-     * @return float Estimated value for the period
-     */
-    private function getEstimatedValue(string $period, string $type = 'electricity'): float {
-        // Default values scaled by period and energy type
-        $defaults = [
-            'electricity' => [
-                'day' => 0.3,    // kWh per hour (reasonable for most households)
-                'month' => 7,    // kWh per day
-                'year' => 250,   // kWh per month
-            ],
-            'gas' => [
-                'day' => 0.15,   // m³ per hour
-                'month' => 3,    // m³ per day
-                'year' => 100,   // m³ per month
-            ]
-        ];
-        
-        return $defaults[$type][$period] ?? $defaults['electricity'][$period] ?? 0.3;
-    }
-    
-    /**
-     * Get seasonal distribution factors for the remaining period
-     * 
-     * @param string $period Period type
-     * @param int $startPoint Starting point in the period
-     * @param int $endPoint Ending point in the period
-     * @return array Seasonal factors for each remaining point
-     */
-    private function getSeasonalDistributionFactors(string $period, int $startPoint, int $endPoint): array
-    {
-        $factors = [];
-        
-        switch ($period) {
-            case 'day':
-                // Hourly factors - higher in morning and evening
-                $hourlyFactors = [
-                    0.6, 0.4, 0.3, 0.2, 0.3, 0.5, // 0-5 night
-                    0.8, 1.2, 1.5, 1.3, 1.0, 0.9, // 6-11 morning
-                    1.0, 1.1, 1.0, 1.1, 1.2, 1.4, // 12-17 afternoon
-                    1.8, 1.7, 1.5, 1.2, 1.0, 0.7  // 18-23 evening
-                ];
-                
-                for ($i = $startPoint; $i < $endPoint; $i++) {
-                    $factors[] = $hourlyFactors[$i % 24];
-                }
-                break;
-                
-            case 'month':
-                // Daily factors - slightly higher on weekends
-                for ($i = $startPoint; $i < $endPoint; $i++) {
-                    // Calculate day of week (0 = Sunday, 6 = Saturday)
-                    $dayOfWeek = date('w', strtotime(date('Y-m') . '-' . ($i + 1)));
-                    $factors[] = ($dayOfWeek == 0 || $dayOfWeek == 6) ? 1.2 : 1.0;
-                }
-                break;
-                
-            case 'year':
-            default:
-                // Monthly factors - seasonal variations
-                $monthlyFactors = [
-                    1.2, 1.1, 1.0, 0.9, 0.8, 0.7, // Jan-Jun
-                    0.7, 0.8, 0.9, 1.0, 1.1, 1.2  // Jul-Dec
-                ];
-                
-                for ($i = $startPoint; $i < $endPoint; $i++) {
-                    $factors[] = $monthlyFactors[$i % 12];
-                }
-                break;
-        }
-        
-        return $factors;
     }
     
     /**
