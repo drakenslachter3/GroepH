@@ -7,13 +7,14 @@ use App\Http\Controllers\EnergyVisualizationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmartMeterController;
+use App\Http\Controllers\InfluxController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-
+Route::get('/influx/explore', [InfluxController::class, 'explore']);
 Route::middleware('auth')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
     Route::post('/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');

@@ -26,8 +26,8 @@
         </div>
         
         <!-- Prediction Chart Canvas -->
-        <div class="relative" style="height: 300px;">
-            <canvas id="predictionChart{{ $type }}"></canvas>
+        <div class="relative" style="height: 350px;">
+            <canvas id="predictionChart{{ $type }}{{ $period }}"></canvas>
         </div>
         
         <!-- Predictions Summary Cards -->
@@ -122,7 +122,10 @@
         const labels = getLabels(periodType);
         
         // Prepare the chart data
-        const ctx = document.getElementById(`predictionChart${energyType}`).getContext('2d');
+        const ctx = document.getElementById(`predictionChart${energyType}${periodType}`).getContext('2d');
+        
+        // Calculate y-axis min/max based on the period type for proper scaling
+        const yAxisConfig = getYAxisConfig(periodType, energyType, currentData, budgetData);
         
         // Create datasets
         const chartData = {
@@ -134,10 +137,12 @@
                     data: currentData.actual,
                     borderColor: mainColor,
                     backgroundColor: mainColorLight,
-                    tension: 0.4,
-                    fill: true,
+                    tension: 0.2,
+                    fill: false,
                     pointRadius: 4,
-                    pointBackgroundColor: mainColor
+                    pointBackgroundColor: mainColor,
+                    borderWidth: 3,
+                    order: 0 // Put actual data at the foreground
                 },
                 // Expected prediction
                 {
@@ -146,9 +151,11 @@
                     borderColor: 'rgba(107, 114, 128, 0.8)',
                     borderDash: [5, 5],
                     backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                    tension: 0.4,
+                    tension: 0.3,
                     fill: false,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    order: 3
                 },
                 // Best case scenario
                 {
@@ -156,9 +163,11 @@
                     data: currentData.best_case_line,
                     borderColor: 'rgba(16, 185, 129, 0.6)',
                     borderDash: [5, 5],
-                    tension: 0.4,
+                    tension: 0.3,
                     fill: false,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    order: 4
                 },
                 // Worst case scenario
                 {
@@ -166,21 +175,24 @@
                     data: currentData.worst_case_line,
                     borderColor: 'rgba(239, 68, 68, 0.6)',
                     borderDash: [5, 5],
-                    tension: 0.4,
+                    tension: 0.3,
                     fill: false,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    order: 5
                 },
-                // Budget target
+                // Budget target - transform to line appropriate for the period
                 {
                     label: 'Budget',
-                    data: budgetData.line,
+                    data: getPeriodBudgetLine(periodType, budgetData),
                     borderColor: 'rgba(0, 0, 0, 0.7)',
                     backgroundColor: 'rgba(0, 0, 0, 0)',
-                    borderWidth: 2,
-                    borderDash: [3, 3],
+                    borderWidth: 2.5,
+                    borderDash: [5, 5],
                     fill: false,
                     tension: 0,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    order: 1 // Place budget line behind other elements
                 }
             ]
         };
@@ -193,9 +205,10 @@
                 data: currentData.worst_case_line,
                 backgroundColor: 'rgba(156, 163, 175, 0.2)', // Gray with transparency
                 borderWidth: 0,
-                tension: 0.4,
+                tension: 0.3,
                 fill: '+1',
-                pointRadius: 0
+                pointRadius: 0,
+                order: 2 // Place prediction band behind most elements but above budget line
             };
             
             // Insert after the worst case dataset
@@ -238,9 +251,16 @@
                             color: gridColor
                         },
                         ticks: {
-                            color: textColor
+                            color: textColor,
+                            callback: function(value) {
+                                // Format ticks to prevent decimal points for larger values
+                                return Number.isInteger(value) ? value : value.toFixed(1);
+                            }
                         },
-                        beginAtZero: true
+                        beginAtZero: true,
+                        min: yAxisConfig.min,
+                        max: yAxisConfig.max,
+                        suggestedMax: yAxisConfig.suggestedMax
                     }
                 },
                 plugins: {
@@ -252,7 +272,7 @@
                                 const datasetIndex = tooltipItems[0].datasetIndex;
                                 if (datasetIndex === 0) { // Actual data
                                     const index = tooltipItems[0].dataIndex;
-                                    const budgetValue = budgetData.values[index] || 0;
+                                    const budgetValue = getValueForTooltip(periodType, budgetData, index);
                                     const actualValue = currentData.actual[index] || 0;
                                     const percentage = budgetValue ? Math.round((actualValue / budgetValue) * 100) : 0;
                                     
@@ -270,6 +290,196 @@
                 }
             }
         });
+        
+        // Helper function to get budget line appropriate for the period
+        function getPeriodBudgetLine(period, budgetData) {
+            const length = getLabels(period).length;
+            
+            // For day and month, budget should be spread across the period rather than total
+            switch(period) {
+                case 'day':
+                    // Hourly budget (daily budget / 24)
+                    const dailyBudget = budgetData.per_unit || (budgetData.target / 365 / 24);
+                    return Array(length).fill(dailyBudget);
+                    
+                case 'month':
+                    // Daily budget (monthly budget / days in month)
+                    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+                    const monthlyBudget = budgetData.target / 12;
+                    const dailyBudgetValue = budgetData.per_unit || (monthlyBudget / daysInMonth);
+                    return Array(length).fill(dailyBudgetValue);
+                    
+                case 'year':
+                default:
+                    // Monthly budget (yearly budget / 12)
+                    const monthlyBudgetValue = budgetData.per_unit || (budgetData.target / 12);
+                    return Array(12).fill(monthlyBudgetValue);
+            }
+        }
+        
+        // Helper function to get budget value for tooltip
+        function getValueForTooltip(period, budgetData, index) {
+            switch(period) {
+                case 'day':
+                    return budgetData.target / 365 / 24; // Hourly budget
+                case 'month':
+                    return budgetData.target / 12 / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(); // Daily budget
+                case 'year':
+                default:
+                    return budgetData.target / 12; // Monthly budget
+            }
+        }
+        
+        // Helper function to get y-axis configuration based on period
+        function getYAxisConfig(period, energyType, currentData, budgetData) {
+            // Find the maximum value in the data
+            let maxActual = 0;
+            let maxPrediction = 0;
+            
+            // Get budget value based on period
+            let budgetMax = 0;
+            switch(period) {
+                case 'day':
+                    budgetMax = budgetData.per_unit || (budgetData.target / 365 / 24); // Hourly budget
+                    break;
+                case 'month':
+                    budgetMax = budgetData.per_unit || (budgetData.target / 12 / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()); // Daily budget
+                    break;
+                case 'year':
+                default:
+                    budgetMax = budgetData.per_unit || (budgetData.target / 12); // Monthly budget
+                    break;
+            }
+            
+            // Check actual data
+            if (currentData.actual && currentData.actual.length > 0) {
+                const actualValues = currentData.actual.filter(val => val !== null);
+                maxActual = actualValues.length > 0 ? Math.max(...actualValues) : 0;
+            }
+            
+            // Check all prediction lines
+            const allPredictionData = [];
+            
+            // Add prediction data
+            if (currentData.prediction && currentData.prediction.length > 0) {
+                allPredictionData.push(...currentData.prediction.filter(val => val !== null));
+            }
+            
+            // Add worst case scenario data
+            if (currentData.worst_case_line && currentData.worst_case_line.length > 0) {
+                allPredictionData.push(...currentData.worst_case_line.filter(val => val !== null));
+            }
+            
+            maxPrediction = allPredictionData.length > 0 ? Math.max(...allPredictionData) : 0;
+            
+            // Find overall maximum
+            const maxValue = Math.max(maxActual, maxPrediction, budgetMax);
+            
+            // Special handling for year view to prevent excessive scale
+            if (period === 'year') {
+                // For year view, use fixed scale based on typical monthly consumption
+                // but ensure it's at least 20% above the highest actual value
+                const yearMaximum = Math.max(maxActual * 1.2, maxPrediction * 1.05, 300);
+                
+                return {
+                    min: 0,
+                    max: Math.ceil(yearMaximum / 100) * 100, // Round to nearest 100
+                    suggestedMax: Math.ceil(yearMaximum / 100) * 100
+                };
+            }
+            
+            // For day and month views, keep using the dynamic scaling approach
+            // Set appropriate scaling for each view type
+            switch(period) {
+                case 'day':
+                    // Day view (hourly data): typically 0-2 kWh per hour for electricity
+                    return {
+                        min: 0,
+                        max: energyType === 'electricity' ? 2 : 1,
+                        suggestedMax: energyType === 'electricity' ? 2 : 1
+                    };
+                case 'month':
+                    // Month view (daily data): apply dynamic scaling for better visibility
+                    // Ensure at least 30-50% padding above the maximum value
+                    const maxMonthDisplay = Math.max(maxValue * 1.5, 
+                                                energyType === 'electricity' ? 30 : 15);
+                    return {
+                        min: 0,
+                        max: maxMonthDisplay,
+                        suggestedMax: maxMonthDisplay
+                    };
+                default:
+                    // Fallback - should not reach here
+                    return {
+                        min: 0,
+                        max: maxValue * 1.2,
+                        suggestedMax: maxValue * 1.2
+                    };
+            }
+        }
+        
+        // Helper function to get scaled maximum value for better readability
+        function getScaledMaximum(maxValue, period, energyType) {
+            // Set realistic maximums based on period and energy type
+            const maxLimits = {
+                'electricity': {
+                    'day': 2,      // Most households won't exceed 2 kWh per hour
+                    'month': 30,   // Daily electricity typically under 30 kWh
+                    'year': 500    // Monthly electricity typically under 500 kWh
+                },
+                'gas': {
+                    'day': 1,      // Most households won't exceed 1 m³ per hour
+                    'month': 15,   // Daily gas typically under 15 m³
+                    'year': 250    // Monthly gas typically under 250 m³
+                }
+            };
+            
+            // Add padding (50% to ensure enough room)
+            let paddedMax = maxValue * 1.5;
+            
+            // Don't exceed reasonable max values
+            paddedMax = Math.min(paddedMax, maxLimits[energyType][period] || 500);
+            
+            // If the max is too small, use sensible minimums
+            if (paddedMax < 0.1) {
+                switch(period) {
+                    case 'day':
+                        paddedMax = energyType === 'electricity' ? 0.5 : 0.2;
+                        break;
+                    case 'month':
+                        paddedMax = energyType === 'electricity' ? 15 : 8;
+                        break;
+                    case 'year':
+                        paddedMax = energyType === 'electricity' ? 400 : 200;
+                        break;
+                }
+            }
+            
+            // Round to a nice number based on scale
+            let roundedMax;
+            
+            if (paddedMax < 1) {
+                // For small values, round to nearest 0.1 or 0.5
+                roundedMax = Math.ceil(paddedMax * 10) / 10;
+            } else if (paddedMax < 10) {
+                // For values under 10, round to nearest 1
+                roundedMax = Math.ceil(paddedMax);
+            } else if (paddedMax < 100) {
+                // For values under 100, round to nearest 10
+                roundedMax = Math.ceil(paddedMax / 10) * 10;
+            } else if (paddedMax < 1000) {
+                // For values under 1000, round to nearest 50
+                roundedMax = Math.ceil(paddedMax / 50) * 50;
+            } else {
+                // For large values, round to nearest 500
+                roundedMax = Math.ceil(paddedMax / 500) * 500;
+            }
+            
+            return {
+                max: roundedMax,
+                suggestedMax: roundedMax
+            };
+        }
         
         // Helper functions for chart labels
         function getLabels(period) {
