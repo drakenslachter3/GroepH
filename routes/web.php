@@ -13,7 +13,9 @@ use App\Http\Controllers\InfluxDataController;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
-
+// Voeg dit toe aan routes/web.php
+Route::get('/energy/data-form', [InfluxDataController::class, 'showEnergyForm'])
+    ->name('energy.form');
 
 Route::middleware('auth')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
@@ -39,6 +41,9 @@ Route::middleware('auth')->group(function () {
 
     // Opslaan geselecteerde meter dashboard route
     Route::post('/dashboard', [DashboardController::class, 'saveSelectedMeter'])->name('dashboard.saveSelectedMeter');
+
+    Route::post('/energy/store-data', [InfluxDataController::class, 'storeEnergyData'])
+        ->name('energy.store-data');
 });
 
 Route::middleware('auth')->group(function () {

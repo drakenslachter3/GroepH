@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\InfluxData;
@@ -61,5 +60,39 @@ class InfluxDataController extends Controller
             'success' => $success,
             'message' => $success ? 'Connection successful!' : 'Connection failed. Check configuration.',
         ]);
+    }
+
+    public function showEnergyForm()
+    {
+        $smartMeters = \App\Models\SmartMeter::all();
+        return view('influx.energy-form', compact('smartMeters'));
+    }
+
+    // Update app/Http/Controllers/InfluxDataController.php
+
+/**
+ * Haal energiedashboard gegevens op en sla ze op
+ */
+    public function storeEnergyData(Request $request)
+    {
+        $validated = $request->validate([
+            'meter_id' => 'required|string|exists:smart_meters,meter_id',
+            'period'   => 'required|string|in:day,month,year',
+            'date'     => 'required|date_format:Y-m-d',
+        ]);
+
+        try {
+            $result = $this->influxService->storeEnergyDashboardData(
+                $validated['meter_id'],
+                $validated['period'],
+                $validated['date']
+            );
+
+            return redirect()->route('dashboard')
+                ->with('success', 'Energiegegevens succesvol opgeslagen.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                ->with('error', 'Fout bij opslaan energiegegevens: ' . $e->getMessage());
+        }
     }
 }
