@@ -7,7 +7,9 @@ use App\Services\EnergyPredictionService;
 use App\Services\EnergyConversionService;
 use Illuminate\Support\Facades\Auth;
 use App\Models\EnergyBudget;
+use App\Models\MonthlyEnergyBudget;
 use Illuminate\View\View;
+use Carbon\Carbon;
 
 class EnergyPredictionController extends Controller
 {
@@ -60,10 +62,30 @@ class EnergyPredictionController extends Controller
         // Get usage data for predictions
         list($usageData, $budgetData) = $this->getPredictionData($period, $date, $type);
         
-        // Calculate percentage of budget used
-        $target = $type === 'electricity' ? $budget->electricity_target_kwh : $budget->gas_target_m3;
-        $usage = array_sum(array_filter($usageData['actual'], function($value) { return $value !== null; }));
-        $percentage = ($usage / $target) * 100;
+        // Get the yearly target budget value
+        $yearlyTarget = $type === 'electricity' ? $budget->electricity_target_kwh : $budget->gas_target_m3;
+        
+        // Scale target based on period
+        $scaledTarget = $this->getScaledTargetForPeriod($yearlyTarget, $period, $date, $type);
+        
+        // Calculate actual usage for the period so far
+        $actualUsageSoFar = array_sum(array_filter($usageData['actual'], function($value) { 
+            return $value !== null; 
+        }));
+        
+        // Get current month (1-12)
+        $currentMonth = (int)date('n');
+        
+        // Calculate percentage of SCALED budget used so far (for the progress indicator)
+        $usagePercentage = ($actualUsageSoFar / $scaledTarget) * 100;
+        $displayPercentage = round($usagePercentage, 1);
+        
+        // Calculate percentage for prediction relative to yearly budget
+        // This indicates whether the predicted total will exceed yearly budget
+        $predictedTotal = $usageData['expected'];
+        $exceedingPercentage = ($predictedTotal / $yearlyTarget * 100) - 100;
+        $isExceedingBudget = $exceedingPercentage > 0;
+        $displayExceedingPercentage = round(abs($exceedingPercentage), 1);
         
         return view('energy.predictions', [
             'usageData' => $usageData,
@@ -72,14 +94,109 @@ class EnergyPredictionController extends Controller
             'date' => $date,
             'type' => $type,
             'budget' => $budget,
-            'percentage' => $percentage,
-            'confidence' => $usageData['confidence'] ?? 75
+            // Used in the top indicator - shows progress so far
+            'percentage' => $displayPercentage,
+            // Used in the prediction cards - shows final prediction vs target
+            'yearlyBudgetTarget' => $yearlyTarget,
+            'isExceedingBudget' => $isExceedingBudget,
+            'exceedingPercentage' => $displayExceedingPercentage,
+            'confidence' => $usageData['confidence'] ?? 75,
+            // Added data for details component
+            'actualUsage' => $actualUsageSoFar,
+            'currentMonth' => $currentMonth,
+            'proRatedBudget' => $yearlyTarget * ($currentMonth / 12)
         ]);
     }
     
     /**
+     * Scale target budget based on the selected period, now using monthly budgets when available
+     * 
+     * @param float $yearlyTarget The yearly budget target
+     * @param string $period The selected period (day, month, year)
+     * @param string $date Reference date
+     * @param string $type Energy type (electricity or gas)
+     * @return float The scaled target for the period
+     */
+    private function getScaledTargetForPeriod(float $yearlyTarget, string $period, string $date, string $type): float
+    {
+        $dateObj = Carbon::parse($date);
+        $currentMonth = (int)$dateObj->format('n');
+        $userId = Auth::user()->id;
+        
+        // Get the user's yearly budget
+        $energyBudget = EnergyBudget::where('year', $dateObj->format('Y'))
+            ->where('user_id', $userId)
+            ->latest()
+            ->first();
+            
+        if (!$energyBudget) {
+            // Fallback to default calculation if no budget exists
+            switch ($period) {
+                case 'day':
+                    return $yearlyTarget / 365; // Daily target
+                case 'month':
+                    return $yearlyTarget / 12; // Monthly target
+                default: // 'year'
+                    return $yearlyTarget * ($currentMonth / 12); // Target so far this year
+            }
+        }
+        
+        // Try to get monthly budgets
+        $monthlyBudgets = MonthlyEnergyBudget::where('user_id', $userId)
+            ->where('energy_budget_id', $energyBudget->id)
+            ->orderBy('month')
+            ->get();
+            
+        if ($monthlyBudgets->isEmpty()) {
+            // Fallback to default calculation if no monthly budgets exist
+            switch ($period) {
+                case 'day':
+                    return $yearlyTarget / 365; // Daily target
+                case 'month':
+                    return $yearlyTarget / 12; // Monthly target
+                default: // 'year'
+                    return $yearlyTarget * ($currentMonth / 12); // Target so far this year
+            }
+        }
+        
+        // Get the field name for the target based on energy type
+        $targetField = $type === 'electricity' ? 'electricity_target_kwh' : 'gas_target_m3';
+        
+        switch ($period) {
+            case 'day':
+                // Get daily budget from the monthly budget for the current month
+                $monthlyBudget = $monthlyBudgets->firstWhere('month', $currentMonth);
+                if ($monthlyBudget) {
+                    $daysInMonth = $dateObj->daysInMonth;
+                    return $monthlyBudget->$targetField / $daysInMonth; // Daily target
+                } 
+                return $yearlyTarget / 365; // Fallback
+                
+            case 'month':
+                // Use the exact monthly budget for the selected month
+                $selectedMonth = (int)$dateObj->format('n');
+                $monthlyBudget = $monthlyBudgets->firstWhere('month', $selectedMonth);
+                if ($monthlyBudget) {
+                    return $monthlyBudget->$targetField; // Exact monthly target
+                }
+                return $yearlyTarget / 12; // Fallback
+                
+            case 'year':
+            default:
+                // For year view, calculate sum of monthly budgets up to current month
+                $totalBudgetSoFar = 0;
+                foreach ($monthlyBudgets as $budget) {
+                    if ($budget->month <= $currentMonth) {
+                        $totalBudgetSoFar += $budget->$targetField;
+                    }
+                }
+                return $totalBudgetSoFar > 0 ? $totalBudgetSoFar : $yearlyTarget * ($currentMonth / 12);
+        }
+    }
+    
+    /**
      * Generate prediction data for the energy type, period and date
-     * Ensuring proper budget scaling for each period
+     * Now using monthly budgets for more accurate predictions
      *
      * @param string $period The period type (day, month, year)
      * @param string $date The reference date
@@ -88,13 +205,25 @@ class EnergyPredictionController extends Controller
      */
     private function getPredictionData(string $period, string $date, string $type): array
     {
+        $dateObj = Carbon::parse($date);
+        $userId = Auth::user()->id;
+        
         // Get current user's budget
-        $currentYear = date('Y', strtotime($date));
-        $budget = EnergyBudget::where('year', $currentYear)
-            ->where('user_id', Auth::user()->id)
+        $currentYear = $dateObj->format('Y');
+        $energyBudget = EnergyBudget::where('year', $currentYear)
+            ->where('user_id', $userId)
             ->latest()
             ->first();
             
+        // Get monthly budgets
+        $monthlyBudgets = [];
+        if ($energyBudget) {
+            $monthlyBudgets = MonthlyEnergyBudget::where('user_id', $userId)
+                ->where('energy_budget_id', $energyBudget->id)
+                ->orderBy('month')
+                ->get();
+        }
+        
         // Get historical data for the period
         $historicalData = $this->getUsageDataByPeriod($period, $date, $type);
         
@@ -105,40 +234,84 @@ class EnergyPredictionController extends Controller
             
         // Format budget data for the chart with proper scaling
         $budgetTarget = $type === 'electricity' 
-            ? $budget->electricity_target_kwh 
-            : $budget->gas_target_m3;
+            ? $energyBudget->electricity_target_kwh 
+            : $energyBudget->gas_target_m3;
             
-        $periodLength = $this->getPeriodLength($period);
+        $periodLength = $this->getPeriodLength($period, $dateObj);
+        $targetField = $type === 'electricity' ? 'electricity_target_kwh' : 'gas_target_m3';
         
-        // Scale the budget appropriately for the period
+        // Create budget lines with proper monthly values
+        $budgetLine = [];
+        $budgetValues = [];
+        
         switch ($period) {
             case 'day':
-                // For day view, show hourly budget allocation (yearly budget / 365 days / 24 hours)
-                $budgetPerUnit = $budgetTarget / 365 / 24;
+                // For day view, calculate hourly budget from the monthly budget
+                $currentMonth = (int)$dateObj->format('n');
+                $monthlyBudget = $monthlyBudgets->firstWhere('month', $currentMonth);
+                
+                if ($monthlyBudget) {
+                    $daysInMonth = $dateObj->daysInMonth;
+                    $dailyBudget = $monthlyBudget->$targetField / $daysInMonth;
+                    $hourlyBudget = $dailyBudget / 24;
+                } else {
+                    // Fallback if no monthly budget
+                    $dailyBudget = $budgetTarget / 365;
+                    $hourlyBudget = $dailyBudget / 24;
+                }
+                
+                $budgetLine = array_fill(0, $periodLength, $hourlyBudget);
+                $budgetValues = array_fill(0, $periodLength, $hourlyBudget);
                 break;
                 
             case 'month':
-                // For month view, show daily budget allocation (yearly budget / 365 days)
-                // More precisely, use days in current month (yearly budget / 12 months / days in month)
-                $daysInMonth = date('t', strtotime($date));
-                $budgetPerUnit = $budgetTarget / 12 / $daysInMonth;
+                // For month view, calculate daily budget from the monthly budget
+                $selectedMonth = (int)$dateObj->format('n');
+                $monthlyBudget = $monthlyBudgets->firstWhere('month', $selectedMonth);
+                
+                if ($monthlyBudget) {
+                    $daysInMonth = $dateObj->daysInMonth;
+                    $dailyBudget = $monthlyBudget->$targetField / $daysInMonth;
+                } else {
+                    // Fallback if no monthly budget
+                    $daysInMonth = $dateObj->daysInMonth;
+                    $dailyBudget = ($budgetTarget / 12) / $daysInMonth;
+                }
+                
+                $budgetLine = array_fill(0, $periodLength, $dailyBudget);
+                $budgetValues = array_fill(0, $periodLength, $dailyBudget);
                 break;
                 
             case 'year':
             default:
-                // For year view, show monthly budget allocation (yearly budget / 12 months)
-                $budgetPerUnit = $budgetTarget / 12;
+                // For year view, use the actual monthly budgets
+                if ($monthlyBudgets->isNotEmpty()) {
+                    for ($i = 0; $i < 12; $i++) {
+                        $month = $i + 1;
+                        $monthBudget = $monthlyBudgets->firstWhere('month', $month);
+                        
+                        if ($monthBudget) {
+                            $budgetLine[$i] = $monthBudget->$targetField;
+                            $budgetValues[$i] = $monthBudget->$targetField;
+                        } else {
+                            // Fallback for missing months
+                            $budgetLine[$i] = $budgetTarget / 12;
+                            $budgetValues[$i] = $budgetTarget / 12;
+                        }
+                    }
+                } else {
+                    // Fallback if no monthly budgets at all
+                    $monthlyValue = $budgetTarget / 12;
+                    $budgetLine = array_fill(0, $periodLength, $monthlyValue);
+                    $budgetValues = array_fill(0, $periodLength, $monthlyValue);
+                }
                 break;
         }
         
-        // Create budget lines scaled appropriately for the period view
-        $budgetLine = array_fill(0, $periodLength, $budgetPerUnit);
-        $budgetValues = array_fill(0, $periodLength, $budgetPerUnit);
-        
         $budgetData = [
             'target' => $budgetTarget,            // Total yearly budget
-            'per_unit' => $budgetPerUnit,         // Budget per unit (hour/day/month)
-            'line' => $budgetLine,                // Line for chart
+            'per_unit' => $budgetLine[0] ?? 0,    // Budget per unit (hour/day/month)
+            'line' => $budgetLine,                // Line for chart (can now vary by month)
             'values' => $budgetValues             // Values for calculations
         ];
         
@@ -146,18 +319,19 @@ class EnergyPredictionController extends Controller
     }
     
     /**
-     * Get the period length in number of units
+     * Get the period length in number of units, accounting for the specific date
      *
      * @param string $period Period type
+     * @param Carbon $date Reference date
      * @return int Length of period
      */
-    private function getPeriodLength(string $period): int
+    private function getPeriodLength(string $period, Carbon $date): int
     {
         switch ($period) {
             case 'day':
                 return 24; // 24 hours
             case 'month':
-                return date('t'); // Days in current month
+                return $date->daysInMonth; // Days in the specific month
             case 'year':
             default:
                 return 12; // 12 months
@@ -222,7 +396,8 @@ class EnergyPredictionController extends Controller
                 
             case 'month':
                 // Generate daily data with weekend pattern
-                $daysInMonth = date('t', strtotime($date));
+                $dateObj = Carbon::parse($date);
+                $daysInMonth = $dateObj->daysInMonth;
                 $currentDay = min((int)date('j'), $daysInMonth);
                 
                 // Daily base (monthly value / days in month)

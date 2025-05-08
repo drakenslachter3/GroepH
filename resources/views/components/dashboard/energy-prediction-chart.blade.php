@@ -1,5 +1,16 @@
 @props(['currentData', 'budgetData', 'type', 'period', 'percentage', 'confidence'])
 
+{{-- Set default values for any missing props --}}
+@php
+// Calculate yearlyBudgetTarget if not provided
+$yearlyBudgetTarget = $yearlyBudgetTarget ?? $budgetData['target'] ?? 0;
+
+// Calculate if prediction exceeds budget if not provided
+$predictedTotal = $currentData['expected'] ?? 0;
+$exceedingPercentage = $exceedingPercentage ?? round(abs(($predictedTotal / $yearlyBudgetTarget * 100) - 100), 1);
+$isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarget);
+@endphp
+
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
     <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
         <h3 class="text-lg font-semibold mb-4 dark:text-white">
@@ -19,9 +30,24 @@
                     </div>
                     <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
                 </div>
-                <div class="text-sm text-{{ $percentage > 100 ? 'red' : 'green' }}-600 dark:text-{{ $percentage > 100 ? 'red' : 'green' }}-400 font-medium">
-                    {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
+                
+                <!-- Properly label percentage for clarity -->
+                <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
+                    @if($period == 'year')
+                        Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
+                    @else
+                        {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
+                    @endif
                 </div>
+            </div>
+            
+            <!-- Display yearly budget info for better context -->
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
+                <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+                
+                @if($period == 'year')
+                    <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+                @endif
             </div>
         </div>
         
@@ -39,8 +65,11 @@
                     {{ number_format($currentData['expected'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
                 </p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ $currentData['expected'] > $budgetData['target'] ? 'Overschrijding' : 'Onder' }} budget: 
-                    {{ number_format(abs(($currentData['expected'] / $budgetData['target'] * 100) - 100), 1) }}%
+                    @if($isExceedingBudget)
+                        Overschrijding budget: {{ number_format($exceedingPercentage, 1) }}%
+                    @else
+                        Onder budget: {{ number_format($exceedingPercentage, 1) }}%
+                    @endif
                 </p>
             </div>
             
@@ -51,8 +80,8 @@
                     {{ number_format($currentData['best_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
                 </p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ $currentData['best_case'] > $budgetData['target'] ? 'Overschrijding' : 'Onder' }} budget: 
-                    {{ number_format(abs(($currentData['best_case'] / $budgetData['target'] * 100) - 100), 1) }}%
+                    {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
+                    {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
                 </p>
             </div>
             
@@ -63,24 +92,24 @@
                     {{ number_format($currentData['worst_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
                 </p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ $currentData['worst_case'] > $budgetData['target'] ? 'Overschrijding' : 'Onder' }} budget: 
-                    {{ number_format(abs(($currentData['worst_case'] / $budgetData['target'] * 100) - 100), 1) }}%
+                    {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
+                    {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
                 </p>
             </div>
         </div>
         
         <!-- Recommendations Based on Prediction -->
-        <div class="mt-6 p-4 bg-{{ $percentage > 100 ? 'red' : 'green' }}-50 rounded-lg dark:bg-{{ $percentage > 100 ? 'red' : 'green' }}-900/30">
-            <h4 class="font-medium text-{{ $percentage > 100 ? 'red' : 'green' }}-700 dark:text-{{ $percentage > 100 ? 'red' : 'green' }}-400 mb-2">
-                {{ $percentage > 100 ? 'Actie nodig' : 'Goed op weg' }}
+        <div class="mt-6 p-4 bg-{{ $isExceedingBudget ? 'red' : 'green' }}-50 rounded-lg dark:bg-{{ $isExceedingBudget ? 'red' : 'green' }}-900/30">
+            <h4 class="font-medium text-{{ $isExceedingBudget ? 'red' : 'green' }}-700 dark:text-{{ $isExceedingBudget ? 'red' : 'green' }}-400 mb-2">
+                {{ $isExceedingBudget ? 'Actie nodig' : 'Goed op weg' }}
             </h4>
             <p class="text-gray-700 dark:text-gray-300">
-                @if($percentage > 110)
+                @if($exceedingPercentage > 30 && $isExceedingBudget)
                     U zit momenteel significant boven uw jaarbudget. Overweeg maatregelen om uw {{ $type === 'electricity' ? 'elektriciteits' : 'gas' }}verbruik te verminderen.
-                @elseif($percentage > 100)
+                @elseif($isExceedingBudget)
                     U zit momenteel iets boven uw jaarbudget. Let op uw verbruik om binnen het budget te blijven.
-                @elseif($percentage > 90)
-                    U zit op schema om binnen uw jaarbudget te blijven. Blijf uw verbruik in de gaten houden.
+                @elseif($exceedingPercentage < 10)
+                    U zit goed op schema om binnen uw jaarbudget te blijven. Blijf uw verbruik in de gaten houden.
                 @else
                     U zit goed op schema en gebruikt minder dan verwacht. Ga zo door!
                 @endif
