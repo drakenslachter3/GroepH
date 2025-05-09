@@ -5,8 +5,15 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Zorg ervoor dat je account een lang en willekeurig wachtwoord gebruikt om veilig te blijven.') }}
+            {{ __('Zorg ervoor dat je account een lang en willekeurig wachtwoord gebruikt om veilig te blijven. Een sterk wachtwoord voldoet aan de volgende eisen:') }}
         </p>
+        <ul class="mt-1 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
+            <li>{{ __('Minstens 8 karakters lang') }}</li>
+            <li>{{ __('Bevat minstens één hoofdletter') }}</li>
+            <li>{{ __('Bevat minstens één kleine letter') }}</li>
+            <li>{{ __('Bevat minstens één nummer') }}</li>
+            <li>{{ __('Bevat minstens één speciaal karakter') }}</li>
+        </ul>
     </header>
 
     <form method="post" action="{{ route('password.update') }}" class="mt-6 space-y-6">

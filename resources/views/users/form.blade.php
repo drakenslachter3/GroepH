@@ -49,13 +49,25 @@
                     </div>
 
                     <div class="mb-4">
-                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Wachtwoord {!! isset($user) ? '' : '<span class="text-red-600">*</span>' !!}</label>
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Wachtwoord {!! isset($user) ? '' : '<span class="text-red-600">*</span>' !!}
+                        </label>
                         <input type="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" id="password" name="password" {{ isset($user) ? '' : 'required' }}>
+
+                        <ul class="mt-1 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
+                            <li>Minstens 8 karakters lang</li>
+                            <li>Bevat minstens één hoofdletter</li>
+                            <li>Bevat minstens één kleine letter</li>
+                            <li>Bevat minstens één nummer</li>
+                            <li>Bevat minstens één speciaal karakter</li>
+                        </ul>
+
                         @if(isset($user))
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Laat leeg om het huidige wachtwoord te behouden</p>
                         @endif
+
                         @error('password')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 

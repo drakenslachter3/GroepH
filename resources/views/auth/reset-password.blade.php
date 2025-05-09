@@ -5,7 +5,7 @@
 
     <form method="POST" action="{{ route('password.reset.update') }}">
         @csrf
-        
+
         <input type="hidden" name="token" value="{{ $token }}">
         <input type="hidden" name="email" value="{{ $email }}">
 
@@ -17,6 +17,15 @@
         <div class="mt-4">
             <x-etc.input-label for="password" :value="__('Nieuw wachtwoord')" />
             <x-etc.text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
+
+            <ul class="mt-2 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
+                <li>Minstens 8 karakters lang</li>
+                <li>Bevat minstens één hoofdletter</li>
+                <li>Bevat minstens één kleine letter</li>
+                <li>Bevat minstens één nummer</li>
+                <li>Bevat minstens één speciaal karakter</li>
+            </ul>
+
             <x-etc.input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
