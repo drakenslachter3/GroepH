@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ResetPasswordRequest;
 use App\Models\PasswordResetRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -82,7 +83,7 @@ class PasswordResetRequestController extends Controller
         }
 
         $resetRequest->approve();
-        
+
         // Send email to user with reset link
         Mail::to($resetRequest->email)->send(new PasswordResetApproved($resetRequest));
 
@@ -99,7 +100,7 @@ class PasswordResetRequestController extends Controller
         }
 
         $resetRequest->deny();
-        
+
         // Send email to user notifying of denial
         Mail::to($resetRequest->email)->send(new PasswordResetDenied($resetRequest));
 
@@ -127,14 +128,8 @@ class PasswordResetRequestController extends Controller
     /**
      * Reset the user's password.
      */
-    public function reset(Request $request)
+    public function reset(PasswordResetRequest $request)
     {
-        $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', 'min:8'],
-        ]);
-
         $resetRequest = PasswordResetRequest::where('token', $request->token)
             ->where('email', $request->email)
             ->where('status', 'approved')
