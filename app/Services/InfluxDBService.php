@@ -111,44 +111,49 @@ class InfluxDBService
  * @return array
  */
 public function getDailyEnergyUsage(string $meterId, string $date): array {
-
+    // Stel het tijdsbereik in
     $start = Carbon::createFromFormat('d-m-Y', $date)->startOfDay()->toIso8601ZuluString();
     $stop = Carbon::createFromFormat('d-m-Y', $date)->endOfDay()->toIso8601ZuluString();
 
+    // Flux query
     $query = '
     from(bucket: "' . config('influxdb.bucket') . '")
     |> range(start: ' . $start . ', stop: ' . $stop . ')
     |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+    |> aggregateWindow(every: 1h, fn: last, createEmpty: false)
+    |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
+    |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
     ';
 
     try {
         $result = $this->query($query);
-        dd($result);
-
-        // Initialiseer arrays voor 24 uur (0-23)
-        $hours                 = range(0, 23);
+        
         $gasUsage              = array_fill(0, 24, 0);
         $electricityUsage      = array_fill(0, 24, 0);
         $electricityGeneration = array_fill(0, 24, 0);
 
-        // Verwerk resultaten
-        if (! empty($result) && isset($result[0]->records)) {
+        // Verwerk de resultaten
+        if (!empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
+
                 $hour = (int) Carbon::parse($record->values['_time'])->format('G');
-
-                if (isset($record->values['gas_usage'])) {
-                    $gasUsage[$hour] = (float) $record->values['gas_usage'];
+                
+                // Verwerk de gegevens
+                if (isset($record->values['energy_consumed'])) {
+                    $gasUsage[$hour] = (float) $record->values['energy_consumed'];
                 }
 
-                if (isset($record->values['electricity_usage'])) {
-                    $electricityUsage[$hour] = (float) $record->values['electricity_usage'];
+                if (isset($record->values['energy_produced'])) {
+                    $electricityUsage[$hour] = (float) $record->values['energy_produced'];
                 }
 
-                if (isset($record->values['electricity_generation'])) {
-                    $electricityGeneration[$hour] = (float) $record->values['electricity_generation'];
+                if (isset($record->values['gas_delivered'])) {
+                    $electricityGeneration[$hour] = (float) $record->values['gas_delivered'];
                 }
             }
         }
+
+        dd($gasUsage, $electricityUsage, $electricityGeneration);
 
         return [
             'gas_usage'              => $gasUsage,
