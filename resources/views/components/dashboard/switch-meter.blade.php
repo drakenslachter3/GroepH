@@ -29,7 +29,7 @@
                         @endforeach
                     @endif
                 </select>
-                <button type="submit" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200">Toepassen</button>
+                <button type="submit" class="flex-1 w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200">Toepassen</button>
             </form>
         </div>
     </div>

@@ -3,7 +3,11 @@ namespace App\Services;
 
 use App\Models\InfluxData;
 use Carbon\Carbon;
+use Exception;
 use InfluxDB2\Client as InfluxDBClient;
+
+use function Laravel\Prompts\error;
+use function Pest\Laravel\call;
 
 class InfluxDBService
 {
@@ -106,19 +110,20 @@ class InfluxDBService
  * @param string $date De dag in formaat 'YYYY-MM-DD'
  * @return array
  */
-    public function getDailyEnergyUsage(string $meterId, string $date): array
-    {
-        // Flux query voor energieverbruik per uur
-        $query = "
-from(bucket: \"" . config('influxdb.bucket') . "\")
-  |> range(start: {$date}T00:00:00Z, stop: {$date}T23:59:59Z)
-  |> filter(fn: (r) => r._measurement == \"energy_usage\" and r.meter_id == \"{$meterId}\")
-  |> aggregateWindow(every: 1h, fn: mean, createEmpty: true)
-  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")
-  |> keep(columns: [\"_time\", \"gas_usage\", \"electricity_usage\", \"electricity_generation\"])
-";
+public function getDailyEnergyUsage(string $meterId, string $date): array {
 
+    $start = Carbon::createFromFormat('d-m-Y', $date)->startOfDay()->toIso8601ZuluString();
+    $stop = Carbon::createFromFormat('d-m-Y', $date)->endOfDay()->toIso8601ZuluString();
+
+    $query = '
+    from(bucket: "' . config('influxdb.bucket') . '")
+    |> range(start: ' . $start . ', stop: ' . $stop . ')
+    |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+    ';
+
+    try {
         $result = $this->query($query);
+        dd($result);
 
         // Initialiseer arrays voor 24 uur (0-23)
         $hours                 = range(0, 23);
@@ -129,7 +134,7 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
         // Verwerk resultaten
         if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
-                $hour = (int) date('G', strtotime($record->values['_time']));
+                $hour = (int) Carbon::parse($record->values['_time'])->format('G');
 
                 if (isset($record->values['gas_usage'])) {
                     $gasUsage[$hour] = (float) $record->values['gas_usage'];
@@ -151,6 +156,11 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
             'electricity_generation' => $electricityGeneration,
         ];
     }
+    catch(Exception $e){
+        dd('Error: ' . $e->getMessage());
+        return [];
+    }
+}
 
 /**
  * Haal energieverbruik per dag op voor een specifieke maand

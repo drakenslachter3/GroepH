@@ -44,6 +44,8 @@ class DashboardController extends Controller
         // Include the user with smart meters data
         $energydashboard_data['user'] = $user;
 
+        $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'day', '01-02-2025');
+
         return view('dashboard', $energydashboard_data);
     }
 
@@ -182,16 +184,16 @@ class DashboardController extends Controller
 
     private function getEnergyData(string $meterId, string $period, string $date)
     {
-        // Probeer eerst uit de MySQL database op te halen
-        $latestData = \App\Models\InfluxData::where('tags->meter_id', $meterId)
-            ->where('tags->period', $period)
-            ->where('tags->date', $date)
-            ->orderBy('time', 'desc')
-            ->first();
+        // // Probeer eerst uit de MySQL database op te halen
+        // $latestData = \App\Models\InfluxData::where('tags->meter_id', $meterId)
+        //     ->where('tags->period', $period)
+        //     ->where('tags->date', $date)
+        //     ->orderBy('time', 'desc')
+        //     ->first();
 
-        if ($latestData) {
-            return $latestData->fields;
-        }
+        // if ($latestData) {
+        //     return $latestData->fields;
+        // }
 
         // Als er geen gegevens zijn, haal ze dan op en sla ze op
         $influxService = app(\App\Services\InfluxDBService::class);

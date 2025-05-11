@@ -217,9 +217,7 @@
                     'energy-chart-electricity', 'energy-chart-gas' => 'large',
                     'trend-analysis' => 'full',
                     'energy-suggestions' => 'large',
-
-                    //TODO aanpassen naar juiste grootte
-                    'switch-meter' => 'small',
+                    'switch-meter' => 'medium',
                     default => 'full'
                 };
 
