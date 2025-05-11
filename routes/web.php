@@ -7,11 +7,15 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmartMeterController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InfluxDataController;
+
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
-
+// Voeg dit toe aan routes/web.php
+Route::get('/energy/data-form', [InfluxDataController::class, 'showEnergyForm'])
+    ->name('energy.form');
 
 Route::middleware('auth')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
@@ -37,6 +41,9 @@ Route::middleware('auth')->group(function () {
 
     // Opslaan geselecteerde meter dashboard route
     Route::post('/dashboard', [DashboardController::class, 'saveSelectedMeter'])->name('dashboard.saveSelectedMeter');
+
+    Route::post('/energy/store-data', [InfluxDataController::class, 'storeEnergyData'])
+        ->name('energy.store-data');
 });
 
 Route::middleware('auth')->group(function () {
@@ -60,3 +67,7 @@ Route::middleware('auth')->prefix('api')->group(function () {
 
 require __DIR__ . '/auth.php';
 
+Route::get('/influx', [InfluxDataController::class, 'index'])->name('influx.index');
+Route::get('/influx/create', [InfluxDataController::class, 'create'])->name('influx.create');
+Route::post('/influx', [InfluxDataController::class, 'store'])->name('influx.store');
+Route::get('/influx/test-connection', [InfluxDataController::class, 'testConnection'])->name('influx.test-connection');
