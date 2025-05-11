@@ -217,6 +217,9 @@
                     'energy-chart-electricity', 'energy-chart-gas' => 'large',
                     'trend-analysis' => 'full',
                     'energy-suggestions' => 'large',
+
+                    //TODO aanpassen naar juiste grootte
+                    'switch-meter' => 'small',
                     default => 'full'
                 };
 
@@ -239,30 +242,30 @@
                         @break
 
                         @case('energy-status-electricity')
-<x-dashboard.energy-status
-    type="Elektriciteit"
-    :usage="$totals['electricity_kwh']"
-    :target="$totals['electricity_target']"
-    :cost="$totals['electricity_euro']"
-    :percentage="$totals['electricity_percentage']"
-    :status="$totals['electricity_status']"
-    :date="$date"
-    :period="$period"
-    unit="kWh" />
-@break
+                        <x-dashboard.energy-status
+                            type="Elektriciteit"
+                            :usage="$totals['electricity_kwh']"
+                            :target="$totals['electricity_target']"
+                            :cost="$totals['electricity_euro']"
+                            :percentage="$totals['electricity_percentage']"
+                            :status="$totals['electricity_status']"
+                            :date="$date"
+                            :period="$period"
+                            unit="kWh" />
+                        @break
 
-@case('energy-status-gas')
-<x-dashboard.energy-status
-    type="Gas"
-    :usage="$totals['gas_m3']"
-    :target="$totals['gas_target']"
-    :cost="$totals['gas_euro']"
-    :percentage="$totals['gas_percentage']"
-    :status="$totals['gas_status']"
-    :date="$date"
-    :period="$period"
-    unit="m³" />
-@break
+                        @case('energy-status-gas')
+                        <x-dashboard.energy-status
+                            type="Gas"
+                            :usage="$totals['gas_m3']"
+                            :target="$totals['gas_target']"
+                            :cost="$totals['gas_euro']"
+                            :percentage="$totals['gas_percentage']"
+                            :status="$totals['gas_status']"
+                            :date="$date"
+                            :period="$period"
+                            unit="m³" />
+                        @break
 
                         @case('historical-comparison')
                         <x-dashboard.historical-comparison
