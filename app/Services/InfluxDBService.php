@@ -126,45 +126,38 @@ class InfluxDBService
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
         ';
 
-        try {
-            $result = $this->query($query);
+        $result = $this->query($query);
             
-            $gasUsage              = array_fill(0, 24, 0);
-            $electricityUsage      = array_fill(0, 24, 0);
-            $electricityGeneration = array_fill(0, 24, 0);
+        $gasUsage              = array_fill(0, 24, 0);
+        $electricityUsage      = array_fill(0, 24, 0);
+        $electricityGeneration = array_fill(0, 24, 0);
 
-            // Verwerk de resultaten
-            if (!empty($result) && isset($result[0]->records)) {
-                foreach ($result[0]->records as $record) {
+        // Verwerk de resultaten
+        if (!empty($result) && isset($result[0]->records)) {
+            foreach ($result[0]->records as $record) {
 
-                    // Er wordt 1 afgetrokken omdat de tijd start de vorige dat om 23:00:00 i.v.m. de derivative in de influx query
-                    $hour = (int) Carbon::parse($record->values['_time'])->format('G');
+                $hour = (int) Carbon::parse($record->values['_time'])->format('G');
                     
-                    // Verwerk de gegevens
-                    if (isset($record->values['energy_consumed'])) {
-                        $gasUsage[$hour] = (float) $record->values['energy_consumed'];
-                    }
+                // Verwerk de gegevens
+                if (isset($record->values['energy_consumed'])) {
+                    $gasUsage[$hour] = (float) $record->values['energy_consumed'];
+                }
 
-                    if (isset($record->values['energy_produced'])) {
-                        $electricityUsage[$hour] = (float) $record->values['energy_produced'];
-                    }
+                if (isset($record->values['energy_produced'])) {
+                    $electricityUsage[$hour] = (float) $record->values['energy_produced'];
+                }
 
-                    if (isset($record->values['gas_delivered'])) {
-                        $electricityGeneration[$hour] = (float) $record->values['gas_delivered'];
-                    }
+                if (isset($record->values['gas_delivered'])) {
+                    $electricityGeneration[$hour] = (float) $record->values['gas_delivered'];
                 }
             }
+        }
 
-            return [
-                'gas_usage'              => $gasUsage,
-                'electricity_usage'      => $electricityUsage,
-                'electricity_generation' => $electricityGeneration,
-            ];
-        }
-        catch(Exception $e){
-            dd('Error: ' . $e->getMessage());
-            return [];
-        }
+        return [
+            'gas_usage'              => $gasUsage,
+            'electricity_usage'      => $electricityUsage,
+            'electricity_generation' => $electricityGeneration,
+        ];
     }
 
     /**
@@ -179,6 +172,7 @@ class InfluxDBService
         list($year, $month) = explode('-', $yearMonth);
         $daysInMonth        = cal_days_in_month(CAL_GREGORIAN, $month, $year);
 
+        // Datum start op de laatste dag van de vorige maand en stopt op de eerste dag van de volgende maand
         $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->subDay()->toIso8601ZuluString();
         $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")
         ->addMonth()
@@ -237,9 +231,9 @@ class InfluxDBService
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
-        // Zet de startdatum op 1 december van het vorige jaar, zodat de derivative functie in de influx query data heeft om mee te vergelijken
+        // Datum start op de laatste maand van het vorige jaar en stopt op de eerste dag van de volgende maand
         $startDate = ($year - 1) . "-12-01T00:00:00Z"; 
-        $endDate   = "{$year}-12-31T23:59:59Z";
+        $endDate = ($year + 1) . "-01-01T00:00:00Z";
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -261,16 +255,7 @@ class InfluxDBService
         // Verwerk resultaten
         if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
-
-                /* Hier wordt 2 afgetrokken
-                   één omdat de array een 0 based index heeft
-                   de andere omdat de startdatum 1 december van het vorige jaar is, i.v.m.
-                   de derivative functie in de influx query.
-                   De tweede aftrek is dus nodig om het jaar inplaats van in december te laten
-                   beginnen in januari!
-                */
-                
-                $month = (int) date('n', strtotime($record->values['_time'])) - 2;
+                $month = (int) date('n', strtotime($record->values['_time'])) - 2; // -1 voor 0-based index, -1 omdat derivative 1 maand vooruit verschuift
 
                 if (isset($record->values['gas_delivered'])) {
                     $gasUsage[$month] = (float) $record->values['gas_delivered'];
