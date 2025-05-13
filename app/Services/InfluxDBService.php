@@ -112,8 +112,9 @@ class InfluxDBService
      */
     public function getDailyEnergyUsage(string $meterId, string $date): array {
 
-        $start = Carbon::createFromFormat('Y-m-d', $date)->startOfDay()->toIso8601ZuluString();
-        $stop = Carbon::createFromFormat('Y-m-d', $date)->endOfDay()->toIso8601ZuluString();
+        // Tijd start een om 23:00:00 de vorige dag en stopt op 00:00:00 de volgende dag.
+        $start = Carbon::createFromFormat('Y-m-d', $date)->subDay()->setTime(23, 0, 0)->toIso8601ZuluString();
+        $stop = Carbon::createFromFormat('Y-m-d', $date)->addDay()->startOfDay()->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -136,6 +137,7 @@ class InfluxDBService
             if (!empty($result) && isset($result[0]->records)) {
                 foreach ($result[0]->records as $record) {
 
+                    // Er wordt 1 afgetrokken omdat de tijd start de vorige dat om 23:00:00 i.v.m. de derivative in de influx query
                     $hour = (int) Carbon::parse($record->values['_time'])->format('G');
                     
                     // Verwerk de gegevens
@@ -177,8 +179,11 @@ class InfluxDBService
         list($year, $month) = explode('-', $yearMonth);
         $daysInMonth        = cal_days_in_month(CAL_GREGORIAN, $month, $year);
 
-        $startDate   = "{$yearMonth}-{$daysInMonth}T00:00:00Z";
-        $endDate   = "{$yearMonth}-{$daysInMonth}T23:59:59Z";
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->subDay()->toIso8601ZuluString();
+        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")
+        ->addMonth()
+        ->startOfDay()
+        ->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -232,7 +237,8 @@ class InfluxDBService
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
-        $startDate = "{$year}-01-01T00:00:00Z";
+        // Zet de startdatum op 1 december van het vorige jaar, zodat de derivative functie in de influx query data heeft om mee te vergelijken
+        $startDate = ($year - 1) . "-12-01T00:00:00Z"; 
         $endDate   = "{$year}-12-31T23:59:59Z";
 
         $query = '
@@ -255,7 +261,16 @@ class InfluxDBService
         // Verwerk resultaten
         if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
-                $month = (int) date('n', strtotime($record->values['_time'])) - 1; // 0-based index
+
+                /* Hier wordt 2 afgetrokken
+                   één omdat de array een 0 based index heeft
+                   de andere omdat de startdatum 1 december van het vorige jaar is, i.v.m.
+                   de derivative functie in de influx query.
+                   De tweede aftrek is dus nodig om het jaar inplaats van in december te laten
+                   beginnen in januari!
+                */
+                
+                $month = (int) date('n', strtotime($record->values['_time'])) - 2;
 
                 if (isset($record->values['gas_delivered'])) {
                     $gasUsage[$month] = (float) $record->values['gas_delivered'];
@@ -270,8 +285,6 @@ class InfluxDBService
                 }
             }
         }
-
-        dd($gasUsage, $electricityGeneration, $electricityUsage);
 
         return [
             'gas_usage'              => $gasUsage,

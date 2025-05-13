@@ -45,8 +45,8 @@ class DashboardController extends Controller
         $energydashboard_data['user'] = $user;
 
         // $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'day', '2025-01-01');
-        // $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'month', '2025-01');
-        $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'year', '2025');
+        $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'month', '2025-01');
+        // $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'year', '2025');
 
         return view('dashboard', $energydashboard_data);
     }
