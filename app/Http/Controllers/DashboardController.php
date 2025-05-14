@@ -9,23 +9,26 @@ use App\Http\Controllers\EnergyVisualizationController;
 use App\Services\EnergyPredictionService;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Services\EnergyNotificationService;
 
 class DashboardController extends Controller
 {
     private $energyVisController;
-    
-    public function __construct(EnergyConversionService $conversionService, EnergyPredictionService $predictionService)
+    private $notificationService;
+
+    public function __construct(EnergyConversionService $conversionService, EnergyPredictionService $predictionService, EnergyNotificationService $notificationService)
     {
         $this->energyVisController = new EnergyVisualizationController($conversionService, $predictionService);
+        $this->notificationService = $notificationService;
     }
 
     public function index(Request $request)
     {
         $user = Auth::user();
-        
+
         // Load user's smart meters with latest readings
         $user->load(['smartMeters', 'smartMeters.latestReading']);
-        
+
         $energydashboard_data = $this->energyVisController->dashboard($request);
 
         $userGridLayoutModel = UserGridLayout::firstOrCreate(
@@ -38,12 +41,21 @@ class DashboardController extends Controller
         if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
             return redirect()->route('budget.form');
         }
-        
+
         // Add last refresh time information
         $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
-        
+
         // Include the user with smart meters data
         $energydashboard_data['user'] = $user;
+
+        if (Auth::check()) {
+            $this->notificationService->generateNotificationsForUser(
+                Auth::user(),
+                $totals['electricity_prediction'] ?? [],
+                $totals['gas_prediction'] ?? [],
+                $period
+            );
+        }
 
         return view('dashboard', $energydashboard_data);
     }
@@ -60,10 +72,10 @@ class DashboardController extends Controller
         $period = $request->input('period');
         $housingType = $request->input('housing_type');
         $inputDate = $request->input('date');
-        
+
         // Format the date based on the period type
         $formattedDate = $this->formatDateByPeriod($period, $inputDate);
-        
+
         // Redirect back to dashboard with the new parameters
         return redirect()->route('dashboard', [
             'period' => $period,
@@ -71,7 +83,7 @@ class DashboardController extends Controller
             'housing_type' => $housingType
         ]);
     }
-    
+
     // Helper method to format dates based on period
     private function formatDateByPeriod($period, $inputDate)
     {
@@ -79,21 +91,21 @@ class DashboardController extends Controller
             case 'day':
                 // For day period, the date should already be in YYYY-MM-DD format
                 return $inputDate;
-                
+
             case 'month':
                 // For month period, ensure we have YYYY-MM-DD with first day of month
                 if (strlen($inputDate) === 7) { // YYYY-MM format
                     return $inputDate . '-01';
                 }
                 return $inputDate;
-                
+
             case 'year':
                 // For year period, ensure we have YYYY-MM-DD with first day of year
                 if (strlen($inputDate) === 4) { // YYYY format
                     return $inputDate . '-01-01';
                 }
                 return $inputDate;
-                
+
             default:
                 // Default to current date if something goes wrong
                 return Carbon::now()->format('Y-m-d');
@@ -138,7 +150,7 @@ class DashboardController extends Controller
 
         return redirect()->route('dashboard')->with('status', 'Widget toegevoegd!');
     }
-    
+
     public function resetLayout(Request $request)
     {
         $user = Auth::user();
@@ -157,7 +169,7 @@ class DashboardController extends Controller
             'energy-status-gas',
             'energy-chart-electricity',
             'energy-chart-gas',
-            'usage-prediction', 
+            'usage-prediction',
             'date-selector',
             'historical-comparison',
             'trend-analysis',

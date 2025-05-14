@@ -39,6 +39,11 @@
                         <x-admin-notification-inbox />
                     </div>
                 @endif
+                @if (Auth::check())
+                    <div class="mr-3">
+                        <x-energy-notification-inbox />
+                    </div>
+                @endif
                 <div class="hidden sm:flex sm:items-center sm:ms-6">
                     <x-etc.dropdown align="right" width="48">
                         <x-slot name="trigger">

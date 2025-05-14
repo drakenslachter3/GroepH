@@ -54,6 +54,20 @@ Route::middleware('auth')->prefix('api')->group(function () {
     Route::get('/smartmeters/search', [SmartMeterController::class, 'search'])->name('api.smartmeters.search');
 });
 
+// Energy notification routes
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [App\Http\Controllers\EnergyNotificationController::class, 'index'])
+        ->name('notifications.index');
+    Route::post('/notifications/{notification}/mark-as-read', [App\Http\Controllers\EnergyNotificationController::class, 'markAsRead'])
+        ->name('notifications.mark-as-read');
+    Route::post('/notifications/{notification}/dismiss', [App\Http\Controllers\EnergyNotificationController::class, 'dismiss'])
+        ->name('notifications.dismiss');
+    Route::get('/notifications/settings', [App\Http\Controllers\EnergyNotificationController::class, 'settings'])
+        ->name('notifications.settings');
+    Route::post('/notifications/settings', [App\Http\Controllers\EnergyNotificationController::class, 'updateSettings'])
+        ->name('notifications.update-settings');
+});
+
 
 require __DIR__ . '/auth.php';
 
