@@ -108,47 +108,49 @@ class InfluxDBService
  */
     public function getDailyEnergyUsage(string $meterId, string $date): array
     {
-        // Flux query voor energieverbruik per uur
+        // Flux query for hourly energy usage with aggregation
         $query = "
 from(bucket: \"" . config('influxdb.bucket') . "\")
   |> range(start: {$date}T00:00:00Z, stop: {$date}T23:59:59Z)
-  |> filter(fn: (r) => r._measurement == \"energy_usage\" and r.meter_id == \"{$meterId}\")
+  |> filter(fn: (r) => r._measurement == \"dsmr\" and r.signature == \"{$meterId}\")
   |> aggregateWindow(every: 1h, fn: mean, createEmpty: true)
   |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")
-  |> keep(columns: [\"_time\", \"gas_usage\", \"electricity_usage\", \"electricity_generation\"])
-";
+    ";
 
+        // Execute query
         $result = $this->query($query);
 
-        // Initialiseer arrays voor 24 uur (0-23)
-        $hours                 = range(0, 23);
+        // Initialize arrays for 24 hours (0-23)
         $gasUsage              = array_fill(0, 24, 0);
         $electricityUsage      = array_fill(0, 24, 0);
         $electricityGeneration = array_fill(0, 24, 0);
 
-        // Verwerk resultaten
+        // Process results with field mapping
         if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
                 $hour = (int) date('G', strtotime($record->values['_time']));
 
-                if (isset($record->values['gas_usage'])) {
-                    $gasUsage[$hour] = (float) $record->values['gas_usage'];
+                // Map gas_delivered to gas_delivered
+                if (isset($record->values['gas_delivered'])) {
+                    $gasUsage[$hour] = (float) $record->values['gas_delivered'];
                 }
 
-                if (isset($record->values['electricity_usage'])) {
-                    $electricityUsage[$hour] = (float) $record->values['electricity_usage'];
+                // Map energy_consumed to energy_consumed
+                if (isset($record->values['energy_consumed'])) {
+                    $electricityUsage[$hour] = (float) $record->values['energy_consumed'];
                 }
 
-                if (isset($record->values['electricity_generation'])) {
-                    $electricityGeneration[$hour] = (float) $record->values['electricity_generation'];
+                // Map energy_produced to energy_produced
+                if (isset($record->values['energy_produced'])) {
+                    $electricityGeneration[$hour] = (float) $record->values['energy_produced'];
                 }
             }
         }
 
         return [
-            'gas_usage'              => $gasUsage,
-            'electricity_usage'      => $electricityUsage,
-            'electricity_generation' => $electricityGeneration,
+            'gas_delivered'              => $gasUsage,
+            'energy_consumed'      => $electricityUsage,
+            'energy_produced' => $electricityGeneration,
         ];
     }
 
@@ -174,7 +176,7 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
   |> filter(fn: (r) => r._measurement == \"energy_usage\" and r.meter_id == \"{$meterId}\")
   |> aggregateWindow(every: 1d, fn: sum, createEmpty: true)
   |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")
-  |> keep(columns: [\"_time\", \"gas_usage\", \"electricity_usage\", \"electricity_generation\"])
+  |> keep(columns: [\"_time\", \"gas_delivered\", \"energy_consumed\", \"energy_produced\"])
 ";
 
         $result = $this->query($query);
@@ -189,24 +191,24 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
             foreach ($result[0]->records as $record) {
                 $day = (int) date('j', strtotime($record->values['_time'])) - 1; // 0-based index
 
-                if (isset($record->values['gas_usage'])) {
-                    $gasUsage[$day] = (float) $record->values['gas_usage'];
+                if (isset($record->values['gas_delivered'])) {
+                    $gasUsage[$day] = (float) $record->values['gas_delivered'];
                 }
 
-                if (isset($record->values['electricity_usage'])) {
-                    $electricityUsage[$day] = (float) $record->values['electricity_usage'];
+                if (isset($record->values['energy_consumed'])) {
+                    $electricityUsage[$day] = (float) $record->values['energy_consumed'];
                 }
 
-                if (isset($record->values['electricity_generation'])) {
-                    $electricityGeneration[$day] = (float) $record->values['electricity_generation'];
+                if (isset($record->values['energy_produced'])) {
+                    $electricityGeneration[$day] = (float) $record->values['energy_produced'];
                 }
             }
         }
 
         return [
-            'gas_usage'              => $gasUsage,
-            'electricity_usage'      => $electricityUsage,
-            'electricity_generation' => $electricityGeneration,
+            'gas_delivered'              => $gasUsage,
+            'energy_consumed'      => $electricityUsage,
+            'energy_produced' => $electricityGeneration,
         ];
     }
 
@@ -229,7 +231,7 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
   |> filter(fn: (r) => r._measurement == \"energy_usage\" and r.meter_id == \"{$meterId}\")
   |> aggregateWindow(every: 1mo, fn: sum, createEmpty: true)
   |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")
-  |> keep(columns: [\"_time\", \"gas_usage\", \"electricity_usage\", \"electricity_generation\"])
+  |> keep(columns: [\"_time\", \"gas_delivered\", \"energy_consumed\", \"energy_produced\"])
 ";
 
         $result = $this->query($query);
@@ -244,24 +246,24 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
             foreach ($result[0]->records as $record) {
                 $month = (int) date('n', strtotime($record->values['_time'])) - 1; // 0-based index
 
-                if (isset($record->values['gas_usage'])) {
-                    $gasUsage[$month] = (float) $record->values['gas_usage'];
+                if (isset($record->values['gas_delivered'])) {
+                    $gasUsage[$month] = (float) $record->values['gas_delivered'];
                 }
 
-                if (isset($record->values['electricity_usage'])) {
-                    $electricityUsage[$month] = (float) $record->values['electricity_usage'];
+                if (isset($record->values['energy_consumed'])) {
+                    $electricityUsage[$month] = (float) $record->values['energy_consumed'];
                 }
 
-                if (isset($record->values['electricity_generation'])) {
-                    $electricityGeneration[$month] = (float) $record->values['electricity_generation'];
+                if (isset($record->values['energy_produced'])) {
+                    $electricityGeneration[$month] = (float) $record->values['energy_produced'];
                 }
             }
         }
 
         return [
-            'gas_usage'              => $gasUsage,
-            'electricity_usage'      => $electricityUsage,
-            'electricity_generation' => $electricityGeneration,
+            'gas_delivered'              => $gasUsage,
+            'energy_consumed'      => $electricityUsage,
+            'energy_produced' => $electricityGeneration,
         ];
     }
 
@@ -325,7 +327,7 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
   |> filter(fn: (r) => r._measurement == \"energy_usage\" and r.meter_id == \"{$meterId}\")
   |> sum()
   |> pivot(rowKey:[\"_measurement\"], columnKey: [\"_field\"], valueColumn: \"_value\")
-  |> keep(columns: [\"gas_usage\", \"electricity_usage\", \"electricity_generation\"])
+  |> keep(columns: [\"gas_delivered\", \"energy_consumed\", \"energy_produced\"])
 ";
 
         $result = $this->query($query);
@@ -338,23 +340,23 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
         if (! empty($result) && isset($result[0]->records) && ! empty($result[0]->records)) {
             $record = $result[0]->records[0];
 
-            if (isset($record->values['gas_usage'])) {
-                $gasUsage = (float) $record->values['gas_usage'];
+            if (isset($record->values['gas_delivered'])) {
+                $gasUsage = (float) $record->values['gas_delivered'];
             }
 
-            if (isset($record->values['electricity_usage'])) {
-                $electricityUsage = (float) $record->values['electricity_usage'];
+            if (isset($record->values['energy_consumed'])) {
+                $electricityUsage = (float) $record->values['energy_consumed'];
             }
 
-            if (isset($record->values['electricity_generation'])) {
-                $electricityGeneration = (float) $record->values['electricity_generation'];
+            if (isset($record->values['energy_produced'])) {
+                $electricityGeneration = (float) $record->values['energy_produced'];
             }
         }
 
         return [
-            'gas_usage'              => $gasUsage,
-            'electricity_usage'      => $electricityUsage,
-            'electricity_generation' => $electricityGeneration,
+            'gas_delivered'              => $gasUsage,
+            'energy_consumed'      => $electricityUsage,
+            'energy_produced' => $electricityGeneration,
         ];
     }
 
