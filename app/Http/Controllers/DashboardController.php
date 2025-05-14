@@ -19,59 +19,54 @@ class DashboardController extends Controller
         $this->energyVisController = new EnergyVisualizationController($conversionService, $predictionService);
     }
 
-    public function index(Request $request)
-    {
-        $user = Auth::user();
+ public function index(Request $request)
+{
+    $user = Auth::user();
 
-        // Load user's smart meters with latest readings
-        $user->load(['smartMeters', 'smartMeters.latestReading']);
+    $user->load(['smartMeters', 'smartMeters.latestReading']);
 
-        $energydashboard_data = $this->energyVisController->dashboard($request);
+    $defaultPeriod = 'day';
+    $defaultDate = Carbon::today()->format('Y-m-d');
+    $defaultMeterId = optional(SmartMeter::getAllSmartMetersForCurrentUser()->first())->meter_id
+                      ?? '2019-ETI-EMON-V01-105C4E-16405E';
 
-        $userGridLayoutModel = UserGridLayout::firstOrCreate(
-            ['user_id' => $user->id],
-            ['layout' => $this->getDefaultLayout()]
-        );
+    if ($request->has('selectedMeterId')) {
+        session(['selected_meter_id' => $request->input('selectedMeterId')]);
+    }
+    if ($request->has('period') && $request->has('date')) {
+        session([
+            'dashboard_period' => $request->input('period'),
+            'dashboard_date'   => $request->input('date'),
+        ]);
+    }
 
-        $energydashboard_data['gridLayout'] = $userGridLayoutModel->layout;
+    $period = session('dashboard_period', $defaultPeriod);
+    $date = session('dashboard_date', $defaultDate);
+    $selectedMeterId = session('selected_meter_id', $defaultMeterId);
 
-        if (! isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
-            return redirect()->route('budget.form');
-        }
+    session([
+        'dashboard_period' => $period,
+        'dashboard_date' => $date,
+        'selected_meter_id' => $selectedMeterId,
+    ]);
 
-        // Add last refresh time information
-        $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
+    $energydashboard_data = $this->energyVisController->dashboard($request);
 
-        // Include the user with smart meters data
-        $energydashboard_data['user'] = $user;
-        
-        /* testdata van Jay om live data op dashboard te fixen
-            $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'day', '2025-01-01');
-            $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'month', '2025-01');
-            $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'year', '2025'); 
-        */
+    $userGridLayoutModel = UserGridLayout::firstOrCreate(
+        ['user_id' => $user->id],
+        ['layout' => $this->getDefaultLayout()]
+    );
+    $energydashboard_data['gridLayout'] = $userGridLayoutModel->layout;
 
-       if($request->has('selectedMeterId')){
-            session(['selected_meter_id' => $request->input('selectedMeterId')]);
-       }
+    if (! isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
+        return redirect()->route('budget.form');
+    }
 
-       if ($request->has('period') && $request->has('date')) {
-            session([
-                'dashboard_period' => $request->input('period'),
-                'dashboard_date'   => $request->input('date'),
-            ]);
-        }
-
-        $period = session('dashboard_period');
-        $date   = session('dashboard_date');
-        $selectedMeterId = session('selected_meter_id');
-        
-
-        if ($period && $date && $selectedMeterId) {
-            $energydashboard_data['period'] = $period;
-            $energydashboard_data['date'] = $date;
-            $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
-        }
+    $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
+    $energydashboard_data['user'] = $user;
+    $energydashboard_data['period'] = $period;
+    $energydashboard_data['date'] = $date;
+    $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
 
     return view('dashboard', $energydashboard_data);
 }
