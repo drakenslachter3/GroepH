@@ -81,7 +81,10 @@ class PasswordValidationTest extends DuskTestCase
                 ->pause(500)
                 ->screenshot('after-creating-user-with-valid-password')
                 ->assertPathIs('/users')
-                ->assertSee('Gebruiker succesvol aangemaakt!');
+                ->assertSee('Gebruiker succesvol aangemaakt!')
+                ->assertSee('Valid User')
+                ->assertSee('valid_user@example.com');
+
         });
     }
 
@@ -127,7 +130,8 @@ class PasswordValidationTest extends DuskTestCase
                 ->pause(500)
                 ->screenshot('after-updating-user-with-empty-password')
                 ->assertPathIs("/users/{$user->id}")
-                ->assertSee('Gebruiker succesvol bijgewerkt!');
+                ->assertSee('Gebruiker succesvol bijgewerkt!')
+                ->assertSee('Updated User Name');
         });
     }
 
