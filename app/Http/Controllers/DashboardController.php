@@ -51,8 +51,22 @@ class DashboardController extends Controller
             $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'year', '2025'); 
         */
 
-        return view('dashboard', $energydashboard_data);
-    }
+       if ($request->has('period') && $request->has('date')) {
+            session([
+                'dashboard_period' => $request->input('period'),
+                'dashboard_date'   => $request->input('date'),
+            ]);
+        }
+
+        $period = session('dashboard_period');
+        $date   = session('dashboard_date');
+
+        if ($period && $date) {
+            $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', $period, $date);
+        }
+
+    return view('dashboard', $energydashboard_data);
+}
 
     // New method to handle date and period settings
     public function setTime(Request $request)
@@ -96,7 +110,7 @@ class DashboardController extends Controller
             case 'year':
                                                 // For year period, ensure we have YYYY-MM-DD with first day of year
                 if (strlen($inputDate) === 4) { // YYYY format
-                    return $inputDate . '-01-01';
+                    return $inputDate;
                 }
                 return $inputDate;
 

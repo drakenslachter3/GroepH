@@ -6,9 +6,6 @@ use Carbon\Carbon;
 use Exception;
 use InfluxDB2\Client as InfluxDBClient;
 
-use function Laravel\Prompts\error;
-use function Pest\Laravel\call;
-
 class InfluxDBService
 {
     protected $client;
@@ -231,6 +228,8 @@ class InfluxDBService
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
+        $year = (int) $year;
+
         // Datum start op de laatste maand van het vorige jaar en stopt op de eerste dag van de volgende maand
         $startDate = ($year - 1) . "-12-01T00:00:00Z"; 
         $endDate = ($year + 1) . "-01-01T00:00:00Z";
@@ -333,13 +332,13 @@ class InfluxDBService
         }
 
         $query = "
-from(bucket: \"" . config('influxdb.bucket') . "\")
-  |> range(start: {$startDate}, stop: {$now})
-  |> filter(fn: (r) => r._measurement == \"energy_usage\" and r.meter_id == \"{$meterId}\")
-  |> sum()
-  |> pivot(rowKey:[\"_measurement\"], columnKey: [\"_field\"], valueColumn: \"_value\")
-  |> keep(columns: [\"gas_usage\", \"electricity_usage\", \"electricity_generation\"])
-";
+        from(bucket: \"" . config('influxdb.bucket') . "\")
+        |> range(start: {$startDate}, stop: {$now})
+        |> filter(fn: (r) => r._measurement == \"energy_usage\" and r.meter_id == \"{$meterId}\")
+        |> sum()
+        |> pivot(rowKey:[\"_measurement\"], columnKey: [\"_field\"], valueColumn: \"_value\")
+        |> keep(columns: [\"gas_usage\", \"electricity_usage\", \"electricity_generation\"])
+        ";
 
         $result = $this->query($query);
 

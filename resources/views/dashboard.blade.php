@@ -17,7 +17,7 @@
             {{-- @if(Auth::check())
                 @include('components.user-meter-readings', ['user' => Auth::user()])
             @endif --}}
-            
+
             <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4 border-gray-200">
@@ -278,7 +278,7 @@
                             title="Elektriciteitsverbruik (kWh)"
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="blue"
-                            :chartData="$chartData"
+                            :chartData="$meterDataForPeriod['current_data'] ?? []"
                             :period="$period" 
                             :date="$date" />
                         @break
@@ -289,7 +289,7 @@
                             title="Gasverbruik (m³)"
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="yellow"
-                            :chartData="$chartData"
+                            :chartData="$meterDataForPeriod['current_data'] ?? []"
                             :period="$period" />
                         @break
 
