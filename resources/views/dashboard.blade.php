@@ -61,6 +61,8 @@
                                         <option value="energy-chart-gas">Gas Grafiek</option>
                                         <option value="trend-analysis">Trend Analyse</option>
                                         <option value="energy-suggestions">Energiebesparingstips</option>
+                                        <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling</option>
+                                        <option value="energy-prediction-chart-gas">Gas Voorspelling</option>
                                         <option value="budget-alert">Budget Waarschuwing</option>
                                     </select>
                                 </div>
@@ -209,6 +211,7 @@
                     'energy-chart-electricity', 'energy-chart-gas' => 'large',
                     'trend-analysis' => 'full',
                     'energy-suggestions' => 'large',
+                    'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
                     default => 'full'
                 };
 
@@ -231,30 +234,30 @@
                         @break
 
                         @case('energy-status-electricity')
-<x-dashboard.energy-status
-    type="Elektriciteit"
-    :usage="$totals['electricity_kwh']"
-    :target="$totals['electricity_target']"
-    :cost="$totals['electricity_euro']"
-    :percentage="$totals['electricity_percentage']"
-    :status="$totals['electricity_status']"
-    :date="$date"
-    :period="$period"
-    unit="kWh" />
-@break
+                        <x-dashboard.energy-status
+                            type="Elektriciteit"
+                            :usage="$totals['electricity_kwh']"
+                            :target="$totals['electricity_target']"
+                            :cost="$totals['electricity_euro']"
+                            :percentage="$totals['electricity_percentage']"
+                            :status="$totals['electricity_status']"
+                            :date="$date"
+                            :period="$period"
+                            unit="kWh" />
+                        @break
 
-@case('energy-status-gas')
-<x-dashboard.energy-status
-    type="Gas"
-    :usage="$totals['gas_m3']"
-    :target="$totals['gas_target']"
-    :cost="$totals['gas_euro']"
-    :percentage="$totals['gas_percentage']"
-    :status="$totals['gas_status']"
-    :date="$date"
-    :period="$period"
-    unit="m³" />
-@break
+                        @case('energy-status-gas')
+                        <x-dashboard.energy-status
+                            type="Gas"
+                            :usage="$totals['gas_m3']"
+                            :target="$totals['gas_target']"
+                            :cost="$totals['gas_euro']"
+                            :percentage="$totals['gas_percentage']"
+                            :status="$totals['gas_status']"
+                            :date="$date"
+                            :period="$period"
+                            unit="m³" />
+                        @break
 
                         @case('historical-comparison')
                         <x-dashboard.historical-comparison
@@ -284,17 +287,37 @@
                             :period="$period" />
                         @break
 
-                        @case('trend-analysis')
-                        <x-dashboard.trend-analysis
-                            :electricityData="['thisYear' => [210, 195, 180, 170, 165, 168, 172, 175, 168, 182, 190, 200], 'lastYear' => [230, 220, 200, 185, 180, 182, 190, 195, 185, 200, 210, 225]]"
-                            :gasData="['thisYear' => [120, 115, 90, 65, 40, 25, 20, 20, 35, 70, 100, 110], 'lastYear' => [130, 125, 100, 70, 45, 30, 25, 25, 40, 75, 110, 120]]" />
-                        @break
+                   
 
                         @case('energy-suggestions')
                         <x-dashboard.energy-suggestions
                             :usagePattern="$usagePattern ?? 'avond'"
                             :housingType="$housingType"
                             :season="date('n') >= 3 && date('n') <= 5 ? 'lente' : (date('n') >= 6 && date('n') <= 8 ? 'zomer' : (date('n') >= 9 && date('n') <= 11 ? 'herfst' : 'winter'))" />
+                        @break
+
+                        @case('energy-prediction-chart-electricity')
+                        <x-dashboard.energy-prediction-chart
+                            :currentData="$predictionData['electricity'] ?? []"
+                            :budgetData="$budgetData['electricity'] ?? []" 
+                            type="electricity"
+                            :period="$period"
+                            :percentage="$predictionPercentage['electricity'] ?? 0"
+                            :confidence="$predictionConfidence['electricity'] ?? 75"
+                            :yearlyConsumptionToDate="$yearlyConsumptionToDate['electricity'] ?? 0"
+                            :dailyAverageConsumption="$dailyAverageConsumption['electricity'] ?? 0" />
+                        @break
+
+                        @case('energy-prediction-chart-gas')
+                        <x-dashboard.energy-prediction-chart
+                            :currentData="$predictionData['gas'] ?? []"
+                            :budgetData="$budgetData['gas'] ?? []" 
+                            type="gas"
+                            :period="$period"
+                            :percentage="$predictionPercentage['gas'] ?? 0"
+                            :confidence="$predictionConfidence['gas'] ?? 75"
+                            :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0"
+                            :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0" />
                         @break
 
                         @default
@@ -325,90 +348,121 @@
 
     // Config section toggle and time setter functionality
     document.addEventListener('DOMContentLoaded', function() {
-    // Toggle for the entire configuration section
-    const toggleConfigSection = document.getElementById('toggleConfigSection');
-    const configSectionContent = document.getElementById('configSectionContent');
-    const configSectionIcon = document.getElementById('configSectionIcon');
+        // Toggle for the entire configuration section
+        const toggleConfigSection = document.getElementById('toggleConfigSection');
+        const configSectionContent = document.getElementById('configSectionContent');
+        const configSectionIcon = document.getElementById('configSectionIcon');
 
-    if (toggleConfigSection && configSectionContent) {
-        // Check localStorage for saved state
-        const configSectionOpen = localStorage.getItem('configSectionOpen') === 'true';
+        if (toggleConfigSection && configSectionContent) {
+            // Check localStorage for saved state
+            const configSectionOpen = localStorage.getItem('configSectionOpen') === 'true';
 
-        // Set initial state based on localStorage or default to open on first visit
-        if (configSectionOpen || localStorage.getItem('configSectionOpen') === null) {
-            configSectionContent.classList.remove('hidden');
-            configSectionIcon.classList.add('rotate-180');
-        }
+            // Set initial state based on localStorage or default to open on first visit
+            if (configSectionOpen || localStorage.getItem('configSectionOpen') === null) {
+                configSectionContent.classList.remove('hidden');
+                configSectionIcon.classList.add('rotate-180');
+            }
 
-        toggleConfigSection.addEventListener('click', function() {
-            configSectionContent.classList.toggle('hidden');
-            configSectionIcon.classList.toggle('rotate-180');
+            toggleConfigSection.addEventListener('click', function() {
+                configSectionContent.classList.toggle('hidden');
+                configSectionIcon.classList.toggle('rotate-180');
 
-            // Save state to localStorage
-            localStorage.setItem('configSectionOpen', !configSectionContent.classList.contains('hidden'));
-        });
-    }
-
-    // Period selection UI enhancement
-    const periodRadios = document.querySelectorAll('input[name="period"]');
-    periodRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            // Reset all buttons
-            periodRadios.forEach(r => {
-                r.nextElementSibling.classList.remove('bg-blue-600', 'text-white');
-                r.nextElementSibling.classList.add('bg-gray-200', 'text-gray-700');
+                // Save state to localStorage
+                localStorage.setItem('configSectionOpen', !configSectionContent.classList.contains('hidden'));
             });
-
-            // Highlight the selected button
-            this.nextElementSibling.classList.remove('bg-gray-200', 'text-gray-700');
-            this.nextElementSibling.classList.add('bg-blue-600', 'text-white');
-
-            // Update date input type based on selected period
-            updateDatePickerType(this.value);
-            
-            // NIEUWE CODE: Submit form na een korte vertraging
-            setTimeout(function() {
-                document.getElementById('timeSetterForm').submit();
-            }, 300);
-        });
-    });
-
-    // Function to update date picker type based on period
-    function updateDatePickerType(period) {
-        const dateContainer = document.querySelector('.date-input-container');
-        let dateInput;
-
-        if (period === 'day') {
-            dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
-        } else if (period === 'month') {
-            dateInput = `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
-        } else if (period === 'year') {
-            dateInput = `<input type="number" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y') }}" min="2000" max="2050">`;
         }
 
-        if (dateContainer) {
-            dateContainer.innerHTML = dateInput;
-            
-            // NIEUWE CODE: Luister naar wijzigingen op de nieuwe datepicker
-            const newDatePicker = document.getElementById('datePicker');
-            if (newDatePicker) {
-                newDatePicker.addEventListener('change', function() {
+        // Period selection UI enhancement
+        const periodRadios = document.querySelectorAll('input[name="period"]');
+        periodRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Reset all buttons
+                periodRadios.forEach(r => {
+                    r.nextElementSibling.classList.remove('bg-blue-600', 'text-white');
+                    r.nextElementSibling.classList.add('bg-gray-200', 'text-gray-700');
+                });
+
+                // Highlight the selected button
+                this.nextElementSibling.classList.remove('bg-gray-200', 'text-gray-700');
+                this.nextElementSibling.classList.add('bg-blue-600', 'text-white');
+
+                // Update date input type based on selected period
+                updateDatePickerType(this.value);
+                
+                // Submit form after a short delay
+                setTimeout(function() {
+                    document.getElementById('timeSetterForm').submit();
+                }, 300);
+            });
+        });
+
+        // Function to update date picker type based on period
+        function updateDatePickerType(period) {
+            const dateContainer = document.querySelector('.date-input-container');
+            let dateInput;
+
+            if (period === 'day') {
+                dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
+            } else if (period === 'month') {
+                dateInput = `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
+            } else if (period === 'year') {
+                dateInput = `<input type="number" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y') }}" min="2000" max="2050">`;
+            }
+
+            if (dateContainer) {
+                dateContainer.innerHTML = dateInput;
+                
+                // Listen for changes on the new datepicker
+                const newDatePicker = document.getElementById('datePicker');
+                if (newDatePicker) {
+                    newDatePicker.addEventListener('change', function() {
+                        document.getElementById('timeSetterForm').submit();
+                    });
+                    
+                    // For month and year inputs that might not trigger change event
+                    if (period === 'month' || period === 'year') {
+                        newDatePicker.addEventListener('input', function() {
+                            // Use a timer to prevent frequent submits
+                            if (this._timer) clearTimeout(this._timer);
+                            this._timer = setTimeout(() => {
+                                document.getElementById('timeSetterForm').submit();
+                            }, 500);
+                        });
+                        
+                        // For year input, also listen for Enter key
+                        if (period === 'year') {
+                            newDatePicker.addEventListener('keydown', function(e) {
+                                if (e.key === 'Enter') {
+                                    document.getElementById('timeSetterForm').submit();
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Initial setup of the datepicker listener
+        function initDatePickerListener() {
+            const datePicker = document.getElementById('datePicker');
+            if (datePicker) {
+                datePicker.addEventListener('change', function() {
                     document.getElementById('timeSetterForm').submit();
                 });
                 
-                // Voor maand en jaar inputs die mogelijk geen change event triggeren
-                if (period === 'month' || period === 'year') {
-                    newDatePicker.addEventListener('input', function() {
-                        // Gebruik een timer om veelvuldige submits te voorkomen
+                // For type="month" and type="number" inputs
+                if (datePicker.type === 'month' || datePicker.type === 'number') {
+                    datePicker.addEventListener('input', function() {
+                        // Delay to prevent too frequent form submissions
                         if (this._timer) clearTimeout(this._timer);
                         this._timer = setTimeout(() => {
                             document.getElementById('timeSetterForm').submit();
                         }, 500);
                     });
                     
-                    // Voor jaar input, ook luisteren naar de Enter toets
-                    if (period === 'year') {
-                        newDatePicker.addEventListener('keydown', function(e) {
+                    // For year input, listen for Enter key
+                    if (datePicker.type === 'number') {
+                        datePicker.addEventListener('keydown', function(e) {
                             if (e.key === 'Enter') {
                                 document.getElementById('timeSetterForm').submit();
                             }
@@ -417,43 +471,13 @@
                 }
             }
         }
-    }
-    
-    // NIEUWE CODE: Initiële setup van de datepicker listener
-    function initDatePickerListener() {
-        const datePicker = document.getElementById('datePicker');
-        if (datePicker) {
-            datePicker.addEventListener('change', function() {
-                document.getElementById('timeSetterForm').submit();
-            });
-            
-            // Voor type="month" en type="number" inputs
-            if (datePicker.type === 'month' || datePicker.type === 'number') {
-                datePicker.addEventListener('input', function() {
-                    // Vertraging om te voorkomen dat het formulier te vaak wordt verzonden
-                    if (this._timer) clearTimeout(this._timer);
-                    this._timer = setTimeout(() => {
-                        document.getElementById('timeSetterForm').submit();
-                    }, 500);
-                });
-                
-                // Voor jaar input, luister naar Enter toets
-                if (datePicker.type === 'number') {
-                    datePicker.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter') {
-                            document.getElementById('timeSetterForm').submit();
-                        }
-                    });
-                }
-            }
-        }
-    }
-    
-    // Roep de initiële setup aan
-    initDatePickerListener();
-});
+        
+        // Call the initial setup
+        initDatePickerListener();
+    });
     </script>
     @stack('chart-scripts')
     @stack('trend-scripts')
+    @stack('prediction-chart-scripts')
     @stack('scripts')
 </x-app-layout>

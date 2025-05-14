@@ -23,7 +23,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(EnergyConversionService::class, function ($app) {
+            return new EnergyConversionService();
+        });
+        
+        // Registreer de Energy Prediction Service
+        $this->app->singleton(EnergyPredictionService::class, function ($app) {
+            return new EnergyPredictionService();
+        });
+        
+        // Registreer de Dashboard Prediction Service
+        $this->app->singleton(DashboardPredictionService::class, function ($app) {
+            return new DashboardPredictionService(
+                $app->make(EnergyPredictionService::class),
+                $app->make(EnergyConversionService::class)
+            );
+        });
     }
 
     /**
