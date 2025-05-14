@@ -68,10 +68,10 @@ Route::middleware('auth')->group(function () {
         ->name('notifications.update-settings');
 });
 
-// Testroutes voor notificaties
-Route::middleware('auth')->prefix('test')->group(function () {
-    Route::get('/generate-notification', [App\Http\Controllers\EnergyNotificationController::class, 'generateTestNotification'])
-        ->name('test.notification');
+// Testroutes - apart van de productie routes
+Route::middleware('auth')->prefix('testing')->group(function () {
+    Route::get('/generate-notification', [App\Http\Controllers\TestNotificationController::class, 'generateTestNotification'])
+        ->name('testing.notification');
 });
 
 
