@@ -290,7 +290,8 @@
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="yellow"
                             :chartData="$meterDataForPeriod['current_data'] ?? []"
-                            :period="$period" />
+                            :period="$period"
+                            :date="$date" />
                         @break
 
                         @case('trend-analysis')

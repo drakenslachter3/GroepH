@@ -65,6 +65,7 @@ class DashboardController extends Controller
         $period = session('dashboard_period');
         $date   = session('dashboard_date');
         $selectedMeterId = session('selected_meter_id');
+        
 
         if ($period && $date && $selectedMeterId) {
             $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);

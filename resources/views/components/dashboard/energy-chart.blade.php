@@ -1,5 +1,13 @@
 @props(['type', 'title', 'buttonLabel', 'buttonColor', 'chartData', 'period', 'date' => null])
 
+@php
+    if ($period == 'month' && $date) {
+        $daysInMonth = \Carbon\Carbon::createFromFormat('Y-m', $date)->daysInMonth;
+    } else {
+        $daysInMonth = 30;
+    }
+@endphp
+
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
     <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -98,7 +106,8 @@
                     periodTranslated = 'Uren';
                 break;
             case 'month':
-                    for (let i = 1; i <= 31; i++) {
+                const daysInMonth = {{ $daysInMonth }};
+                    for (let i = 1; i <= daysInMonth; i++) {
                         labels.push(i.toString());
                     }
                     periodTranslated = 'Dagen';
