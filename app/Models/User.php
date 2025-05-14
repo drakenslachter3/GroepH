@@ -23,7 +23,8 @@ class User extends Authenticatable
         'phone',
         'description',
         'role',
-        'active'
+        'active',
+        'notification_frequency',  // Nieuwe attribuut voor notificatie instellingen
     ];
 
     /**
@@ -56,6 +57,28 @@ class User extends Authenticatable
     public function smartMeters()
     {
         return $this->hasMany(SmartMeter::class, 'account_id');
+    }
+
+    /**
+     * Get de notificaties voor deze gebruiker.
+     */
+    public function energyNotifications(): HasMany
+    {
+        return $this->hasMany(EnergyNotification::class);
+    }
+
+    /**
+     * Get de ongelezen notificaties voor deze gebruiker.
+     */
+    public function unreadEnergyNotifications()
+    {
+        return $this->energyNotifications()
+            ->where('status', 'unread')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -113,5 +136,13 @@ class User extends Authenticatable
    public function energyBudgets(): HasMany
    {
        return $this->hasMany(EnergyBudget::class);
+   }
+
+   /**
+    * Get de notificatie frequentie van de gebruiker.
+    */
+   public function getNotificationFrequency(): string
+   {
+       return $this->notification_frequency ?? 'weekly';
    }
 }
