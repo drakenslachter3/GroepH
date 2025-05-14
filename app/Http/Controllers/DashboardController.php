@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\EnergyVisualizationController;
+use App\Models\SmartMeter;
 use App\Models\UserGridLayout;
 use App\Services\EnergyConversionService;
 use App\Services\EnergyPredictionService;
@@ -43,13 +44,16 @@ class DashboardController extends Controller
 
         // Include the user with smart meters data
         $energydashboard_data['user'] = $user;
-
         
         /* testdata van Jay om live data op dashboard te fixen
             $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'day', '2025-01-01');
             $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'month', '2025-01');
             $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', 'year', '2025'); 
         */
+
+       if($request->has('selectedMeterId')){
+            session(['selected_meter_id' => $request->input('selectedMeterId')]);
+       }
 
        if ($request->has('period') && $request->has('date')) {
             session([
@@ -60,9 +64,10 @@ class DashboardController extends Controller
 
         $period = session('dashboard_period');
         $date   = session('dashboard_date');
+        $selectedMeterId = session('selected_meter_id');
 
-        if ($period && $date) {
-            $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData('2019-ETI-EMON-V01-105C4E-16405E', $period, $date);
+        if ($period && $date && $selectedMeterId) {
+            $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
         }
 
     return view('dashboard', $energydashboard_data);
@@ -188,17 +193,20 @@ class DashboardController extends Controller
 
     public function saveSelectedMeter(Request $request)
     {
-        $meterId = $request->meter;
+        $meterDatabaseId = $request->meter;
         $layout  = UserGridLayout::where('user_id', auth()->id())->first();
 
         if ($layout) {
-            $layout->selected_smartmeter = $meterId;
+            $layout->selected_smartmeter = $meterDatabaseId;
             $layout->save();
         } else {
             throw new \Exception('[SaveSelectedMeter, DashboardController]: meter kan niet opgeslagen worden, omdat user_grid_layout nog niet bestaat voor deze gebruiker!');
         }
 
-        return redirect()->route('dashboard')->with('status', 'Meterkeuze doorgevoerd - het dashboard is nu up-to-date!');
+        $smartMeterId = SmartMeter::getMeterIdByDatabaseId($meterDatabaseId);
+
+        return redirect()->route('dashboard', ['selectedMeterId' => $smartMeterId])
+                         ->with('status', 'Meterkeuze doorgevoerd - het dashboard is nu up-to-date!');
     }
 
     private function getEnergyData(string $meterId, string $period, string $date)
