@@ -77,7 +77,9 @@ class EnergyPredictionService
             
             if (!empty($lastValues)) {
                 // Use average of actual values as base for prediction
-                $predictedUsage = $this->calculateAverage($lastValues) * (1 + $trend) * $seasonalFactor;
+                // Limit the trend influence to avoid excessive growth/decline
+                $limitedTrend = min(max($trend, -0.15), 0.15); // Limit trend to ±15%
+                $predictedUsage = $this->calculateAverage($lastValues) * (1 + $limitedTrend) * $seasonalFactor;
             } else {
                 // Fallback if no valid historical data
                 $predictedUsage = $scaleFactor * $seasonalFactor;
@@ -104,8 +106,7 @@ class EnergyPredictionService
             }
         }
         
-        // SPECIAL HANDLING FOR YEAR VIEW - different calculation to prevent unrealistic values
-        // that would cause the graph to scale poorly
+        // Prediction logic based on period type
         if ($period === 'year') {
             // For year view, calculate more stable predictions based on actual data pattern
             $actualValues = array_filter($historicalData, function($val) { return $val !== null; });
@@ -117,8 +118,8 @@ class EnergyPredictionService
                 // Average annual consumption based on current data
                 $estimatedAnnual = $avgMonthlyValue * 12;
                 
-                // Apply a modest trend factor
-                $trendFactor = 1 + (min(max($trend, -0.2), 0.2)); // Limit trend to ±20%
+                // Apply a modest trend factor with stricter limits
+                $trendFactor = 1 + (min(max($trend, -0.10), 0.10)); // Limit trend to ±10%
                 
                 // Predicted total is average x 12 x trend factor
                 $predictedTotalUsage = $estimatedAnnual * $trendFactor;
@@ -133,7 +134,6 @@ class EnergyPredictionService
             $predictedTotalUsage = min(max($predictedTotalUsage, $minYearly), $maxYearly);
         } else if ($period === 'day') {
             // For day view, calculate predicted total differently to keep hourly values realistic
-            // For day view, estimate based on pattern and current time
             $hoursLeft = 24 - ($currentPoint + 1);
             
             // Get reasonable hourly max for this energy type
@@ -150,42 +150,63 @@ class EnergyPredictionService
             // Predicted total is actual so far plus realistic remaining
             $predictedTotalUsage = $actualSum + $remainingUsageEstimate;
         } else {
-            // For month view, use the standard approach
+            // For month view, use an improved approach
+            // Start with actual usage to date
             $predictedTotalUsage = $actualSum;
             
-            // If we have any remaining period, add prediction
-            if ($remainingFactor < 1 && $remainingFactor > 0) {
-                $predictedRemainingUsage = $predictedUsage * (1 - $remainingFactor) / $remainingFactor;
-                $predictedTotalUsage += $predictedRemainingUsage;
+            // Calculate average usage per day for prediction
+            $daysInMonth = date('t');
+            $currentDay = min((int)date('j'), $daysInMonth);
+            $daysLeft = $daysInMonth - $currentDay;
+            
+            if ($daysLeft > 0) {
+                // Calculate average daily usage so far
+                $avgDailyUsage = $currentDay > 0 ? $actualSum / $currentDay : 0;
+                
+                // Apply seasonal and pattern adjustments for remaining days
+                // with a small trend factor for realism
+                $trendFactor = 1 + (min(max($trend, -0.05), 0.05)); // Limit trend to ±5% for month view
+                $remainingUsage = $avgDailyUsage * $daysLeft * $trendFactor * $seasonalFactor;
+                
+                // Add predicted remaining usage
+                $predictedTotalUsage += $remainingUsage;
             }
         }
         
         // Calculate confidence based on data quality, volatility, and period
         $confidence = $this->calculateConfidence($historicalData, $period);
         
-        // Calculate margin based on confidence and period - smaller margins for day view
+        // Calculate margin based on confidence and period - with improved scaling
+        // Smaller margins for day/month view, slightly larger for year
         $baseMarginByPeriod = [
-            'day' => 0.08,    // 8% base margin for day (hourly predictions should be tight)
-            'month' => 0.15,  // 15% base margin for month
-            'year' => 0.20    // 20% base margin for year
+            'day' => 0.05,    // 5% base margin for day (hourly predictions should be tight)
+            'month' => 0.08,  // 8% base margin for month
+            'year' => 0.12    // 12% base margin for year (reduced from 20%)
         ];
         
-        $baseMargin = $baseMarginByPeriod[$period] ?? 0.15;
+        $baseMargin = $baseMarginByPeriod[$period] ?? 0.10;
         
         // Adjust margin based on confidence (lower confidence = wider margin, but keep it reasonable)
-        $confidenceAdjustment = ((100 - $confidence) / 100) * 0.2; // 0-20% additional margin based on confidence
+        // Use a gentler curve for margin adjustment
+        $confidenceAdjustment = ((100 - $confidence) / 100) * 0.12; // 0-12% additional margin based on confidence
         $marginPercentage = $baseMargin + $confidenceAdjustment;
         
-        // Tighter cap on margins for day view to prevent unrealistic hourly values
+        // Cap margins by period type to prevent unrealistic predictions
         if ($period === 'day') {
-            $marginPercentage = min($marginPercentage, 0.2); // Cap at 20% for day view
+            $marginPercentage = min($marginPercentage, 0.10); // Cap at 10% for day view
+        } else if ($period === 'month') {
+            $marginPercentage = min($marginPercentage, 0.18); // Cap at 18% for month view
         } else {
-            $marginPercentage = min($marginPercentage, 0.35); // Cap at 35% for month/year
+            $marginPercentage = min($marginPercentage, 0.25); // Cap at 25% for year view (reduced from 35%)
         }
         
         // Calculate best and worst case scenarios based on margin
-        $bestCaseUsage = $predictedTotalUsage * (1 - $marginPercentage);
-        $worstCaseUsage = $predictedTotalUsage * (1 + $marginPercentage);
+        // Make best case closer to expected for a more optimistic view
+        $bestCaseMargin = $marginPercentage * 0.8; // 80% of the full margin for best case
+        $worstCaseMargin = $marginPercentage * 1.1; // 110% of the full margin for worst case
+        
+        $bestCaseUsage = $predictedTotalUsage * (1 - $bestCaseMargin);
+        $worstCaseUsage = $predictedTotalUsage * (1 + $worstCaseMargin);
         
         // Generate trend lines for visualization with proper scaling for the period
         $actualData = $this->generateActualData($historicalData, $period);
@@ -228,17 +249,17 @@ class EnergyPredictionService
      */
     private function normalizeValue(float $value, string $period, string $type): float
     {
-        // Define reasonable ranges for each period and type
+        // Define more realistic ranges for each period and type
         $ranges = [
             'electricity' => [
-                'day' => ['min' => 0.1, 'max' => 1.2, 'typical' => 0.5],   // kWh per hour (most households 0.2-1.0)
-                'month' => ['min' => 2, 'max' => 15, 'typical' => 8],      // kWh per day
-                'year' => ['min' => 80, 'max' => 400, 'typical' => 250]    // kWh per month
+                'day' => ['min' => 0.1, 'max' => 1.0, 'typical' => 0.4],   // kWh per hour (most households 0.2-0.8)
+                'month' => ['min' => 2, 'max' => 12, 'typical' => 7],      // kWh per day (reduced max from 15)
+                'year' => ['min' => 80, 'max' => 350, 'typical' => 250]    // kWh per month (reduced max from 400)
             ],
             'gas' => [
-                'day' => ['min' => 0.05, 'max' => 0.6, 'typical' => 0.2],  // m³ per hour
-                'month' => ['min' => 1, 'max' => 10, 'typical' => 4],      // m³ per day
-                'year' => ['min' => 30, 'max' => 200, 'typical' => 100]    // m³ per month
+                'day' => ['min' => 0.05, 'max' => 0.5, 'typical' => 0.2],  // m³ per hour (reduced max from 0.6)
+                'month' => ['min' => 1, 'max' => 8, 'typical' => 4],       // m³ per day (reduced max from 10)
+                'year' => ['min' => 30, 'max' => 180, 'typical' => 100]    // m³ per month (reduced max from 200)
             ]
         ];
         
@@ -279,8 +300,8 @@ class EnergyPredictionService
             // Base value with appropriate scale for the period
             $baseValue = isset($historicalData[$i]) ? $historicalData[$i] : ($scaleFactor * $patternMultiplier);
             
-            // Apply some randomness for realistic looking data
-            $actualData[$i] = $baseValue * (0.9 + (mt_rand(0, 20) / 100));
+            // Apply less randomness for more stable data
+            $actualData[$i] = $baseValue * (0.95 + (mt_rand(0, 10) / 100));
         }
         
         // Determine current position in period
@@ -291,20 +312,20 @@ class EnergyPredictionService
             $actualData[$i] = null;
         }
         
-        // For month view: ensure data points are within reasonable range (10-20 kWh for electricity)
+        // For month view: ensure data points are within reasonable range
         if ($period === 'month') {
             for ($i = 0; $i <= $currentPoint; $i++) {
-                if ($actualData[$i] > 25) {
-                    $actualData[$i] = mt_rand(150, 220) / 10; // Scale to reasonable 15-22 kWh range
+                if ($actualData[$i] > 20) {  // Reduced threshold from 25
+                    $actualData[$i] = mt_rand(150, 200) / 10; // Scale to reasonable 15-20 kWh range
                 }
             }
         }
         
-        // For year view: ensure monthly values are within reasonable range (200-400 kWh)
+        // For year view: ensure monthly values are within reasonable range
         if ($period === 'year') {
             for ($i = 0; $i <= $currentPoint; $i++) {
-                if ($actualData[$i] > 450) {
-                    $actualData[$i] = mt_rand(2000, 4000) / 10; // Scale to reasonable 200-400 kWh range
+                if ($actualData[$i] > 400) {  // Reduced threshold from 450
+                    $actualData[$i] = mt_rand(2000, 3500) / 10; // Scale to reasonable 200-350 kWh range
                 }
             }
         }
@@ -349,11 +370,12 @@ class EnergyPredictionService
         switch ($period) {
             case 'day':
                 // Daily pattern: higher consumption in morning and evening
+                // Reduced extreme peaks for more realistic predictions
                 $hourPatterns = [
                     0.5, 0.4, 0.3, 0.3, 0.3, 0.5, // 0-5 night (low usage)
-                    0.8, 1.4, 1.7, 1.3, 1.1, 1.0, // 6-11 morning (peak at 8)
-                    1.0, 1.1, 1.0, 1.1, 1.3, 1.5, // 12-17 afternoon/evening
-                    2.0, 1.8, 1.5, 1.2, 0.9, 0.7  // 18-23 evening (peak at 18)
+                    0.8, 1.3, 1.5, 1.2, 1.0, 0.9, // 6-11 morning (reduced peak at 8 from 1.7 to 1.5)
+                    0.9, 1.0, 0.9, 1.0, 1.2, 1.4, // 12-17 afternoon/evening
+                    1.7, 1.6, 1.4, 1.1, 0.9, 0.7  // 18-23 evening (reduced peak at 18 from 2.0 to 1.7)
                 ];
                 return $hourPatterns[$index % 24];
                 
@@ -366,18 +388,18 @@ class EnergyPredictionService
                 $date = "$currentYear-$currentMonth-$dayOfMonth";
                 $dayOfWeek = date('w', strtotime($date));
                 
-                // Weekend multiplier
+                // Weekend multiplier (reduced from 1.3 to 1.2 for more consistency)
                 if ($dayOfWeek == 0 || $dayOfWeek == 6) {
-                    return 1.3; // Higher usage on weekends
+                    return 1.2; // Higher usage on weekends
                 }
                 return 1.0; // Normal usage on weekdays
                 
             case 'year':
             default:
-                // Yearly pattern: seasonal variations
+                // Yearly pattern: seasonal variations (reduced extremes)
                 $monthPatterns = [
-                    1.4, 1.3, 1.1, 0.9, 0.8, 0.7, // Jan-Jun: Higher in winter, lower in spring/summer
-                    0.8, 0.9, 1.0, 1.1, 1.2, 1.4  // Jul-Dec: Increasing toward winter again
+                    1.3, 1.2, 1.1, 0.9, 0.8, 0.7, // Jan-Jun: Higher in winter, lower in spring/summer
+                    0.8, 0.9, 0.9, 1.0, 1.1, 1.3  // Jul-Dec: Increasing toward winter again
                 ];
                 return $monthPatterns[$index % 12];
         }
@@ -433,6 +455,13 @@ class EnergyPredictionService
             return 0;
         }
         
+        // Filter out null values
+        $data = array_filter($data, function($val) { return $val !== null; });
+        
+        if (count($data) < 2) {
+            return 0;
+        }
+        
         $first = reset($data);
         $last = end($data);
         
@@ -440,7 +469,9 @@ class EnergyPredictionService
             return 0;
         }
         
-        return ($last - $first) / $first;
+        // Limit extreme trends for more stability
+        $rawTrend = ($last - $first) / $first;
+        return min(max($rawTrend, -0.3), 0.3); // Limit to ±30%
     }
     
     /**
@@ -455,7 +486,14 @@ class EnergyPredictionService
             return 0;
         }
         
-        return array_sum($data) / count($data);
+        // Filter out null values
+        $validData = array_filter($data, function($val) { return $val !== null; });
+        
+        if (empty($validData)) {
+            return 0;
+        }
+        
+        return array_sum($validData) / count($validData);
     }
     
     /**
@@ -470,14 +508,14 @@ class EnergyPredictionService
         $month = date('n');
         
         if ($type === 'gas') {
-            // Gas heeft sterke seizoensinvloed
+            // Gas heeft sterke seizoensinvloed, maar reduceer extremen
             $winterMonths = [1, 2, 3, 11, 12];
             $summerMonths = [6, 7, 8];
             
             if (in_array($month, $winterMonths)) {
-                return 1.5; // Hoger verbruik in winter
+                return 1.3; // Hoger verbruik in winter (reduced from 1.5)
             } elseif (in_array($month, $summerMonths)) {
-                return 0.5; // Lager verbruik in zomer
+                return 0.6; // Lager verbruik in zomer (increased from 0.5)
             } else {
                 return 1.0; // Gemiddeld verbruik in lente/herfst
             }
@@ -487,9 +525,9 @@ class EnergyPredictionService
             $summerMonths = [6, 7, 8];
             
             if (in_array($month, $winterMonths)) {
-                return 1.2; // Iets hoger verbruik in winter (verlichting)
+                return 1.15; // Iets hoger verbruik in winter (reduced from 1.2)
             } elseif (in_array($month, $summerMonths)) {
-                return 1.1; // Iets hoger verbruik in zomer (koeling)
+                return 1.08; // Iets hoger verbruik in zomer (reduced from 1.1)
             } else {
                 return 1.0; // Gemiddeld verbruik in lente/herfst
             }
@@ -531,24 +569,29 @@ class EnergyPredictionService
      */
     private function calculateConfidence(array $data, string $period = 'year'): int
     {
-        // Base confidence depends on period - shorter periods are more predictable
+        // Improved base confidence values per period
+        // Day predictions are most accurate, year predictions have more variables
         $periodBaseConfidence = [
-            'day' => 85,    // Day predictions are most accurate
-            'month' => 75,  // Month predictions are moderately accurate
-            'year' => 65    // Year predictions have more variables
+            'day' => 90,    // Increased from 85
+            'month' => 82,  // Increased from 75
+            'year' => 72    // Increased from 65
         ];
         
-        $baseConfidence = $periodBaseConfidence[$period] ?? 65;
+        $baseConfidence = $periodBaseConfidence[$period] ?? 72;
         
-        // More data points increase confidence (up to +10%)
-        $dataPointsBonus = min(count($data), 10);
+        // Filter out null values
+        $validData = array_filter($data, function($val) { return $val !== null; });
+        $validDataCount = count($validData);
         
-        // Consistent data increases confidence (up to +15%)
-        $volatility = $this->calculateVolatility($data);
-        $consistencyBonus = $volatility < 0.3 ? 15 : ($volatility < 0.6 ? 10 : ($volatility < 1 ? 5 : 0));
+        // More data points increase confidence (up to +8%)
+        $dataPointsBonus = min($validDataCount, 8);
+        
+        // Consistent data increases confidence (up to +10%)
+        $volatility = $this->calculateVolatility($validData);
+        $consistencyBonus = $volatility < 0.2 ? 10 : ($volatility < 0.4 ? 7 : ($volatility < 0.7 ? 4 : 0));
         
         // Recent data increases confidence (up to +5%)
-        $recencyBonus = count($data) > 0 && end($data) !== false ? 5 : 0;
+        $recencyBonus = $validDataCount > 0 && end($validData) !== false ? 5 : 0;
         
         // Seasonal effect on confidence
         $seasonalEffect = $this->getSeasonalConfidenceEffect($period);
@@ -556,11 +599,11 @@ class EnergyPredictionService
         // Final confidence score capped based on period
         $maxConfidence = [
             'day' => 98,    // Day predictions can be very accurate
-            'month' => 95,  // Month predictions have slight uncertainty
-            'year' => 90    // Year predictions always have uncertainty
+            'month' => 93,  // Month predictions have slight uncertainty
+            'year' => 85    // Year predictions always have uncertainty (reduced from 90)
         ];
         
-        return min($baseConfidence + $dataPointsBonus + $consistencyBonus + $recencyBonus + $seasonalEffect, $maxConfidence[$period] ?? 90);
+        return min($baseConfidence + $dataPointsBonus + $consistencyBonus + $recencyBonus + $seasonalEffect, $maxConfidence[$period] ?? 85);
     }
     
     /**
@@ -578,9 +621,9 @@ class EnergyPredictionService
             case 'day':
                 // More predictable during typical hours, less at transition times
                 if (($hour >= 9 && $hour <= 15) || ($hour >= 22 || $hour <= 4)) {
-                    return 5; // Stable periods (mid-day or night)
+                    return 3; // Stable periods (mid-day or night) (reduced from 5)
                 } elseif (($hour >= 6 && $hour <= 8) || ($hour >= 17 && $hour <= 21)) {
-                    return -5; // Transition periods (morning or evening)
+                    return -3; // Transition periods (morning or evening) (reduced from -5)
                 }
                 return 0;
                 
@@ -590,9 +633,9 @@ class EnergyPredictionService
                 $daysInMonth = (int)date('t');
                 
                 if ($day > 5 && $day < ($daysInMonth - 5)) {
-                    return 3; // Mid-month is more stable
+                    return 2; // Mid-month is more stable (reduced from 3)
                 } elseif ($day <= 3 || $day >= ($daysInMonth - 2)) {
-                    return -3; // Beginning/end of month has more variations
+                    return -2; // Beginning/end of month has more variations (reduced from -3)
                 }
                 return 0;
                 
@@ -600,9 +643,9 @@ class EnergyPredictionService
             default:
                 // Mid-seasons are more predictable than transition months
                 if (in_array($month, [1, 2, 7, 8])) {
-                    return 3; // Mid-winter and mid-summer are stable
+                    return 2; // Mid-winter and mid-summer are stable (reduced from 3)
                 } elseif (in_array($month, [3, 4, 9, 10])) {
-                    return -3; // Season transitions are less predictable
+                    return -2; // Season transitions are less predictable (reduced from -3)
                 }
                 return 0;
         }
@@ -617,13 +660,13 @@ class EnergyPredictionService
     private function calculateVolatility(array $data): float
     {
         if (count($data) < 2) {
-            return 1.0; // High volatility by default for insufficient data
+            return 0.8; // Moderate volatility by default for insufficient data (reduced from 1.0)
         }
         
         $mean = $this->calculateAverage($data);
         
         if ($mean == 0) {
-            return 1.0; // Avoid division by zero
+            return 0.8; // Avoid division by zero (reduced from 1.0)
         }
         
         // Calculate standard deviation
@@ -730,6 +773,13 @@ class EnergyPredictionService
             return [];
         }
         
+        // Filter out null values
+        $data = array_filter($data, function($val) { return $val !== null; });
+        
+        if (empty($data)) {
+            return [];
+        }
+        
         // Veronderstel dat de data-array is geïndexeerd van 0 tot 23 voor uren van de dag
         if ($period === 'day') {
             // Zoek het piekuur
@@ -757,7 +807,7 @@ class EnergyPredictionService
                 
                 $totalUsage = array_sum($data);
                 $peakPercentage = ($totalUsage > 0) ? ($peakUsage / $totalUsage) * 100 : 0;
-                $potentialSaving = round($peakPercentage * 0.3); // 30% van piekverbruik kan worden bespaard
+                $potentialSaving = round($peakPercentage * 0.25); // 25% van piekverbruik kan worden bespaard (reduced from 30%)
                 
                 return [
                     'start' => sprintf('%02d:00', $startHour),

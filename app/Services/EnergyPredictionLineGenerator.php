@@ -286,7 +286,7 @@ class EnergyPredictionLineGenerator
     }
     
     /**
-     * Generate month view prediction line
+     * Generate month view prediction line with more realistic patterns
      */
     private function generateMonthLine(
         array $predictionLine,
@@ -299,76 +299,119 @@ class EnergyPredictionLineGenerator
         string $type,
         string $scenario
     ): array {
-        // Get pattern factors for the month
-        $patternFactors = [];
-        for ($i = $lastActualIndex + 1; $i < $periodLength; $i++) {
-            // Calculate base pattern (weekday/weekend effects)
-            $patternFactor = $this->getPatternMultiplier('month', $i);
+        // Determine current month for seasonal effects
+        $currentMonth = (int)date('n');
+        
+        // Determine first day of month for weekday effects
+        $startDayOfWeek = (int)date('w', strtotime(date('Y-m-01'))); // 0 = Sunday, 6 = Saturday
+        
+        // Weekday patterns - weekends have higher consumption
+        $weekdayPatterns = [
+            0 => 1.3,  // Sunday
+            1 => 0.9,  // Monday
+            2 => 0.85, // Tuesday
+            3 => 0.9,  // Wednesday
+            4 => 0.95, // Thursday
+            5 => 1.1,  // Friday
+            6 => 1.25  // Saturday
+        ];
+        
+        // Seasonal adjustment for the selected month
+        $seasonalFactor = $type === 'gas' ?
+            $this->getSeasonalFactorForGas($currentMonth) :
+            $this->getSeasonalFactorForElectricity($currentMonth);
             
-            // Adjust pattern by scenario
-            if ($scenario === 'best') {
-                // Best case: less variation between days
-                $patternFactor = $patternFactor > 1.0 ? 
-                    1.0 + (($patternFactor - 1.0) * 0.6) : $patternFactor;
-            } else if ($scenario === 'worst') {
-                // Worst case: more variation between days
-                $patternFactor = $patternFactor > 1.0 ? 
-                    1.0 + (($patternFactor - 1.0) * 1.4) : $patternFactor;
-            }
-            
-            $patternFactors[$i] = $patternFactor;
-        }
+        // Adjust trend based on season
+        $trendDirection = $this->getTrendDirectionForMonth($currentMonth, $type, $scenario);
         
-        // Get maximum daily value based on type
-        $maxValuePerUnit = $type === 'electricity' ? 25 : 12;
+        // Calculate daily average consumption based on remaining total
+        $daysRemaining = $periodLength - $currentPoint - 1;
+        if ($daysRemaining <= 0) return $predictionLine;
         
-        // Adjust max value by scenario
-        if ($scenario === 'best') {
-            $maxValuePerUnit *= 0.9; // Lower max for best case
-        } else if ($scenario === 'worst') {
-            $maxValuePerUnit *= 1.2; // Higher max for worst case
-        }
+        $averageDailyUsage = $remainingUsage / $daysRemaining;
         
-        // Add transition points
-        if ($currentPoint > $lastActualIndex) {
-            $transitionSlope = $this->calculateTransitionSlope(
-                $lastActualValue, $patternFactors, $remainingUsage, 'month', $scenario);
-            
-            // Fill transition points
-            for ($i = $lastActualIndex + 1; $i <= $currentPoint; $i++) {
-                $steps = $i - $lastActualIndex;
-                $predictionLine[$i] = min($lastActualValue + ($transitionSlope * $steps), $maxValuePerUnit);
-            }
-        }
+        // Maximum daily value depending on type and scenario
+        $maxDailyValue = $type === 'electricity' ? 
+            ($scenario === 'worst' ? 30 : 25) :  // Electricity max 25-30 kWh/day
+            ($scenario === 'worst' ? 15 : 12);   // Gas max 12-15 m³/day
         
-        // Calculate daily usage total
-        $factorSum = array_sum($patternFactors);
-        $usagePerUnit = $remainingUsage / max($factorSum, 0.1);
-        
-        // Start from last actual or transition value
-        $cumulativeUsage = $actualSum;
-        
-        // Generate future days
+        // Generate realistic daily patterns
         for ($i = $currentPoint + 1; $i < $periodLength; $i++) {
-            // Apply scenario-specific adjustments to pattern factors
-            $adjustedFactor = $patternFactors[$i];
-            $incrementalUsage = $usagePerUnit * $adjustedFactor;
+            // Determine day of week for this day
+            $dayOfWeek = ($startDayOfWeek + $i) % 7;
+            $weekdayFactor = $weekdayPatterns[$dayOfWeek];
             
-            // Add to running total
-            // For month view, don't use cumulative approach but daily values
-            $predictionLine[$i] = min($incrementalUsage, $maxValuePerUnit);
+            // Adjust weekday factor based on scenario
+            if ($scenario === 'best') {
+                // Best case: less difference between weekdays
+                $weekdayFactor = ($weekdayFactor - 1.0) * 0.7 + 1.0;
+            } elseif ($scenario === 'worst') {
+                // Worst case: more difference between weekdays
+                $weekdayFactor = ($weekdayFactor - 1.0) * 1.3 + 1.0;
+            }
+            
+            // Apply trend (increase/decrease over time)
+            $dayFromStart = $i - $currentPoint;
+            $trendFactor = 1.0 + ($trendDirection * $dayFromStart);
+            
+            // Set 10% chance for an extreme day (e.g., very cold or hot)
+            $extremeDay = mt_rand(1, 10) === 1;
+            $extremeFactor = 1.0;
+            
+            if ($extremeDay) {
+                if ($type === 'gas' && ($currentMonth >= 10 || $currentMonth <= 3)) {
+                    // Extremely cold day in winter - up to 50% more gas consumption
+                    $extremeFactor = mt_rand(130, 150) / 100;
+                } elseif ($type === 'electricity' && $currentMonth >= 6 && $currentMonth <= 8) {
+                    // Extremely hot day in summer - up to 40% more electricity consumption (AC)
+                    $extremeFactor = mt_rand(120, 140) / 100;
+                } else {
+                    // Other extreme days have less impact
+                    $extremeFactor = mt_rand(110, 130) / 100;
+                }
+                
+                // Adjust extreme factor based on scenario
+                if ($scenario === 'best') {
+                    $extremeFactor = 1.0 + (($extremeFactor - 1.0) * 0.7);
+                } elseif ($scenario === 'worst') {
+                    $extremeFactor = 1.0 + (($extremeFactor - 1.0) * 1.3);
+                }
+            }
+            
+            // Random variation for natural pattern
+            $randomFactor = 0.95 + (mt_rand(0, 10) / 100);
+            
+            // Calculate value for this day
+            $predictedValue = $averageDailyUsage * $weekdayFactor * $trendFactor * $extremeFactor * $randomFactor;
+            
+            // Limit the value to the maximum
+            $predictionLine[$i] = min($predictedValue, $maxDailyValue);
         }
         
-        // Apply scenario-specific adjustments to the whole curve
-        if ($scenario === 'best') {
-            // Best case shows improvement over time
-            $this->applyTrendToLine($predictionLine, $currentPoint, -0.01);
-        } else if ($scenario === 'worst') {
-            // Worst case shows deterioration over time
-            $this->applyTrendToLine($predictionLine, $currentPoint, 0.02);
-        }
+        // Create a smooth transition from last actual data point
+        $this->smoothTransition($predictionLine, $lastActualIndex, $currentPoint);
         
         return $predictionLine;
+    }
+
+    /**
+     * Helper to create a smooth transition between actual and predicted data
+     */
+    private function smoothTransition(array &$line, int $lastActualIndex, int $currentPoint): void
+    {
+        // If we have a gap between last actual point and current point
+        if ($currentPoint > $lastActualIndex + 1) {
+            $lastValue = $line[$lastActualIndex];
+            $nextValue = $line[$currentPoint + 1] ?? $line[$currentPoint];
+            
+            // Calculate transition values for intermediate points
+            $steps = $currentPoint - $lastActualIndex;
+            
+            for ($i = $lastActualIndex + 1; $i <= $currentPoint; $i++) {
+                $progress = ($i - $lastActualIndex) / $steps;
+                $line[$i] = $lastValue + ($nextValue - $lastValue) * $progress;
+            }
+        }
     }
     
     /**
@@ -497,7 +540,7 @@ class EnergyPredictionLineGenerator
         
         // Look back up to 3 points to find actual data
         for ($i = $currentPoint; $i >= max(0, $currentPoint - 3); $i--) {
-            if (!is_null($actualData[$i])) {
+            if (isset($actualData[$i]) && $actualData[$i] !== null) {
                 $lastActualValue = $actualData[$i];
                 $lastActualIndex = $i;
                 break;
@@ -600,6 +643,84 @@ class EnergyPredictionLineGenerator
                 ];
                 return $monthPatterns[$index % 12];
         }
+    }
+    
+    /**
+     * Calculate seasonal factor for gas
+     */
+    private function getSeasonalFactorForGas(int $month): float
+    {
+        $factors = [
+            1 => 1.8, 2 => 1.7, 3 => 1.5, 4 => 1.2, 5 => 0.8, 6 => 0.5,
+            7 => 0.4, 8 => 0.4, 9 => 0.6, 10 => 1.0, 11 => 1.4, 12 => 1.7
+        ];
+        
+        return $factors[$month] ?? 1.0;
+    }
+
+    /**
+     * Calculate seasonal factor for electricity
+     */
+    private function getSeasonalFactorForElectricity(int $month): float
+    {
+        $factors = [
+            1 => 1.15, 2 => 1.1, 3 => 1.05, 4 => 0.95, 5 => 0.9, 6 => 0.95,
+            7 => 1.05, 8 => 1.05, 9 => 0.95, 10 => 1.0, 11 => 1.05, 12 => 1.15
+        ];
+        
+        return $factors[$month] ?? 1.0;
+    }
+
+    /**
+     * Determine trend direction based on month, type and scenario
+     */
+    private function getTrendDirectionForMonth(int $month, string $type, string $scenario): float
+    {
+        // Base trend based on season
+        $baseDirection = 0.0;
+        
+        if ($type === 'gas') {
+            // Gas consumption increases in fall/winter, decreases in spring/summer
+            if ($month >= 9 || $month <= 2) {
+                $baseDirection = 0.005; // Slight increase per day
+            } elseif ($month >= 3 && $month <= 8) {
+                $baseDirection = -0.003; // Slight decrease per day
+            }
+        } else {
+            // Electricity has less pronounced seasonal trends
+            if ($month >= 10 || $month <= 3) {
+                $baseDirection = 0.002; // Very slight increase in winter
+            } elseif ($month >= 6 && $month <= 8) {
+                $baseDirection = 0.001; // Very slight increase in summer (AC)
+            } else {
+                $baseDirection = -0.001; // Very slight decrease in spring/fall
+            }
+        }
+        
+        // Adjust based on scenario
+        if ($scenario === 'best') {
+            // Best case: trend direction down (savings)
+            if ($baseDirection > 0) {
+                $baseDirection *= 0.5; // Weaken increase
+            } else {
+                $baseDirection *= 1.5; // Strengthen decrease
+            }
+            
+            // Add extra decrease for best case
+            $baseDirection -= 0.002;
+        } elseif ($scenario === 'worst') {
+            // Worst case: trend direction up (more consumption)
+            if ($baseDirection > 0) {
+                $baseDirection *= 1.5; // Strengthen increase
+            } else {
+                $baseDirection *= 0.5; // Weaken decrease
+            }
+            
+            // Add extra increase for worst case
+            $baseDirection += 0.003;
+        }
+        
+        return $baseDirection;
     }
     
     /**

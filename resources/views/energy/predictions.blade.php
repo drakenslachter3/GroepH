@@ -66,6 +66,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h4 class="font-medium text-gray-700 mb-2 dark:text-gray-300">Actueel verbruik</h4>
+                            
                             <p class="dark:text-white">
                                 Tot nu toe heb je <span class="font-semibold">{{ number_format(array_sum(array_filter($usageData['actual'], function($value) { return $value !== null; })), 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span> 
                                 verbruikt, wat neerkomt op <span class="font-semibold">{{ number_format($percentage, 1) }}%</span> van je jaarbudget.

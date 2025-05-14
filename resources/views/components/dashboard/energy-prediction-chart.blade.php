@@ -1,4 +1,4 @@
-@props(['currentData', 'budgetData', 'type', 'period', 'percentage', 'confidence'])
+@props(['currentData', 'budgetData', 'type', 'period', 'percentage', 'confidence', 'yearlyConsumptionToDate' => 0, 'dailyAverageConsumption' => 0])
 
 {{-- Set default values for any missing props --}}
 @php
@@ -37,7 +37,6 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
             <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
         </div>
                 
-                <!-- Properly label percentage for clarity -->
         <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
             @if($period == 'year')
                 Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
@@ -46,17 +45,32 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
             @endif
         </div>
     </div>
-            
-            <!-- Display budget info based on period -->
-    <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
-        @if($period == 'month' && isset($monthlyBudgetValue))
-            <span>Maandbudget: {{ number_format($monthlyBudgetValue, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-            <span>Dagelijks budget: {{ number_format($monthlyBudgetValue / $daysInMonth, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
-        @else
-            <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-            <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-        @endif
+        <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
+    @if($period == 'month' && isset($monthlyBudgetValue))
+        <span>Maandbudget: {{ number_format($monthlyBudgetValue, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+        <span>Dagelijks budget: {{ number_format($monthlyBudgetValue / 30, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
+    @else
+        <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+        <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+    @endif
+</div>    
+    <!-- Nieuwe verbruiksdetails toevoegen -->
+    <div class="actueel-verbruik-details mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-md">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <span class="text-sm text-gray-500 dark:text-gray-400">Totaal dit jaar:</span>
+            <span class="font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
+                {{ isset($yearlyConsumptionToDate) ? number_format($yearlyConsumptionToDate, 2) : number_format(0, 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
+            </span>
+        </div>
+        <div>
+            <span class="text-sm text-gray-500 dark:text-gray-400">Dagelijks gemiddelde:</span>
+            <span class="font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
+                {{ isset($dailyAverageConsumption) ? number_format($dailyAverageConsumption, 2) : number_format(0, 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag
+            </span>
+        </div>
     </div>
+</div>
 </div>
         
         <!-- Prediction Chart Canvas -->
@@ -235,22 +249,42 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
         };
         
         // Create prediction band (area between best and worst case)
-        if (currentData.actual.length > 0) {
-            const areaBetween = {
-                type: 'line',
-                label: 'Voorspellingsmarge',
-                data: currentData.worst_case_line,
-                backgroundColor: 'rgba(156, 163, 175, 0.2)', // Gray with transparency
-                borderWidth: 0,
-                tension: 0.3,
-                fill: '+1',
-                pointRadius: 0,
-                order: 2 // Place prediction band behind most elements but above budget line
-            };
-            
-            // Insert after the worst case dataset
-            chartData.datasets.splice(4, 0, areaBetween);
-        }
+       // Wijzig de datasets volgorde
+chartData.datasets = [
+    // Actual data (blijft als eerste)
+    chartData.datasets[0],
+    
+    // Budget line (move up in order)
+    chartData.datasets[4],
+    
+    // Best case scenario (before worst case for proper area filling)
+    chartData.datasets[2],
+    
+    // Worst case scenario
+    chartData.datasets[3],
+    
+    // Expected prediction (keep last)
+    chartData.datasets[1]
+];
+
+// Create prediction band (area between best and worst case)
+if (currentData.actual.length > 0) {
+    // Voeg een area dataset toe die het verschil tussen worst case en best case toont
+    const predictionArea = {
+        type: 'line',
+        label: 'Voorspellingsmarge',
+        data: currentData.worst_case_line,
+        backgroundColor: 'rgba(156, 163, 175, 0.2)', // Gray with transparency
+        borderWidth: 0,
+        tension: 0.3,
+        fill: '-1', // Vul naar voorgaande dataset (best case)
+        pointRadius: 0,
+        order: 1 // Place prediction band behind most elements
+    };
+    
+    // Insert area dataset between best case and worst case
+    chartData.datasets.splice(3, 0, predictionArea);
+}
         
         // Adjust colors for dark mode
         if (isDarkMode) {
