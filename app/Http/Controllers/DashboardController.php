@@ -87,6 +87,8 @@ class DashboardController extends Controller
         $housingType = $request->input('housing_type');
         $inputDate   = $request->input('date');
 
+
+
         // Format the date based on the period type
         $formattedDate = $this->formatDateByPeriod($period, $inputDate);
 
