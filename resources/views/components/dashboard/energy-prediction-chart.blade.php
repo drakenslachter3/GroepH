@@ -13,43 +13,51 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
 
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
     <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
-        <h3 class="text-lg font-semibold mb-4 dark:text-white">
-            {{ $type === 'electricity' ? 'Elektriciteit' : 'Gas' }} Voorspelling 
-            <span class="text-sm bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-100 text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-800 px-2 py-1 rounded ml-2 dark:bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-900/30 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-300">
-                {{ ucfirst($period) }}
-            </span>
-        </h3>
+    <h3 class="text-lg font-semibold mb-4 dark:text-white">
+    {{ $type === 'electricity' ? 'Elektriciteit' : 'Gas' }} Voorspelling 
+    <span class="text-sm bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-100 text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-800 px-2 py-1 rounded ml-2 dark:bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-900/30 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-300">
+        {{ ucfirst($period) }}
+    </span>
+    
+    @if(isset($currentMonthName) && $period === 'month')
+    <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded ml-2 dark:bg-gray-700 dark:text-gray-200">
+        {{ $currentMonthName }}
+    </span>
+    @endif
+</h3>
         
-        <div class="mb-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
-                    <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
-                        <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
-                             style="width: {{ $confidence }}%"></div>
-                    </div>
-                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
-                </div>
+<div class="mb-4">
+    <div class="flex justify-between items-center">
+        <div class="flex items-center">
+            <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
+            <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
+                <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
+                     style="width: {{ $confidence }}%"></div>
+            </div>
+            <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
+        </div>
                 
                 <!-- Properly label percentage for clarity -->
-                <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
-                    @if($period == 'year')
-                        Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
-                    @else
-                        {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
-                    @endif
-                </div>
-            </div>
-            
-            <!-- Display yearly budget info for better context -->
-            <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
-                <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-                
-                @if($period == 'year')
-                    <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-                @endif
-            </div>
+        <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
+            @if($period == 'year')
+                Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
+            @else
+                {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
+            @endif
         </div>
+    </div>
+            
+            <!-- Display budget info based on period -->
+    <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
+        @if($period == 'month' && isset($monthlyBudgetValue))
+            <span>Maandbudget: {{ number_format($monthlyBudgetValue, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+            <span>Dagelijks budget: {{ number_format($monthlyBudgetValue / $daysInMonth, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
+        @else
+            <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+            <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+        @endif
+    </div>
+</div>
         
         <!-- Prediction Chart Canvas -->
         <div class="relative" style="height: 350px;">
@@ -321,30 +329,43 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
         });
         
         // Helper function to get budget line appropriate for the period
-        function getPeriodBudgetLine(period, budgetData) {
-            const length = getLabels(period).length;
-            
-            // For day and month, budget should be spread across the period rather than total
-            switch(period) {
-                case 'day':
-                    // Hourly budget (daily budget / 24)
-                    const dailyBudget = budgetData.per_unit || (budgetData.target / 365 / 24);
-                    return Array(length).fill(dailyBudget);
-                    
-                case 'month':
-                    // Daily budget (monthly budget / days in month)
-                    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-                    const monthlyBudget = budgetData.target / 12;
-                    const dailyBudgetValue = budgetData.per_unit || (monthlyBudget / daysInMonth);
-                    return Array(length).fill(dailyBudgetValue);
-                    
-                case 'year':
-                default:
-                    // Monthly budget (yearly budget / 12)
-                    const monthlyBudgetValue = budgetData.per_unit || (budgetData.target / 12);
-                    return Array(12).fill(monthlyBudgetValue);
-            }
+        
+/**
+ * Helper function om de budgetlijn te genereren op basis van de periode
+ */
+function getPeriodBudgetLine(period, budgetData) {
+    const length = getLabels(period).length;
+    
+    // Controleer of we een array met budgetlijnwaarden hebben
+    if (budgetData.line && Array.isArray(budgetData.line) && budgetData.line.length > 0) {
+        // Voor jaarweergave, gebruik de daadwerkelijke maandelijkse budgetten
+        if (period === 'year') {
+            return budgetData.line;
         }
+        // Voor dag- en maandweergave, we hebben al een array met correcte waarden
+        else if (budgetData.line.length === length) {
+            return budgetData.line;
+        }
+    }
+    
+    // Fallback naar de oude methode als er geen specifieke budgetlijn is
+    switch(period) {
+        case 'day':
+            const dailyBudget = budgetData.per_unit || (budgetData.target / 365 / 24);
+            return Array(length).fill(dailyBudget);
+            
+        case 'month':
+            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+            const monthlyBudget = budgetData.target / 12;
+            const dailyBudgetValue = budgetData.per_unit || (monthlyBudget / daysInMonth);
+            return Array(length).fill(dailyBudgetValue);
+            
+        case 'year':
+        default:
+            const monthlyBudgetValue = budgetData.per_unit || (budgetData.target / 12);
+            return Array(12).fill(monthlyBudgetValue);
+    }
+}
         
         // Helper function to get budget value for tooltip
         function getValueForTooltip(period, budgetData, index) {
