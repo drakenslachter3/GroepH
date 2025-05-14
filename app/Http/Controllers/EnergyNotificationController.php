@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\EnergyNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\EnergyNotificationService;
+use Carbon\Carbon;
 
 class EnergyNotificationController extends Controller
 {
@@ -15,12 +17,12 @@ class EnergyNotificationController extends Controller
     {
         $user = Auth::user();
         $notifications = EnergyNotification::where('user_id', $user->id)
+            ->where('status', '!=', 'dismissed')  // Voeg deze regel toe
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-            
+
         return view('energy.notifications.index', compact('notifications'));
     }
-    
     /**
      * Mark a notification as read.
      */
@@ -30,12 +32,12 @@ class EnergyNotificationController extends Controller
         if ($notification->user_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-        
+
         $notification->markAsRead();
-        
+
         return response()->json(['success' => true]);
     }
-    
+
     /**
      * Dismiss a notification.
      */
@@ -45,25 +47,25 @@ class EnergyNotificationController extends Controller
         if ($notification->user_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-        
+
         $notification->dismiss();
-        
+
         return response()->json(['success' => true]);
     }
-    
+
     /**
      * Display the notification settings form.
      */
     public function settings()
     {
         $user = Auth::user();
-        
+
         return view('energy.notifications.settings', [
             'user' => $user,
             'frequency' => $user->getNotificationFrequency(),
         ]);
     }
-    
+
     /**
      * Update the user's notification settings.
      */
@@ -74,7 +76,7 @@ class EnergyNotificationController extends Controller
             'electricity_threshold' => 'required|integer|min:1|max:50',
             'gas_threshold' => 'required|integer|min:1|max:50',
         ]);
-        
+
         $user = Auth::user();
         $user->notification_frequency = $request->notification_frequency;
         $user->electricity_threshold = $request->electricity_threshold;
@@ -83,7 +85,7 @@ class EnergyNotificationController extends Controller
         $user->include_comparison = $request->has('include_comparison') ? 1 : 0;
         $user->include_forecast = $request->has('include_forecast') ? 1 : 0;
         $user->save();
-        
+
         return redirect()->route('notifications.settings')
             ->with('status', 'Notificatie-instellingen succesvol bijgewerkt!');
     }

@@ -10,12 +10,12 @@ use Carbon\Carbon;
 class EnergyNotificationService
 {
     protected $predictionService;
-    
-    public function __construct(EnergyPredictionService $predictionService)
+
+    public function __construct(EnergyPredictionService $predictionService = null)
     {
         $this->predictionService = $predictionService;
     }
-    
+
     /**
      * Generate notifications for a user based on their energy usage predictions
      */
@@ -25,37 +25,37 @@ class EnergyNotificationService
         if ($user->getNotificationFrequency() === 'never') {
             return;
         }
-        
+
         // Check the last time we generated notifications
         $lastNotification = EnergyNotification::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->first();
-            
+
         // Check if we should generate based on user's preferred frequency
         if ($lastNotification) {
             $shouldGenerate = $this->shouldGenerateNotification(
                 $lastNotification->created_at,
                 $user->getNotificationFrequency()
             );
-            
+
             if (!$shouldGenerate) {
                 return;
             }
         }
-        
+
         // Check if the user is on track for their electricity usage
         $electricityThreshold = $user->electricity_threshold ?? 10;
         if ($electricityData && $this->isOverThreshold($electricityData, $electricityThreshold)) {
             $this->createElectricityNotification($user, $electricityData, $period);
         }
-        
+
         // Check if the user is on track for their gas usage
         $gasThreshold = $user->gas_threshold ?? 10;
         if ($gasData && $this->isOverThreshold($gasData, $gasThreshold)) {
             $this->createGasNotification($user, $gasData, $period);
         }
     }
-    
+
     /**
      * Determine if we should generate a new notification based on frequency
      */
@@ -72,17 +72,17 @@ class EnergyNotificationService
                 return false;
         }
     }
-    
+
     /**
      * Check if the predicted usage is over the threshold percentage
      */
     private function isOverThreshold(array $data, int $thresholdPercentage): bool
     {
         // If predicted usage is over the threshold percentage (e.g., 110% of target)
-        return isset($data['predicted_percentage']) && 
-               ($data['predicted_percentage'] - 100) >= $thresholdPercentage;
+        return isset($data['predicted_percentage']) &&
+            ($data['predicted_percentage'] - 100) >= $thresholdPercentage;
     }
-    
+
     /**
      * Create an electricity usage notification
      */
@@ -90,7 +90,7 @@ class EnergyNotificationService
     {
         $severity = $this->getSeverityLevel($data['predicted_percentage'] - 100);
         $suggestions = $this->getElectricitySavingSuggestions($period);
-        
+
         EnergyNotification::create([
             'user_id' => $user->id,
             'type' => 'electricity',
@@ -103,7 +103,7 @@ class EnergyNotificationService
             'expires_at' => $this->getExpirationDate($user->getNotificationFrequency()),
         ]);
     }
-    
+
     /**
      * Create a gas usage notification
      */
@@ -111,7 +111,7 @@ class EnergyNotificationService
     {
         $severity = $this->getSeverityLevel($data['predicted_percentage'] - 100);
         $suggestions = $this->getGasSavingSuggestions($period);
-        
+
         EnergyNotification::create([
             'user_id' => $user->id,
             'type' => 'gas',
@@ -124,7 +124,7 @@ class EnergyNotificationService
             'expires_at' => $this->getExpirationDate($user->getNotificationFrequency()),
         ]);
     }
-    
+
     /**
      * Get the severity level based on how much the target is exceeded
      */
@@ -133,25 +133,25 @@ class EnergyNotificationService
         if ($percentage >= 20) {
             return 'critical';
         }
-        
+
         if ($percentage >= 10) {
             return 'warning';
         }
-        
+
         return 'info';
     }
-    
+
     /**
      * Calculate how much the user needs to reduce to meet their target
      */
     private function calculateTargetReduction(array $data): float
     {
         // Calculate the amount that exceeds the target
-        return isset($data['predicted_total']) && isset($data['target']) 
-            ? $data['predicted_total'] - $data['target'] 
+        return isset($data['predicted_total']) && isset($data['target'])
+            ? $data['predicted_total'] - $data['target']
             : 0;
     }
-    
+
     /**
      * Generate message for electricity notification
      */
@@ -160,10 +160,10 @@ class EnergyNotificationService
         $percentage = round($data['predicted_percentage'] - 100);
         $reduction = round($this->calculateTargetReduction($data), 1);
         $periodLabel = $this->getPeriodLabel($period);
-        
+
         return "Volgens onze voorspelling zal je dit {$periodLabel} {$percentage}% over je elektriciteitsbudget gaan. Je kunt dit voorkomen door je verbruik met {$reduction} kWh te verminderen.";
     }
-    
+
     /**
      * Generate message for gas notification
      */
@@ -172,10 +172,10 @@ class EnergyNotificationService
         $percentage = round($data['predicted_percentage'] - 100);
         $reduction = round($this->calculateTargetReduction($data), 1);
         $periodLabel = $this->getPeriodLabel($period);
-        
+
         return "Volgens onze voorspelling zal je dit {$periodLabel} {$percentage}% over je gasbudget gaan. Je kunt dit voorkomen door je verbruik met {$reduction} m³ te verminderen.";
     }
-    
+
     /**
      * Convert period code to readable label
      */
@@ -192,14 +192,14 @@ class EnergyNotificationService
                 return $period;
         }
     }
-    
+
     /**
      * Get suggestions for reducing electricity
      */
     private function getElectricitySavingSuggestions(string $period): array
     {
         $season = $this->getCurrentSeason();
-        
+
         $suggestions = [
             [
                 'title' => 'Verlichting efficiënt gebruiken',
@@ -212,7 +212,7 @@ class EnergyNotificationService
                 'saving' => 'tot 3 kWh per week',
             ],
         ];
-        
+
         // Add seasonal suggestions
         if ($season === 'winter') {
             $suggestions[] = [
@@ -227,17 +227,17 @@ class EnergyNotificationService
                 'saving' => 'tot 15 kWh per week',
             ];
         }
-        
+
         return $suggestions;
     }
-    
+
     /**
      * Get suggestions for reducing gas
      */
     private function getGasSavingSuggestions(string $period): array
     {
         $season = $this->getCurrentSeason();
-        
+
         $suggestions = [
             [
                 'title' => 'Verwarm slim',
@@ -250,7 +250,7 @@ class EnergyNotificationService
                 'saving' => 'tot 3 m³ gas per maand',
             ],
         ];
-        
+
         // Add seasonal suggestions
         if ($season === 'winter') {
             $suggestions[] = [
@@ -265,17 +265,17 @@ class EnergyNotificationService
                 'saving' => 'tot 7% op je gasverbruik',
             ];
         }
-        
+
         return $suggestions;
     }
-    
+
     /**
      * Get current season
      */
     private function getCurrentSeason(): string
     {
         $month = date('n');
-        
+
         if ($month >= 3 && $month <= 5) {
             return 'spring';
         } elseif ($month >= 6 && $month <= 8) {
@@ -286,7 +286,7 @@ class EnergyNotificationService
             return 'winter';
         }
     }
-    
+
     /**
      * Get expiration date based on frequency
      */

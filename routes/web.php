@@ -68,6 +68,12 @@ Route::middleware('auth')->group(function () {
         ->name('notifications.update-settings');
 });
 
+// Testroutes voor notificaties
+Route::middleware('auth')->prefix('test')->group(function () {
+    Route::get('/generate-notification', [App\Http\Controllers\EnergyNotificationController::class, 'generateTestNotification'])
+        ->name('test.notification');
+});
+
 
 require __DIR__ . '/auth.php';
 

@@ -12,7 +12,7 @@ class EnergyNotificationInbox extends Component
      * The pending notification requests
      */
     public $unreadNotifications;
-    
+
     /**
      * Count of unread notifications
      */
@@ -25,9 +25,18 @@ class EnergyNotificationInbox extends Component
      */
     public function __construct()
     {
-        // Only fetch notifications if user is authenticated
         if (Auth::check()) {
-            $this->unreadNotifications = EnergyNotification::getUnreadForUser(Auth::user());
+            $this->unreadNotifications = EnergyNotification::where('user_id', Auth::id())
+                ->where('status', '!=', 'dismissed')
+                ->where(function ($query) {
+                    $query->where('status', 'unread')
+                        ->orWhereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+
             $this->unreadCount = $this->unreadNotifications->count();
         } else {
             $this->unreadNotifications = collect();

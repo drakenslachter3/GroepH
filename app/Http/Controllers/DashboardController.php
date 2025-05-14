@@ -25,11 +25,14 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+
+        // Eerst data ophalen
+        $energydashboard_data = $this->energyVisController->dashboard($request);
+
         $period = $energydashboard_data['period'] ?? 'month';
+
         // Load user's smart meters with latest readings
         $user->load(['smartMeters', 'smartMeters.latestReading']);
-
-        $energydashboard_data = $this->energyVisController->dashboard($request);
 
         $userGridLayoutModel = UserGridLayout::firstOrCreate(
             ['user_id' => $user->id],
@@ -48,11 +51,12 @@ class DashboardController extends Controller
         // Include the user with smart meters data
         $energydashboard_data['user'] = $user;
 
-        if (Auth::check()) {
+        // Gebruik de juiste variabelen voor notificaties
+        if (Auth::check() && isset($energydashboard_data['totals'])) {
             $this->notificationService->generateNotificationsForUser(
                 Auth::user(),
-                $totals['electricity_prediction'] ?? [],
-                $totals['gas_prediction'] ?? [],
+                $energydashboard_data['totals']['electricity_prediction'] ?? [],
+                $energydashboard_data['totals']['gas_prediction'] ?? [],
                 $period
             );
         }
