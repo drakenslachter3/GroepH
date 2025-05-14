@@ -48,7 +48,9 @@ class EnergyNotificationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $notification->dismiss();
+        $notification->update([
+            'status' => 'dismissed'
+        ]);
 
         return response()->json(['success' => true]);
     }

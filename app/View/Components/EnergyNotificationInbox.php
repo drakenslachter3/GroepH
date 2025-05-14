@@ -27,12 +27,8 @@ class EnergyNotificationInbox extends Component
     {
         if (Auth::check()) {
             $this->unreadNotifications = EnergyNotification::where('user_id', Auth::id())
-                ->where('status', '!=', 'dismissed')
-                ->where(function ($query) {
-                    $query->where('status', 'unread')
-                        ->orWhereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
+                ->where('status', 'unread')  // Zorg dat alleen 'unread' status wordt geteld!
+                ->where('expires_at', '>', now())
                 ->orderBy('created_at', 'desc')
                 ->take(5)
                 ->get();
