@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Models\InfluxData;
 use Carbon\Carbon;
 use InfluxDB2\Client as InfluxDBClient;
+use Illuminate\Support\Facades\Log;
 
 class InfluxDBService
 {
@@ -148,8 +149,8 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
         }
 
         return [
-            'gas_delivered'              => $gasUsage,
-            'energy_consumed'      => $electricityUsage,
+            'gas_delivered'   => $gasUsage,
+            'energy_consumed' => $electricityUsage,
             'energy_produced' => $electricityGeneration,
         ];
     }
@@ -206,8 +207,8 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
         }
 
         return [
-            'gas_delivered'              => $gasUsage,
-            'energy_consumed'      => $electricityUsage,
+            'gas_delivered'   => $gasUsage,
+            'energy_consumed' => $electricityUsage,
             'energy_produced' => $electricityGeneration,
         ];
     }
@@ -261,8 +262,8 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
         }
 
         return [
-            'gas_delivered'              => $gasUsage,
-            'energy_consumed'      => $electricityUsage,
+            'gas_delivered'   => $gasUsage,
+            'energy_consumed' => $electricityUsage,
             'energy_produced' => $electricityGeneration,
         ];
     }
@@ -303,6 +304,13 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
      * @param string $period Periode ('week', 'month', 'year')
      * @return array
      */
+    /**
+     * Haal totale energieverbruik op voor de afgelopen periode
+     *
+     * @param string $meterId De ID van de slimme meter
+     * @param string $period Periode ('week', 'month', 'year')
+     * @return array
+     */
     public function getTotalEnergyUsage(string $meterId, string $period): array
     {
         $now = date('Y-m-d\TH:i:s\Z');
@@ -321,41 +329,93 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
                 throw new \InvalidArgumentException("Ongeldige periode: {$period}");
         }
 
-        $query = "
+        // Log the time range for debugging
+        Log::debug("Total energy usage time range: {$startDate} to {$now} for period {$period}");
+
+        // Get first reading in the period
+        $firstQuery = "
 from(bucket: \"" . config('influxdb.bucket') . "\")
   |> range(start: {$startDate}, stop: {$now})
-  |> filter(fn: (r) => r._measurement == \"energy_usage\" and r.meter_id == \"{$meterId}\")
-  |> sum()
+  |> filter(fn: (r) => r._measurement == \"dsmr\" and r.signature == \"{$meterId}\")
+  |> first()
   |> pivot(rowKey:[\"_measurement\"], columnKey: [\"_field\"], valueColumn: \"_value\")
-  |> keep(columns: [\"gas_delivered\", \"energy_consumed\", \"energy_produced\"])
 ";
 
-        $result = $this->query($query);
+        // Get last reading in the period
+        $lastQuery = "
+from(bucket: \"" . config('influxdb.bucket') . "\")
+  |> range(start: {$startDate}, stop: {$now})
+  |> filter(fn: (r) => r._measurement == \"dsmr\" and r.signature == \"{$meterId}\")
+  |> last()
+  |> pivot(rowKey:[\"_measurement\"], columnKey: [\"_field\"], valueColumn: \"_value\")
+";
 
-        $gasUsage              = 0;
-        $electricityUsage      = 0;
-        $electricityGeneration = 0;
+        // Execute the queries
+        $firstResult = $this->query($firstQuery);
+        $lastResult  = $this->query($lastQuery);
 
-        // Verwerk resultaten
-        if (! empty($result) && isset($result[0]->records) && ! empty($result[0]->records)) {
-            $record = $result[0]->records[0];
+        // Log debug info
+        Log::debug("First reading query: {$firstQuery}");
+        Log::debug("Last reading query: {$lastQuery}");
+
+        // Initialize values
+        $firstGas         = 0;
+        $lastGas          = 0;
+        $firstElectricity = 0;
+        $lastElectricity  = 0;
+        $firstGeneration  = 0;
+        $lastGeneration   = 0;
+
+        // Process first reading
+        if (! empty($firstResult) && isset($firstResult[0]->records) && ! empty($firstResult[0]->records)) {
+            $record = $firstResult[0]->records[0];
 
             if (isset($record->values['gas_delivered'])) {
-                $gasUsage = (float) $record->values['gas_delivered'];
+                $firstGas = (float) $record->values['gas_delivered'];
             }
 
             if (isset($record->values['energy_consumed'])) {
-                $electricityUsage = (float) $record->values['energy_consumed'];
+                $firstElectricity = (float) $record->values['energy_consumed'];
             }
 
             if (isset($record->values['energy_produced'])) {
-                $electricityGeneration = (float) $record->values['energy_produced'];
+                $firstGeneration = (float) $record->values['energy_produced'];
             }
         }
 
+        // Process last reading
+        if (! empty($lastResult) && isset($lastResult[0]->records) && ! empty($lastResult[0]->records)) {
+            $record = $lastResult[0]->records[0];
+
+            if (isset($record->values['gas_delivered'])) {
+                $lastGas = (float) $record->values['gas_delivered'];
+            }
+
+            if (isset($record->values['energy_consumed'])) {
+                $lastElectricity = (float) $record->values['energy_consumed'];
+            }
+
+            if (isset($record->values['energy_produced'])) {
+                $lastGeneration = (float) $record->values['energy_produced'];
+            }
+        }
+
+        // Calculate differences (consumption over the period)
+        $gasUsage              = $lastGas - $firstGas;
+        $electricityUsage      = $lastElectricity - $firstElectricity;
+        $electricityGeneration = $lastGeneration - $firstGeneration;
+
+        // Ensure we don't return negative values
+        $gasUsage              = max(0, $gasUsage);
+        $electricityUsage      = max(0, $electricityUsage);
+        $electricityGeneration = max(0, $electricityGeneration);
+
+        // Log the calculated values
+        Log::debug("Calculated usage: Gas={$gasUsage}, Electricity={$electricityUsage}, Generation={$electricityGeneration}");
+
         return [
-            'gas_delivered'              => $gasUsage,
-            'energy_consumed'      => $electricityUsage,
+            'gas_delivered'   => $gasUsage,
+            'energy_consumed' => $electricityUsage,
             'energy_produced' => $electricityGeneration,
         ];
     }
@@ -396,9 +456,21 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
             'current_data'    => $currentData,
             'historical_data' => $historicalData,
             'total'           => [
-                'week'  => $weekTotal,
-                'month' => $monthTotal,
-                'year'  => $yearTotal,
+                'week'  => [
+                    'gas_usage'              => $weekTotal['gas_delivered'],
+                    'electricity_usage'      => $weekTotal['energy_consumed'],
+                    'electricity_generation' => $weekTotal['energy_produced'],
+                ],
+                'month' => [
+                    'gas_usage'              => $monthTotal['gas_delivered'],
+                    'electricity_usage'      => $monthTotal['energy_consumed'],
+                    'electricity_generation' => $monthTotal['energy_produced'],
+                ],
+                'year'  => [
+                    'gas_usage'              => $yearTotal['gas_delivered'],
+                    'electricity_usage'      => $yearTotal['energy_consumed'],
+                    'electricity_generation' => $yearTotal['energy_produced'],
+                ],
             ],
         ];
     }

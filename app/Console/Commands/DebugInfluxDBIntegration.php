@@ -321,10 +321,10 @@ class DebugInfluxDBIntegration extends Command
             
             // Check total data
             $this->info('Total Usage Data:');
-            foreach ($dashboardData['total'] as $totalPeriod => $data) {
-                $this->line("{$totalPeriod}: Gas: {$data['gas_delivered']} m³, Electricity: {$data['energy_consumed']} kWh, Generation: {$data['energy_produced']} kWh");
-            }
-            
+            // foreach ($dashboardData['total'] as $totalPeriod => $data) {
+            //     $this->line("{$totalPeriod}: Gas: {$data['gas_delivered']} m³, Electricity: {$data['energy_consumed']} kWh, Generation: {$data['energy_produced']} kWh");
+            // }
+            print_r($dashboardData['total']);
             // Save to MySQL
             if ($this->confirm('Would you like to save this data to MySQL?', true)) {
                 $startTime = microtime(true);
