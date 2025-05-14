@@ -42,7 +42,7 @@
 
             <x-etc.input-label for="password" :value="__('Wachtwoord')" />
             <div class="row-2">
-                <!-- Password -->        
+                <!-- Password -->
                 <div class="relative flex items-center">
                     <x-etc.text-input id="password" class="block mt-1 w-full absolute"
                                   type="password"
@@ -68,9 +68,9 @@
 
             <div class="row-4">
                 <div class="flex flex-row justify-between">
-                    
+
                 <!-- Login Button -->
-                <x-primary-button class="mt-4">
+                <x-primary-button dusk="login-button" class="mt-4">
                     {{ __('Log in') }}
                 </x-primary-button>
 

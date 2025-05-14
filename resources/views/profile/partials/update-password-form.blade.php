@@ -9,9 +9,9 @@
         </p>
         <ul class="mt-1 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
             <li>{{ __('Minstens 8 karakters lang') }}</li>
-            <li>{{ __('Bevat minstens één hoofdletter') }}</li>
-            <li>{{ __('Bevat minstens één kleine letter') }}</li>
-            <li>{{ __('Bevat minstens één nummer') }}</li>
+            <li>{{ __('Eén hoofdletter') }}</li>
+            <li>{{ __('Eén kleine letter') }}</li>
+            <li>{{ __('Eén nummer') }}</li>
             <li>{{ __('Bevat minstens één speciaal karakter') }}</li>
         </ul>
     </header>
@@ -39,7 +39,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Opslaan') }}</x-primary-button>
+            <x-primary-button dusk="save-button">{{ __('Opslaan') }}</x-primary-button>
 
             @if (session('status') === 'password-updated')
                 <p
