@@ -1,193 +1,165 @@
-@props(['type', 'title', 'buttonLabel', 'buttonColor', 'chartData', 'period', 'date' => null])
+@props([
+    'type' => 'electricity',
+    'title' => 'Energy Chart',
+    'buttonLabel' => 'Show Last Year',
+    'buttonColor' => 'blue',
+    'chartData' => [],
+    'period' => 'day',
+    'date' => null
+])
 
-@php
-    if ($period == 'month' && $date) {
-        $daysInMonth = \Carbon\Carbon::createFromFormat('Y-m', $date)->daysInMonth;
-    } else {
-        $daysInMonth = 30;
-    }
-@endphp
+<div class="bg-white rounded-lg shadow-md p-6 dark:bg-gray-800">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $title }}</h3>
+        <button 
+            id="toggleChart{{ ucfirst($type) }}" 
+            class="px-4 py-2 rounded-md text-white transition-colors duration-200
+                   {{ $buttonColor === 'blue' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-600 hover:bg-yellow-700' }}"
+            onclick="toggleChart{{ ucfirst($type) }}()">
+            {{ $buttonLabel }}
+        </button>
+    </div>
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
-    <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-            <div class="flex flex-col mb-2 sm:mb-0">
-                <h3 class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
-                
-                <div class="mt-1 text-sm text-sky-600 dark:text-sky-300 font-medium">
-                    @switch($period)
-                        @case('day')
-                            {{ \Carbon\Carbon::parse($date)->format('d F Y') }}
-                            @break
-                        @case('month')
-                            {{ \Carbon\Carbon::parse($date)->format('F Y') }}
-                            @break
-                        @case('year')
-                            {{ \Carbon\Carbon::parse($date)->format('Y') }}
-                            @break
-                    @endswitch
-                </div>
-            </div>
-            
-            <div class="flex w-full sm:w-auto mt-2 sm:mt-0 dark:border dark:border-gray-700">
-                <a href="{{ route('dashboard', ['period' => 'day', 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
-                   class="px-3 py-1 text-sm rounded-l-md {{ $period === 'day' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
-                    Dag
-                </a>
-                <a href="{{ route('dashboard', ['period' => 'month', 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
-                   class="px-3 py-1 text-sm {{ $period === 'month' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
-                    Maand
-                </a>
-                <a href="{{ route('dashboard', ['period' => 'year', 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
-                   class="px-3 py-1 text-sm rounded-r-md {{ $period === 'year' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
-                    Jaar
-                </a>
-            </div>
-        </div>
-        
-        <div class="flex justify-between items-center mb-4">
-            <a href="{{ route('dashboard', [
-                'period' => $period, 
-                'date' => \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d'),
-                'housing_type' => request('housing_type', 'tussenwoning')
-            ]) }}" 
-               class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-            </a>
-            
-            <span class="px-3 py-1 text-sm bg-{{ $buttonColor }}-500 text-white dark:bg-{{ $buttonColor }}-600 dark:text-white rounded-md">
-                {{ $type === "electricity" ? "kWh" : "m³" }} Verbruik
-            </span>
-            
-            <a href="{{ route('dashboard', [
-                'period' => $period, 
-                'date' => \Carbon\Carbon::parse($date)->add(1, $period)->format('Y-m-d'),
-                'housing_type' => request('housing_type', 'tussenwoning')
-            ]) }}" 
-               class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
-            </a>
-        </div>
-        
-        <div class="relative" style="height: 300px;">
-            <canvas id="{{ $type }}Chart{{ $loop->index ?? 0 }}"></canvas>
-        </div>
-        
-        <div class="mt-4 flex justify-end">
-            <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
-                {{ $buttonLabel }}
-            </button>
-        </div>
+    <div class="relative" style="height: 400px;">
+        <canvas id="chart{{ ucfirst($type) }}"></canvas>
     </div>
 </div>
 
 @push('chart-scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js is not loaded!');
-            return;
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    // Safely parse the chart data
+    let chartData;
+    try {
+        chartData = @json($chartData);
+    } catch (e) {
+        console.error('Error parsing chart data for {{ $type }}:', e);
+        chartData = {};
+    }
 
-        const chartData = @json($chartData);
+    // Ensure chartData has the expected structure
+    if (!chartData || typeof chartData !== 'object') {
+        chartData = {};
+    }
 
-        let periodTranslated;
+    // Set up period labels based on the period
+    const periodLabels = {
+        'day': Array.from({length: 24}, (_, i) => `${i}:00`),
+        'month': Array.from({length: new Date({{ date('Y') }}, {{ date('n') }}, 0).getDate()}, (_, i) => `${i + 1}`),
+        'year': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    };
 
-        const labels = [];
-        switch("{{ $period }}") {
-            case 'day':
-                    labels.push("00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
-                                "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
-                                "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00");
-                    periodTranslated = 'Uren';
-                break;
-            case 'month':
-                const daysInMonth = {{ $daysInMonth }};
-                    for (let i = 1; i <= daysInMonth; i++) {
-                        labels.push(i.toString());
-                    }
-                    periodTranslated = 'Dagen';
-                break;
-            case 'year':
-                    labels.push("Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December");
-                    periodTranslated = 'Maanden';
-                break;
-            default:
-                console.error("Unknown period:", "{{ $period }}");
-        }
-        
-        const chartCanvas = document.getElementById('{{ $type }}Chart{{ $loop->index ?? 0 }}');
-        
-        if (!chartCanvas) {
-            console.error('Canvas element not found: {{ $type }}Chart{{ $loop->index ?? 0 }}');
-            return;
-        }
-        
-        const ctx = chartCanvas.getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: '{{ $type === "electricity" ? "kWh" : "m³" }} Verbruik',
-                    data: chartData['{{ $type }}_usage'] || [],
-                    backgroundColor: '{{ $type === "electricity" ? "rgba(59, 130, 246, 0.6)" : "rgba(245, 158, 11, 0.6)" }}',
-                    borderColor: '{{ $type === "electricity" ? "rgb(37, 99, 235)" : "rgb(217, 119, 6)" }}',
-                    borderWidth: 1
-                }]
+    const labels = periodLabels['{{ $period }}'] || [];
+    
+    // Extract data for the specific type
+    const typeData = chartData['{{ $type }}'] || {};
+    
+    // Prepare current data - ensure it's an array
+    let currentData = [];
+    if (typeData && Array.isArray(typeData)) {
+        currentData = typeData;
+    } else if (chartData['{{ $type === "electricity" ? "energy_consumed" : ($type === "gas" ? "gas_delivered" : "energy_produced") }}']) {
+        currentData = chartData['{{ $type === "electricity" ? "energy_consumed" : ($type === "gas" ? "gas_delivered" : "energy_produced") }}'];
+    }
+    
+    // Ensure currentData is an array and has the right length
+    if (!Array.isArray(currentData)) {
+        currentData = [];
+    }
+    
+    // Fill with zeros if data is shorter than expected
+    while (currentData.length < labels.length) {
+        currentData.push(0);
+    }
+
+    // Chart configuration
+    const config = {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Current {{ ucfirst($type) }}',
+                data: currentData,
+                borderColor: '{{ $type === "electricity" ? "#3b82f6" : ($type === "gas" ? "#f59e0b" : "#10b981") }}',
+                backgroundColor: '{{ $type === "electricity" ? "#3b82f6" : ($type === "gas" ? "#f59e0b" : "#10b981") }}20',
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '{{ $title }}'
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: periodTranslated,
-                            color: '#000'
-                        },
-                        ticks: {
-                            color: '#4B5563'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: '{{ $type === "electricity" ? "Elektriciteit (kWh)" : "Gas (m³)" }}',
-                            color: '#000'
-                        },
-                        ticks: {
-                            color: '#4B5563'
-                        }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '{{ $type === "gas" ? "m³" : "kWh" }}'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '{{ ucfirst($period) }}'
                     }
                 }
             }
-        });
-
-        // Toggle comparison with last year
-        const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}');
-        if (toggleButton) {
-            toggleButton.addEventListener('click', function() {
-                const isVisible = chart.data.datasets.length > 1;
-                if (isVisible) {
-                    chart.data.datasets.pop();  // Remove the second dataset
-                } else {
-                    chart.data.datasets.push({
-                        label: 'Verbruik Vorig Jaar',
-                        data: chartData['{{ $type }}_usage_previous_year'] || [],
-                        backgroundColor: '{{ $type === "electricity" ? "rgba(34, 197, 94, 0.6)" : "rgba(234, 88, 12, 0.6)" }}',
-                        borderColor: '{{ $type === "electricity" ? "rgb(22, 163, 74)" : "rgb(234, 88, 12)" }}',
-                        borderWidth: 1
-                    });
-                }
-                chart.update();
-            });
         }
-    });
+    };
+
+    // Create chart
+    const ctx = document.getElementById('chart{{ ucfirst($type) }}').getContext('2d');
+    const chart{{ ucfirst($type) }} = new Chart(ctx, config);
+
+    // Store chart instance globally for toggle function
+    window.chart{{ ucfirst($type) }} = chart{{ ucfirst($type) }};
+    window.chart{{ ucfirst($type) }}Data = {
+        current: currentData,
+        historical: [], // Will be populated when historical data is available
+        showingHistorical: false
+    };
+});
+
+// Toggle function for showing historical data
+function toggleChart{{ ucfirst($type) }}() {
+    const chart = window.chart{{ ucfirst($type) }};
+    const data = window.chart{{ ucfirst($type) }}Data;
+    
+    if (!chart || !data) {
+        console.error('Chart not initialized for {{ $type }}');
+        return;
+    }
+
+    if (data.showingHistorical) {
+        // Switch back to current data
+        chart.data.datasets[0].data = data.current;
+        chart.data.datasets[0].label = 'Current {{ ucfirst($type) }}';
+        chart.data.datasets[0].borderColor = '{{ $type === "electricity" ? "#3b82f6" : ($type === "gas" ? "#f59e0b" : "#10b981") }}';
+        chart.data.datasets[0].backgroundColor = '{{ $type === "electricity" ? "#3b82f6" : ($type === "gas" ? "#f59e0b" : "#10b981") }}20';
+        document.getElementById('toggleChart{{ ucfirst($type) }}').textContent = '{{ $buttonLabel }}';
+        data.showingHistorical = false;
+    } else {
+        // Switch to historical data (for now, using the same data as we don't have historical)
+        // In the future, this should be replaced with actual historical data
+        chart.data.datasets[0].data = data.historical.length > 0 ? data.historical : data.current;
+        chart.data.datasets[0].label = 'Historical {{ ucfirst($type) }}';
+        chart.data.datasets[0].borderColor = '#6b7280';
+        chart.data.datasets[0].backgroundColor = '#6b728020';
+        document.getElementById('toggleChart{{ ucfirst($type) }}').textContent = 'Show Current';
+        data.showingHistorical = true;
+    }
+    
+    chart.update();
+}
 </script>
 @endpush
