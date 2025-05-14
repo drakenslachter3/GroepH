@@ -25,7 +25,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-
+        $period = $energydashboard_data['period'] ?? 'month';
         // Load user's smart meters with latest readings
         $user->load(['smartMeters', 'smartMeters.latestReading']);
 
