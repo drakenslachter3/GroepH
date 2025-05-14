@@ -7,16 +7,6 @@
             <div class="p-6 text-gray-900 dark:text-gray-100">
                 <h2 class="text-xl font-semibold mb-4">{{ isset($user) ? 'Gebruiker bewerken' : 'Nieuwe gebruiker aanmaken' }}</h2>
 
-                @if ($errors->any())
-                    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                        <ul class="list-disc pl-5">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ isset($user) ? route('users.update', $user->id) : route('users.store') }}">
                     @csrf
                     @if(isset($user))
