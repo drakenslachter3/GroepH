@@ -87,21 +87,25 @@
 
         const chartData = @json($chartData);
 
+        let periodTranslated;
+
         const labels = [];
         switch("{{ $period }}") {
             case 'day':
-                labels.push("00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
-                            "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
-                            "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00");
+                    labels.push("00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
+                                "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
+                                "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00");
+                    periodTranslated = 'Uren';
                 break;
             case 'month':
-                for (let i = 1; i <= 31; i++) {
-                    labels.push(i.toString());
-                }
+                    for (let i = 1; i <= 31; i++) {
+                        labels.push(i.toString());
+                    }
+                    periodTranslated = 'Dagen';
                 break;
             case 'year':
-                labels.push("January", "February", "March", "April", "May", "June", "July", "August", 
-                            "September", "October", "November", "December");
+                    labels.push("Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December");
+                    periodTranslated = 'Maanden';
                 break;
             default:
                 console.error("Unknown period:", "{{ $period }}");
@@ -134,7 +138,7 @@
                     x: {
                         title: {
                             display: true,
-                            text: '{{ ucfirst($period) }}',
+                            text: periodTranslated,
                             color: '#000'
                         },
                         ticks: {

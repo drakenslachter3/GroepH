@@ -108,7 +108,7 @@ class DashboardController extends Controller
             case 'month':
                                                 // For month period, ensure we have YYYY-MM-DD with first day of month
                 if (strlen($inputDate) === 7) { // YYYY-MM format
-                    return $inputDate . '-01';
+                    return $inputDate;
                 }
                 return $inputDate;
 
