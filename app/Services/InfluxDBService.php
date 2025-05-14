@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\InfluxData;
 use Carbon\Carbon;
+use Exception;
 use InfluxDB2\Client as InfluxDBClient;
 use Illuminate\Support\Facades\Log;
 
@@ -100,6 +101,7 @@ class InfluxDBService
         return $queryApi->query($query);
     }
 
+
 /**
  * Haal energieverbruik per uur op voor een specifieke dag
  *
@@ -121,15 +123,17 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
         // Execute query
         $result = $this->query($query);
 
+
         // Initialize arrays for 24 hours (0-23)
         $gasUsage              = array_fill(0, 24, 0);
         $electricityUsage      = array_fill(0, 24, 0);
         $electricityGeneration = array_fill(0, 24, 0);
 
+
         // Process results with field mapping
         if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
-                $hour = (int) date('G', strtotime($record->values['_time']));
+
 
                 // Map gas_delivered to gas_delivered
                 if (isset($record->values['gas_delivered'])) {
@@ -155,17 +159,18 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
         ];
     }
 
-/**
- * Haal energieverbruik per dag op voor een specifieke maand
- *
- * @param string $meterId De ID van de slimme meter
- * @param string $yearMonth De maand in formaat 'YYYY-MM'
- * @return array
- */
+    /**
+     * Haal energieverbruik per dag op voor een specifieke maand
+     *
+     * @param string $meterId De ID van de slimme meter
+     * @param string $yearMonth De maand in formaat 'YYYY-MM'
+     * @return array
+     */
     public function getMonthlyEnergyUsage(string $meterId, string $yearMonth): array
     {
         list($year, $month) = explode('-', $yearMonth);
         $daysInMonth        = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+
 
         // Flux query voor energieverbruik per dag
         $startDate = "{$yearMonth}-01T00:00:00Z";
@@ -222,6 +227,7 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
+
         // Flux query voor energieverbruik per maand
         $startDate = "{$year}-01-01T00:00:00Z";
         $endDate   = "{$year}-12-31T23:59:59Z";
@@ -245,7 +251,7 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
         // Verwerk resultaten
         if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
-                $month = (int) date('n', strtotime($record->values['_time'])) - 1; // 0-based index
+                $month = (int) date('n', strtotime($record->values['_time'])) - 2; // -1 voor 0-based index, -1 omdat derivative 1 maand vooruit verschuift
 
                 if (isset($record->values['gas_delivered'])) {
                     $gasUsage[$month] = (float) $record->values['gas_delivered'];
@@ -328,6 +334,7 @@ from(bucket: \"" . config('influxdb.bucket') . "\")
             default:
                 throw new \InvalidArgumentException("Ongeldige periode: {$period}");
         }
+
 
         // Log the time range for debugging
         Log::debug("Total energy usage time range: {$startDate} to {$now} for period {$period}");
