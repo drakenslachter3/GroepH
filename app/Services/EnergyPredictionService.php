@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 /**
@@ -33,7 +32,7 @@ class EnergyPredictionService
     {
         return $this->predictEnergyUsage($historicalData, $period, 'electricity');
     }
-    
+
     /**
      * Voorspel het gasverbruik voor de komende periode op basis van historische gegevens.
      *
@@ -238,7 +237,7 @@ class EnergyPredictionService
             'expected' => round($predictedTotalUsage, 2)
         ];
     }
-    
+
     /**
      * Normalize a value to be reasonable for the given period and energy type
      * 
@@ -442,7 +441,7 @@ class EnergyPredictionService
                 return (int)date('n') - 1; // Current month (0-11)
         }
     }
-    
+
     /**
      * Bereken trend op basis van een array van datapunten.
      *
@@ -463,8 +462,8 @@ class EnergyPredictionService
         }
         
         $first = reset($data);
-        $last = end($data);
-        
+        $last  = end($data);
+
         if ($first == 0) {
             return 0;
         }
@@ -473,7 +472,7 @@ class EnergyPredictionService
         $rawTrend = ($last - $first) / $first;
         return min(max($rawTrend, -0.3), 0.3); // Limit to ±30%
     }
-    
+
     /**
      * Bereken het gemiddelde van een array van waarden.
      *
@@ -495,7 +494,7 @@ class EnergyPredictionService
         
         return array_sum($validData) / count($validData);
     }
-    
+
     /**
      * Bepaal seizoensfactor op basis van periode en energietype.
      *
@@ -506,12 +505,12 @@ class EnergyPredictionService
     private function getSeasonalFactor(string $period, string $type): float
     {
         $month = date('n');
-        
+
         if ($type === 'gas') {
             // Gas heeft sterke seizoensinvloed, maar reduceer extremen
             $winterMonths = [1, 2, 3, 11, 12];
             $summerMonths = [6, 7, 8];
-            
+
             if (in_array($month, $winterMonths)) {
                 return 1.3; // Hoger verbruik in winter (reduced from 1.5)
             } elseif (in_array($month, $summerMonths)) {
@@ -523,7 +522,7 @@ class EnergyPredictionService
             // Elektriciteit heeft minder seizoensinvloed
             $winterMonths = [11, 12, 1, 2];
             $summerMonths = [6, 7, 8];
-            
+
             if (in_array($month, $winterMonths)) {
                 return 1.15; // Iets hoger verbruik in winter (reduced from 1.2)
             } elseif (in_array($month, $summerMonths)) {
@@ -533,7 +532,7 @@ class EnergyPredictionService
             }
         }
     }
-    
+
     /**
      * Bepaal welk deel van de periode al verstreken is.
      *
@@ -542,23 +541,23 @@ class EnergyPredictionService
      */
     private function getRemainingFactor(string $period): float
     {
-        switch($period) {
+        switch ($period) {
             case 'day':
                 $hour = date('G');
                 return $hour / 24;
             case 'month':
-                $day = date('j');
+                $day         = date('j');
                 $daysInMonth = date('t');
                 return $day / $daysInMonth;
             case 'year':
-                $dayOfYear = date('z');
+                $dayOfYear  = date('z');
                 $daysInYear = date('L') ? 366 : 365;
                 return $dayOfYear / $daysInYear;
             default:
                 return 0.5;
         }
     }
-    
+
     /**
      * Bereken een betrouwbaarheidspercentage voor de voorspelling.
      * Dit percentage varieert logisch per periode (dag/maand/jaar)
@@ -759,7 +758,7 @@ class EnergyPredictionService
         
         return $tips;
     }
-    
+
     /**
      * Analyseer piektijden in het verbruik.
      *
@@ -785,20 +784,20 @@ class EnergyPredictionService
             // Zoek het piekuur
             $maxValue = max($data);
             $peakHour = array_search($maxValue, $data);
-            
+
             if ($peakHour !== false) {
                 $startHour = $peakHour;
-                $endHour = $peakHour;
-                
+                $endHour   = $peakHour;
+
                 // Zoek aangrenzende uren met hoog verbruik
                 while (isset($data[$startHour - 1]) && $data[$startHour - 1] > $maxValue * 0.8) {
                     $startHour--;
                 }
-                
+
                 while (isset($data[$endHour + 1]) && $data[$endHour + 1] > $maxValue * 0.8) {
                     $endHour++;
                 }
-                
+
                 // Bereken besparingspotentieel
                 $peakUsage = 0;
                 for ($i = $startHour; $i <= $endHour; $i++) {
@@ -810,14 +809,14 @@ class EnergyPredictionService
                 $potentialSaving = round($peakPercentage * 0.25); // 25% van piekverbruik kan worden bespaard (reduced from 30%)
                 
                 return [
-                    'start' => sprintf('%02d:00', $startHour),
-                    'end' => sprintf('%02d:00', $endHour + 1),
+                    'start'      => sprintf('%02d:00', $startHour),
+                    'end'        => sprintf('%02d:00', $endHour + 1),
                     'percentage' => round($peakPercentage),
-                    'potential' => "{$potentialSaving}%"
+                    'potential'  => "{$potentialSaving}%",
                 ];
             }
         }
-        
+
         return [];
     }
 }

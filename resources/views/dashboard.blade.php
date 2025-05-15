@@ -6,11 +6,18 @@
     </x-slot>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+            @if (session('status'))
+                    <div id="status-message" class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-6 transition-opacity duration-1000 ease-out opacity-100">
+                        {{ session('status') }}
+                    </div>
+             @endif
+
             <!-- Display smart meters for the user -->
             {{-- @if(Auth::check())
                 @include('components.user-meter-readings', ['user' => Auth::user()])
             @endif --}}
-            
+
             <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4 border-gray-200">
@@ -48,7 +55,7 @@
                                             <option value="{{ $i }}">Positie {{ $i + 1 }}</option>
                                         @endfor
                                     </select>
-                                </div>
+                                </div> 
 
                                 <div class="space-y-2">
                                     <label for="widget-type" class="block text-sm font-medium text-gray-700 dark:text-white">Widget Type:</label>
@@ -64,10 +71,11 @@
                                         <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling</option>
                                         <option value="energy-prediction-chart-gas">Gas Voorspelling</option>
                                         <option value="budget-alert">Budget Waarschuwing</option>
+                                        <option value="switch-meter">Selecteer meter</option>
                                     </select>
                                 </div>
 
-                                <button type="submit" class="w-full py-3 px-4 bg-green-500 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
+                                <button type="submit" class="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
                                     Widget Toevoegen
                                 </button>
                             </form>
@@ -80,7 +88,7 @@
                                     </button>
                                 </form>
 
-                                <button onclick="window.location.href='{{ route('budget.form') }}'" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-purple-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
+                                <button onclick="window.location.href='{{ route('budget.form') }}'" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
                                     Budget Aanpassen
                                 </button>
                             </div>
@@ -212,6 +220,7 @@
                     'trend-analysis' => 'full',
                     'energy-suggestions' => 'large',
                     'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
+                    'switch-meter' => 'medium',
                     default => 'full'
                 };
 
@@ -272,7 +281,7 @@
                             title="Elektriciteitsverbruik (kWh)"
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="blue"
-                            :chartData="$chartData"
+                            :chartData="$meterDataForPeriod['current_data'] ?? []"
                             :period="$period" 
                             :date="$date" />
                         @break
@@ -283,11 +292,10 @@
                             title="Gasverbruik (m³)"
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="yellow"
-                            :chartData="$chartData"
-                            :period="$period" />
+                            :chartData="$meterDataForPeriod['current_data'] ?? []"
+                            :period="$period"
+                            :date="$date" />
                         @break
-
-                   
 
                         @case('energy-suggestions')
                         <x-dashboard.energy-suggestions
@@ -318,6 +326,12 @@
                             :confidence="$predictionConfidence['gas'] ?? 75"
                             :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0"
                             :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0" />
+                        @break
+
+                        @case('switch-meter')
+                        <x-dashboard.switch-meter 
+                            :meters="\App\Models\SmartMeter::getAllSmartMetersForCurrentUser()"
+                            :selectedMeterId="\App\Models\UserGridLayout::getSelectedSmartMeterForCurrentUser()" />
                         @break
 
                         @default
@@ -402,7 +416,7 @@
             let dateInput;
 
             if (period === 'day') {
-                dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
+                dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m-d') }}">`;
             } else if (period === 'month') {
                 dateInput = `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
             } else if (period === 'year') {
@@ -450,17 +464,17 @@
                     document.getElementById('timeSetterForm').submit();
                 });
                 
-                // For type="month" and type="number" inputs
+                // Voor type="month" en type="number" inputs
                 if (datePicker.type === 'month' || datePicker.type === 'number') {
                     datePicker.addEventListener('input', function() {
-                        // Delay to prevent too frequent form submissions
+                        // Vertraging om te voorkomen dat het formulier te vaak wordt verzonden
                         if (this._timer) clearTimeout(this._timer);
                         this._timer = setTimeout(() => {
                             document.getElementById('timeSetterForm').submit();
                         }, 500);
                     });
                     
-                    // For year input, listen for Enter key
+                    // Voor jaar input, luister naar Enter toets
                     if (datePicker.type === 'number') {
                         datePicker.addEventListener('keydown', function(e) {
                             if (e.key === 'Enter') {
@@ -472,8 +486,21 @@
             }
         }
         
-        // Call the initial setup
+        // Roep de initiële setup aan
         initDatePickerListener();
+
+        // Status-message verwijderen na 5 seconden
+        setTimeout(() => {
+            const msg = document.getElementById('status-message');
+            if (msg) {
+                msg.classList.remove('opacity-100');
+                msg.classList.add('opacity-0');
+
+                setTimeout(() => {
+                    msg.remove();
+                }, 1000);
+            }
+        }, 5000);
     });
     </script>
     @stack('chart-scripts')

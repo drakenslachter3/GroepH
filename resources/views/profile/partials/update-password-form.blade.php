@@ -5,8 +5,15 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Zorg ervoor dat je account een lang en willekeurig wachtwoord gebruikt om veilig te blijven.') }}
+            {{ __('Zorg ervoor dat je account een lang en willekeurig wachtwoord gebruikt om veilig te blijven. Een sterk wachtwoord voldoet aan de volgende eisen:') }}
         </p>
+        <ul class="mt-1 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
+            <li>{{ __('Minstens 8 karakters lang') }}</li>
+            <li>{{ __('Eén hoofdletter') }}</li>
+            <li>{{ __('Eén kleine letter') }}</li>
+            <li>{{ __('Eén nummer') }}</li>
+            <li>{{ __('Bevat minstens één speciaal karakter') }}</li>
+        </ul>
     </header>
 
     <form method="post" action="{{ route('password.update') }}" class="mt-6 space-y-6">
@@ -32,7 +39,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Opslaan') }}</x-primary-button>
+            <x-primary-button dusk="save-button">{{ __('Opslaan') }}</x-primary-button>
 
             @if (session('status') === 'password-updated')
                 <p

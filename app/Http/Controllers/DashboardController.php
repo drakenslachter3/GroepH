@@ -1,47 +1,71 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\EnergyVisualizationController;
+use App\Models\SmartMeter;
 use App\Models\UserGridLayout;
 use App\Services\EnergyConversionService;
 use App\Services\EnergyPredictionService;
-use App\Services\DashboardPredictionService; // Add this import
+use App\Services\DashboardPredictionService; // Behouden van SCRUM-53
 use Illuminate\Http\Request;
-use App\Http\Controllers\EnergyVisualizationController;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     private $energyVisController;
-    private $predictionService; // Add this
-    private $dashboardPredictionService; // Add this
+    private $predictionService; // Behouden van SCRUM-53
+    private $dashboardPredictionService; // Behouden van SCRUM-53
     
     public function __construct(
         EnergyConversionService $conversionService, 
         EnergyPredictionService $predictionService,
-        DashboardPredictionService $dashboardPredictionService // Add this
+        DashboardPredictionService $dashboardPredictionService // Behouden van SCRUM-53
     )
     {
         $this->energyVisController = new EnergyVisualizationController($conversionService, $predictionService);
-        $this->predictionService = $predictionService; // Add this
-        $this->dashboardPredictionService = $dashboardPredictionService; // Add this
+        $this->predictionService = $predictionService; // Behouden van SCRUM-53
+        $this->dashboardPredictionService = $dashboardPredictionService; // Behouden van SCRUM-53
     }
 
     public function index(Request $request)
     {
         $user = Auth::user();
-        
-        // Load user's smart meters with latest readings
+
         $user->load(['smartMeters', 'smartMeters.latestReading']);
-        
+
+        $defaultPeriod = 'day';
+        $defaultDate = Carbon::today()->format('Y-m-d');
+        $defaultMeterId = optional(SmartMeter::getAllSmartMetersForCurrentUser()->first())->meter_id
+                        ?? '2019-ETI-EMON-V01-105C4E-16405E';
+
+        // Code van dev branch behouden
+        if ($request->has('selectedMeterId')) {
+            session(['selected_meter_id' => $request->input('selectedMeterId')]);
+        }
+        if ($request->has('period') && $request->has('date')) {
+            session([
+                'dashboard_period' => $request->input('period'),
+                'dashboard_date'   => $request->input('date'),
+            ]);
+        }
+
+        $period = session('dashboard_period', $defaultPeriod);
+        $date = session('dashboard_date', $defaultDate);
+        $selectedMeterId = session('selected_meter_id', $defaultMeterId);
+
+        session([
+            'dashboard_period' => $period,
+            'dashboard_date' => $date,
+            'selected_meter_id' => $selectedMeterId,
+        ]);
+
         $energydashboard_data = $this->energyVisController->dashboard($request);
 
         $userGridLayoutModel = UserGridLayout::firstOrCreate(
             ['user_id' => $user->id],
             ['layout' => $this->getDefaultLayout()]
         );
-
         $energydashboard_data['gridLayout'] = $userGridLayoutModel->layout;
 
         if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
@@ -53,11 +77,11 @@ class DashboardController extends Controller
         
         // Include the user with smart meters data
         $energydashboard_data['user'] = $user;
+        $energydashboard_data['period'] = $period;
+        $energydashboard_data['date'] = $date;
+        $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
 
-        // Get period and date from request
-        $period = $request->query('period', 'month');
-        $date = $request->query('date', date('Y-m-d'));
-        
+        // Code van SCRUM-53 branch behouden voor prediction data
         // Add energy prediction data for both electricity and gas
         $predictionData = [];
         $budgetData = [];
@@ -190,26 +214,26 @@ class DashboardController extends Controller
     public function setTime(Request $request)
     {
         $request->validate([
-            'period' => 'required|in:day,month,year',
-            'date' => 'required',
+            'period'       => 'required|in:day,month,year',
+            'date'         => 'required',
             'housing_type' => 'required|string',
         ]);
 
-        $period = $request->input('period');
+        $period      = $request->input('period');
         $housingType = $request->input('housing_type');
-        $inputDate = $request->input('date');
-        
+        $inputDate   = $request->input('date');
+
         // Format the date based on the period type
         $formattedDate = $this->formatDateByPeriod($period, $inputDate);
-        
+
         // Redirect back to dashboard with the new parameters
         return redirect()->route('dashboard', [
-            'period' => $period,
-            'date' => $formattedDate,
-            'housing_type' => $housingType
+            'period'       => $period,
+            'date'         => $formattedDate,
+            'housing_type' => $housingType,
         ]);
     }
-    
+
     // Helper method to format dates based on period
     private function formatDateByPeriod($period, $inputDate)
     {
@@ -217,21 +241,21 @@ class DashboardController extends Controller
             case 'day':
                 // For day period, the date should already be in YYYY-MM-DD format
                 return $inputDate;
-                
+
             case 'month':
-                // For month period, ensure we have YYYY-MM-DD with first day of month
+                                                // For month period, ensure we have YYYY-MM-DD with first day of month
                 if (strlen($inputDate) === 7) { // YYYY-MM format
-                    return $inputDate . '-01';
+                    return $inputDate;
                 }
                 return $inputDate;
-                
+
             case 'year':
-                // For year period, ensure we have YYYY-MM-DD with first day of year
+                                                // For year period, ensure we have YYYY-MM-DD with first day of year
                 if (strlen($inputDate) === 4) { // YYYY format
-                    return $inputDate . '-01-01';
+                    return $inputDate;
                 }
                 return $inputDate;
-                
+
             default:
                 // Default to current date if something goes wrong
                 return Carbon::now()->format('Y-m-d');
@@ -240,13 +264,13 @@ class DashboardController extends Controller
 
     public function setWidget(Request $request)
     {
-        $user = Auth::user();
-        $position = (int) $request->input('grid_position');
+        $user       = Auth::user();
+        $position   = (int) $request->input('grid_position');
         $widgetType = $request->input('widget_type');
 
         $request->validate([
             'grid_position' => 'required|numeric',
-            'widget_type' => 'required|string',
+            'widget_type'   => 'required|string',
         ]);
 
         $userGridLayout = UserGridLayout::firstOrCreate(
@@ -254,7 +278,7 @@ class DashboardController extends Controller
             ['layout' => $this->getDefaultLayout()]
         );
 
-        $gridLayout = $userGridLayout->layout;
+        $gridLayout  = $userGridLayout->layout;
         $widgetTypes = [$widgetType];
 
         foreach ($widgetTypes as $widget) {
@@ -276,7 +300,7 @@ class DashboardController extends Controller
 
         return redirect()->route('dashboard')->with('status', 'Widget toegevoegd!');
     }
-    
+
     public function resetLayout(Request $request)
     {
         $user = Auth::user();
@@ -291,16 +315,56 @@ class DashboardController extends Controller
     private function getDefaultLayout()
     {
         return [
+            'switch-meter',
             'energy-status-electricity',
             'energy-status-gas',
             'energy-chart-electricity',
             'energy-chart-gas',
-            'usage-prediction', 
+            'usage-prediction',
             'date-selector',
             'historical-comparison',
+            'trend-analysis', // Behouden van dev branch
             'energy-suggestions',
-            'energy-prediction-chart-electricity', // Add these new widget types
-            'energy-prediction-chart-gas'          // Add these new widget types
+            'energy-prediction-chart-electricity', // Behouden van SCRUM-53
+            'energy-prediction-chart-gas'          // Behouden van SCRUM-53
         ];
+    }
+
+    public function saveSelectedMeter(Request $request)
+    {
+        $meterDatabaseId = $request->meter;
+        $layout  = UserGridLayout::where('user_id', auth()->id())->first();
+
+        if ($layout) {
+            $layout->selected_smartmeter = $meterDatabaseId;
+            $layout->save();
+        } else {
+            throw new \Exception('[SaveSelectedMeter, DashboardController]: meter kan niet opgeslagen worden, omdat user_grid_layout nog niet bestaat voor deze gebruiker!');
+        }
+
+        $smartMeterId = SmartMeter::getMeterIdByDatabaseId($meterDatabaseId);
+
+        return redirect()->route('dashboard', ['selectedMeterId' => $smartMeterId])
+                         ->with('status', 'Meterkeuze doorgevoerd - het dashboard is nu up-to-date!');
+    }
+
+    private function getEnergyData(string $meterId, string $period, string $date)
+    {
+        // Probeer eerst uit de MySQL database op te halen
+        $latestData = \App\Models\InfluxData::where('tags->meter_id', $meterId)
+            ->where('tags->period', $period)
+            ->where('tags->date', $date)
+            ->orderBy('time', 'desc')
+            ->first();
+
+        if ($latestData) {
+            return $latestData->fields;
+        }
+
+        // Als er geen gegevens zijn, haal ze dan op en sla ze op
+        $influxService = app(\App\Services\InfluxDBService::class);
+        $result        = $influxService->storeEnergyDashboardData($meterId, $period, $date);
+
+        return $result['data'];
     }
 }

@@ -9,12 +9,20 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmartMeterController;
 use App\Http\Controllers\InfluxController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InfluxDataController;
+
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+// Behouden van beide routes uit de verschillende branches
 Route::get('/influx/explore', [InfluxController::class, 'explore']);
+
+// Toegevoegd vanuit dev branch
+Route::get('/energy/data-form', [InfluxDataController::class, 'showEnergyForm'])
+    ->name('energy.form');
+
 Route::middleware('auth')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
     Route::post('/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
@@ -37,6 +45,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/set-widget', [DashboardController::class, 'setWidget'])->name('dashboard.setWidget');
     Route::post('/dashboard/reset-layout', [DashboardController::class, 'resetLayout'])->name('dashboard.resetLayout');
     Route::post('/dashboard/set-time', [DashboardController::class, 'setTime'])->name('dashboard.setTime');
+
+    // Opslaan geselecteerde meter dashboard route
+    Route::post('/dashboard', [DashboardController::class, 'saveSelectedMeter'])->name('dashboard.saveSelectedMeter');
+
+    Route::post('/energy/store-data', [InfluxDataController::class, 'storeEnergyData'])
+        ->name('energy.store-data');
 });
 
 Route::middleware('auth')->group(function () {
@@ -60,3 +74,7 @@ Route::middleware('auth')->prefix('api')->group(function () {
 
 require __DIR__ . '/auth.php';
 
+Route::get('/influx', [InfluxDataController::class, 'index'])->name('influx.index');
+Route::get('/influx/create', [InfluxDataController::class, 'create'])->name('influx.create');
+Route::post('/influx', [InfluxDataController::class, 'store'])->name('influx.store');
+Route::get('/influx/test-connection', [InfluxDataController::class, 'testConnection'])->name('influx.test-connection');
