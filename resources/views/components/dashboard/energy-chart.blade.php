@@ -205,7 +205,9 @@ function toggleChart{{ ucfirst($type) }}() {
     chart.update();
 }
 </script>
-@endpush@props([
+@endpush
+<!-- 
+@props([
     'type' => 'electricity',
     'title' => 'Energy Chart',
     'buttonLabel' => 'Show Last Year',
@@ -472,4 +474,4 @@ function toggleChart{{ ucfirst($type) }}() {
     chart.update();
 }
 </script>
-@endpush
+@endpush -->
