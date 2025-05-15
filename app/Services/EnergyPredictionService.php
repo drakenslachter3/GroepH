@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 class EnergyPredictionService
@@ -15,30 +14,33 @@ class EnergyPredictionService
     {
         // Bereken trend op basis van de laatste 3 datapunten
         $recentData = array_slice($historicalData, -3);
-        $trend = $this->calculateTrend($recentData);
-        
+        $trend      = $this->calculateTrend($recentData);
+
         // Bereken gemiddeld verbruik uit historische gegevens
         $averageUsage = $this->calculateAverage($historicalData);
-        
+
         // Pas voorspelling aan op basis van seizoenspatronen
         $seasonalFactor = $this->getSeasonalFactor($period, 'electricity');
-        
+
         // Bereken voorspelling
         $predictedUsage = $averageUsage * (1 + $trend) * $seasonalFactor;
-        
+
         // Bereken voorspeld verbruik voor de komende periode
-        $remainingFactor = $this->getRemainingFactor($period);
-        $predictedTotalUsage = $predictedUsage / $remainingFactor;
-        
+        $remainingFactor     = $this->getRemainingFactor($period);
+        $predictedTotalUsage = 0;
+        if($remainingFactor != 0){
+            $predictedTotalUsage = $predictedUsage / $remainingFactor;
+        }
+
         return [
-            'predicted_usage' => round($predictedUsage, 2),
-            'predicted_total' => round($predictedTotalUsage, 2),
+            'predicted_usage'  => round($predictedUsage, 2),
+            'predicted_total'  => round($predictedTotalUsage, 2),
             'trend_percentage' => round($trend * 100, 1),
-            'trend_direction' => $trend >= 0 ? 'up' : 'down',
-            'confidence' => $this->calculateConfidence($historicalData)
+            'trend_direction'  => $trend >= 0 ? 'up' : 'down',
+            'confidence'       => $this->calculateConfidence($historicalData),
         ];
     }
-    
+
     /**
      * Voorspel het gasverbruik voor de komende periode op basis van historische gegevens.
      *
@@ -50,30 +52,33 @@ class EnergyPredictionService
     {
         // Bereken trend op basis van de laatste 3 datapunten
         $recentData = array_slice($historicalData, -3);
-        $trend = $this->calculateTrend($recentData);
-        
+        $trend      = $this->calculateTrend($recentData);
+
         // Bereken gemiddeld verbruik uit historische gegevens
         $averageUsage = $this->calculateAverage($historicalData);
-        
+
         // Pas voorspelling aan op basis van seizoenspatronen
         $seasonalFactor = $this->getSeasonalFactor($period, 'gas');
-        
+
         // Bereken voorspelling
         $predictedUsage = $averageUsage * (1 + $trend) * $seasonalFactor;
-        
+
         // Bereken voorspeld verbruik voor de komende periode
-        $remainingFactor = $this->getRemainingFactor($period);
-        $predictedTotalUsage = $predictedUsage / $remainingFactor;
-        
+        $remainingFactor     = $this->getRemainingFactor($period);
+        $predictedTotalUsage = 0;
+        if($remainingFactor != 0){
+            $predictedTotalUsage = $predictedUsage / $remainingFactor;
+        }
+
         return [
-            'predicted_usage' => round($predictedUsage, 2),
-            'predicted_total' => round($predictedTotalUsage, 2),
+            'predicted_usage'  => round($predictedUsage, 2),
+            'predicted_total'  => round($predictedTotalUsage, 2),
             'trend_percentage' => round($trend * 100, 1),
-            'trend_direction' => $trend >= 0 ? 'up' : 'down',
-            'confidence' => $this->calculateConfidence($historicalData)
+            'trend_direction'  => $trend >= 0 ? 'up' : 'down',
+            'confidence'       => $this->calculateConfidence($historicalData),
         ];
     }
-    
+
     /**
      * Genereer gepersonaliseerde besparingstips op basis van verbruikspatronen.
      *
@@ -86,71 +91,71 @@ class EnergyPredictionService
     public function generateSavingTips(array $electricityData, array $gasData, string $period, string $housingType): array
     {
         $tips = [];
-        
+
         // Analyseer piekverbruik voor elektriciteit
         $electricityPeakTimes = $this->analyzePeakTimes($electricityData, $period);
-        if (!empty($electricityPeakTimes)) {
+        if (! empty($electricityPeakTimes)) {
             $tips[] = [
-                'type' => 'electricity',
-                'title' => 'Verlaag je verbruik tijdens piekuren',
-                'description' => "Je verbruikt het meeste elektriciteit tussen {$electricityPeakTimes['start']} en {$electricityPeakTimes['end']}. Verplaats grote apparaten naar daluren om te besparen.",
-                'saving_potential' => $electricityPeakTimes['potential']
+                'type'             => 'electricity',
+                'title'            => 'Verlaag je verbruik tijdens piekuren',
+                'description'      => "Je verbruikt het meeste elektriciteit tussen {$electricityPeakTimes['start']} en {$electricityPeakTimes['end']}. Verplaats grote apparaten naar daluren om te besparen.",
+                'saving_potential' => $electricityPeakTimes['potential'],
             ];
         }
-        
+
         // Voeg seizoensgebonden tips toe
         $currentMonth = date('n');
         if ($currentMonth >= 10 || $currentMonth <= 3) {
             // Winter tips
             $tips[] = [
-                'type' => 'gas',
-                'title' => 'Optimaliseer je verwarming',
-                'description' => "Een verlaging van 1°C op je thermostaat kan tot 6% besparing op je gasverbruik opleveren.",
-                'saving_potential' => '6%'
+                'type'             => 'gas',
+                'title'            => 'Optimaliseer je verwarming',
+                'description'      => "Een verlaging van 1°C op je thermostaat kan tot 6% besparing op je gasverbruik opleveren.",
+                'saving_potential' => '6%',
             ];
         } elseif ($currentMonth >= 4 && $currentMonth <= 9) {
             // Zomer tips
             $tips[] = [
-                'type' => 'electricity',
-                'title' => 'Verminder koelingskosten',
-                'description' => "Gebruik zonwering overdag en ventileer 's nachts om kosten voor airconditioning te besparen.",
-                'saving_potential' => '12%'
+                'type'             => 'electricity',
+                'title'            => 'Verminder koelingskosten',
+                'description'      => "Gebruik zonwering overdag en ventileer 's nachts om kosten voor airconditioning te besparen.",
+                'saving_potential' => '12%',
             ];
         }
-        
+
         // Woningtype-specifieke tips
-        switch($housingType) {
+        switch ($housingType) {
             case 'appartement':
                 $tips[] = [
-                    'type' => 'general',
-                    'title' => 'Appartement isolatie',
-                    'description' => "Appartementbewoners kunnen gemiddeld 8% gas besparen door het isoleren van aangrenzende muren.",
-                    'saving_potential' => '8%'
+                    'type'             => 'general',
+                    'title'            => 'Appartement isolatie',
+                    'description'      => "Appartementbewoners kunnen gemiddeld 8% gas besparen door het isoleren van aangrenzende muren.",
+                    'saving_potential' => '8%',
                 ];
                 break;
             case 'tussenwoning':
                 $tips[] = [
-                    'type' => 'general',
-                    'title' => 'Tussenwoningisolatie',
-                    'description' => "Overweeg het isoleren van je dak, dit kan tot 15% besparing op je gasverbruik opleveren in een tussenwoning.",
-                    'saving_potential' => '15%'
+                    'type'             => 'general',
+                    'title'            => 'Tussenwoningisolatie',
+                    'description'      => "Overweeg het isoleren van je dak, dit kan tot 15% besparing op je gasverbruik opleveren in een tussenwoning.",
+                    'saving_potential' => '15%',
                 ];
                 break;
             case 'hoekwoning':
             case 'twee_onder_een_kap':
             case 'vrijstaand':
                 $tips[] = [
-                    'type' => 'general',
-                    'title' => 'Wand- en vloerisolatie',
-                    'description' => "Woningen met meerdere buitenmuren kunnen tot 20% besparen door goede muur- en vloerisolatie.",
-                    'saving_potential' => '20%'
+                    'type'             => 'general',
+                    'title'            => 'Wand- en vloerisolatie',
+                    'description'      => "Woningen met meerdere buitenmuren kunnen tot 20% besparen door goede muur- en vloerisolatie.",
+                    'saving_potential' => '20%',
                 ];
                 break;
         }
-        
+
         return $tips;
     }
-    
+
     /**
      * Bereken trend op basis van een array van datapunten.
      *
@@ -162,17 +167,17 @@ class EnergyPredictionService
         if (count($data) < 2) {
             return 0;
         }
-        
+
         $first = reset($data);
-        $last = end($data);
-        
+        $last  = end($data);
+
         if ($first == 0) {
             return 0;
         }
-        
+
         return ($last - $first) / $first;
     }
-    
+
     /**
      * Bereken het gemiddelde van een array van waarden.
      *
@@ -184,10 +189,10 @@ class EnergyPredictionService
         if (empty($data)) {
             return 0;
         }
-        
+
         return array_sum($data) / count($data);
     }
-    
+
     /**
      * Bepaal seizoensfactor op basis van periode en energietype.
      *
@@ -198,12 +203,12 @@ class EnergyPredictionService
     private function getSeasonalFactor(string $period, string $type): float
     {
         $month = date('n');
-        
+
         if ($type === 'gas') {
             // Gas heeft sterke seizoensinvloed
             $winterMonths = [1, 2, 3, 11, 12];
             $summerMonths = [6, 7, 8];
-            
+
             if (in_array($month, $winterMonths)) {
                 return 1.5; // Hoger verbruik in winter
             } elseif (in_array($month, $summerMonths)) {
@@ -215,7 +220,7 @@ class EnergyPredictionService
             // Elektriciteit heeft minder seizoensinvloed
             $winterMonths = [11, 12, 1, 2];
             $summerMonths = [6, 7, 8];
-            
+
             if (in_array($month, $winterMonths)) {
                 return 1.2; // Iets hoger verbruik in winter (verlichting)
             } elseif (in_array($month, $summerMonths)) {
@@ -225,7 +230,7 @@ class EnergyPredictionService
             }
         }
     }
-    
+
     /**
      * Bepaal welk deel van de periode al verstreken is.
      *
@@ -234,23 +239,23 @@ class EnergyPredictionService
      */
     private function getRemainingFactor(string $period): float
     {
-        switch($period) {
+        switch ($period) {
             case 'day':
                 $hour = date('G');
                 return $hour / 24;
             case 'month':
-                $day = date('j');
+                $day         = date('j');
                 $daysInMonth = date('t');
                 return $day / $daysInMonth;
             case 'year':
-                $dayOfYear = date('z');
+                $dayOfYear  = date('z');
                 $daysInYear = date('L') ? 366 : 365;
                 return $dayOfYear / $daysInYear;
             default:
                 return 0.5;
         }
     }
-    
+
     /**
      * Bereken een betrouwbaarheidspercentage voor de voorspelling.
      *
@@ -261,11 +266,11 @@ class EnergyPredictionService
     {
         // Eenvoudige implementatie: hoe meer datapunten, hoe hoger de betrouwbaarheid (max 90%)
         $baseConfidence = 50;
-        $dataBonus = min(count($data) * 5, 40);
-        
+        $dataBonus      = min(count($data) * 5, 40);
+
         return $baseConfidence + $dataBonus;
     }
-    
+
     /**
      * Analyseer piektijden in het verbruik.
      *
@@ -278,45 +283,45 @@ class EnergyPredictionService
         if (empty($data)) {
             return [];
         }
-        
+
         // Veronderstel dat de data-array is geïndexeerd van 0 tot 23 voor uren van de dag
         if ($period === 'day') {
             // Zoek het piekuur
             $maxValue = max($data);
             $peakHour = array_search($maxValue, $data);
-            
+
             if ($peakHour !== false) {
                 $startHour = $peakHour;
-                $endHour = $peakHour;
-                
+                $endHour   = $peakHour;
+
                 // Zoek aangrenzende uren met hoog verbruik
                 while (isset($data[$startHour - 1]) && $data[$startHour - 1] > $maxValue * 0.8) {
                     $startHour--;
                 }
-                
+
                 while (isset($data[$endHour + 1]) && $data[$endHour + 1] > $maxValue * 0.8) {
                     $endHour++;
                 }
-                
+
                 // Bereken besparingspotentieel
                 $peakUsage = 0;
                 for ($i = $startHour; $i <= $endHour; $i++) {
                     $peakUsage += isset($data[$i]) ? $data[$i] : 0;
                 }
-                
-                $totalUsage = array_sum($data);
-                $peakPercentage = ($totalUsage > 0) ? ($peakUsage / $totalUsage) * 100 : 0;
+
+                $totalUsage      = array_sum($data);
+                $peakPercentage  = ($totalUsage > 0) ? ($peakUsage / $totalUsage) * 100 : 0;
                 $potentialSaving = round($peakPercentage * 0.3); // 30% van piekverbruik kan worden bespaard
-                
+
                 return [
-                    'start' => sprintf('%02d:00', $startHour),
-                    'end' => sprintf('%02d:00', $endHour + 1),
+                    'start'      => sprintf('%02d:00', $startHour),
+                    'end'        => sprintf('%02d:00', $endHour + 1),
                     'percentage' => round($peakPercentage),
-                    'potential' => "{$potentialSaving}%"
+                    'potential'  => "{$potentialSaving}%",
                 ];
             }
         }
-        
+
         return [];
     }
 }
