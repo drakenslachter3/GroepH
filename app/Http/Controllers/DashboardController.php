@@ -23,6 +23,7 @@ class DashboardController extends Controller
         $this->notificationService = $notificationService;
         $this->predictionService = $predictionService;
         $this->dashboardPredictionService = $dashboardPredictionService;
+        $this->conversionService = $conversionService;
     }
 
     public function index(Request $request)
@@ -126,16 +127,16 @@ class DashboardController extends Controller
         $monthlyTarget = $budgetData['electricity']['monthly_target'] ?? 0;
         
         if ($period === 'month') {
-            $predictionPercentage['electricity'] = ($actualElectricity / $monthlyTarget) * 100;
+            $predictionPercentage['electricity'] = $monthlyTarget > 0 ? ($actualElectricity / $monthlyTarget) * 100 : 0;
         } else if ($period === 'day') {
             $dailyTarget = $monthlyTarget / $dateObj->daysInMonth;
-            $predictionPercentage['electricity'] = ($actualElectricity / $dailyTarget) * 100;
+            $predictionPercentage['electricity'] = $dailyTarget > 0 ? ($actualElectricity / $dailyTarget) * 100 : 0;
         } else {
             $yearlyTarget = $budgetData['electricity']['target'] ?? 0;
             $currentDayOfYear = $dateObj->dayOfYear;
             $daysInYear = $dateObj->isLeapYear() ? 366 : 365;
             $proRatedBudget = $yearlyTarget * ($currentDayOfYear / $daysInYear);
-            $predictionPercentage['electricity'] = ($actualElectricity / $proRatedBudget) * 100;
+            $predictionPercentage['electricity'] = $proRatedBudget > 0 ? ($actualElectricity / $proRatedBudget) * 100 : 0;
         }
         
         // Yearly consumption to date and daily average for electricity
@@ -158,21 +159,51 @@ class DashboardController extends Controller
         $monthlyTarget = $budgetData['gas']['monthly_target'] ?? 0;
         
         if ($period === 'month') {
-            $predictionPercentage['gas'] = ($actualGas / $monthlyTarget) * 100;
+            $predictionPercentage['gas'] = $monthlyTarget > 0 ? ($actualGas / $monthlyTarget) * 100 : 0;
         } else if ($period === 'day') {
             $dailyTarget = $monthlyTarget / $dateObj->daysInMonth;
-            $predictionPercentage['gas'] = ($actualGas / $dailyTarget) * 100;
+            $predictionPercentage['gas'] = $dailyTarget > 0 ? ($actualGas / $dailyTarget) * 100 : 0;
         } else {
             $yearlyTarget = $budgetData['gas']['target'] ?? 0;
             $currentDayOfYear = $dateObj->dayOfYear;
             $daysInYear = $dateObj->isLeapYear() ? 366 : 365;
             $proRatedBudget = $yearlyTarget * ($currentDayOfYear / $daysInYear);
-            $predictionPercentage['gas'] = ($actualGas / $proRatedBudget) * 100;
+            $predictionPercentage['gas'] = $proRatedBudget > 0 ? ($actualGas / $proRatedBudget) * 100 : 0;
         }
         
         // Yearly consumption to date and daily average for gas
         $yearlyConsumptionToDate['gas'] = $this->getYearlyConsumptionToDate('gas');
         $dailyAverageConsumption['gas'] = $yearlyConsumptionToDate['gas'] / $daysPassedThisYear;
+        
+        // Calculate targets for the selected period
+        $electricityTarget = $this->calculateTargetForPeriod('electricity', $period, $date, $budgetData['electricity']);
+        $gasTarget = $this->calculateTargetForPeriod('gas', $period, $date, $budgetData['gas']);
+        
+        // Calculate costs using the conversion service
+        $electricityCost = $this->conversionService->kwhToEuro($actualElectricity);
+        $gasCost = $this->conversionService->m3ToEuro($actualGas);
+        
+        // Determine status based on percentage
+        $electricityStatus = $this->determineStatus($predictionPercentage['electricity']);
+        $gasStatus = $this->determineStatus($predictionPercentage['gas']);
+        
+        // Add live data to energydashboard_data for energy status widgets
+        $energydashboard_data['liveData'] = [
+            'electricity' => [
+                'usage' => $actualElectricity,
+                'target' => $electricityTarget,
+                'cost' => $electricityCost,
+                'percentage' => $predictionPercentage['electricity'],
+                'status' => $electricityStatus,
+            ],
+            'gas' => [
+                'usage' => $actualGas,
+                'target' => $gasTarget,
+                'cost' => $gasCost,
+                'percentage' => $predictionPercentage['gas'],
+                'status' => $gasStatus,
+            ]
+        ];
         
         // Add prediction data to the view
         $energydashboard_data['predictionData'] = $predictionData;
@@ -183,6 +214,43 @@ class DashboardController extends Controller
         $energydashboard_data['dailyAverageConsumption'] = $dailyAverageConsumption;
 
         return view('dashboard', $energydashboard_data);
+    }
+
+    /**
+     * Calculate target for a specific period
+     */
+    private function calculateTargetForPeriod(string $type, string $period, string $date, array $budgetData): float
+    {
+        $yearlyTarget = $budgetData['target'] ?? 0;
+        $monthlyTarget = $budgetData['monthly_target'] ?? ($yearlyTarget / 12);
+        $dateObj = Carbon::parse($date);
+        
+        switch ($period) {
+            case 'day':
+                return $monthlyTarget / $dateObj->daysInMonth;
+            case 'month':
+                return $monthlyTarget;
+            case 'year':
+                // For year view, calculate pro-rated target based on current day of year
+                $currentDayOfYear = $dateObj->dayOfYear;
+                $daysInYear = $dateObj->isLeapYear() ? 366 : 365;
+                return $yearlyTarget * ($currentDayOfYear / $daysInYear);
+            default:
+                return $monthlyTarget;
+        }
+    }
+
+    /**
+     * Determine status based on percentage
+     */
+    private function determineStatus(float $percentage): string
+    {
+        if ($percentage > 95) {
+            return 'kritiek';
+        } elseif ($percentage > 80) {
+            return 'waarschuwing';
+        }
+        return 'goed';
     }
 
     /**
