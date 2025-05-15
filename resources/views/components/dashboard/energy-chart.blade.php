@@ -29,7 +29,7 @@
                 </div>
             </div>
             
-            <div class="flex w-full sm:w-auto mt-2 sm:mt-0 dark:border dark:border-gray-700">
+            <!-- <div class="flex w-full sm:w-auto mt-2 sm:mt-0 dark:border dark:border-gray-700">
                 <a href="{{ route('dashboard', ['period' => 'day', 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
                    class="px-3 py-1 text-sm rounded-l-md {{ $period === 'day' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
                     Dag
@@ -42,11 +42,11 @@
                    class="px-3 py-1 text-sm rounded-r-md {{ $period === 'year' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
                     Jaar
                 </a>
-            </div>
+            </div> -->
         </div>
         
         <div class="flex justify-between items-center mb-4">
-            <a href="{{ route('dashboard', [
+            <!-- <a href="{{ route('dashboard', [
                 'period' => $period, 
                 'date' => \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d'),
                 'housing_type' => request('housing_type', 'tussenwoning')
@@ -70,18 +70,18 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>
-            </a>
+            </a> -->
         </div>
         
         <div class="relative" style="height: 300px;">
             <canvas id="{{ $type }}Chart{{ $loop->index ?? 0 }}"></canvas>
         </div>
         
-        <div class="mt-4 flex justify-end">
+        <!-- <div class="mt-4 flex justify-end">
             <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
                 {{ $buttonLabel }}
             </button>
-        </div>
+        </div> -->
     </div>
 </div>
 
