@@ -14,7 +14,8 @@ use App\View\Components\TrendAnalysis;
 use App\View\Components\BudgetAlert;
 use App\View\Components\EnergySuggestions;
 use App\View\Components\AdminNotificationInbox;
-use App\View\Components\dashboard\EnergyPredictionChart; // Add this line
+use App\View\Components\dashboard\EnergyPredictionChart;
+use App\View\Components\EnergyNotificationInbox;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -59,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
         Blade::component('budget-alert', BudgetAlert::class);
         Blade::component('energy-suggestions', EnergySuggestions::class);
         Blade::component('admin-notification-inbox', AdminNotificationInbox::class);
-        Blade::component('energy-prediction-chart', EnergyPredictionChart::class); // Add this line
+        Blade::component('energy-notification-inbox', EnergyNotificationInbox::class);
+        Blade::component('energy-prediction-chart', EnergyPredictionChart::class);
     }
 }

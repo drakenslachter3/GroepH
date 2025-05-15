@@ -6,31 +6,35 @@ use App\Models\SmartMeter;
 use App\Models\UserGridLayout;
 use App\Services\EnergyConversionService;
 use App\Services\EnergyPredictionService;
-use App\Services\DashboardPredictionService; // Behouden van SCRUM-53
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Services\EnergyNotificationService;
+use App\Services\DashboardPredictionService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     private $energyVisController;
-    private $predictionService; // Behouden van SCRUM-53
-    private $dashboardPredictionService; // Behouden van SCRUM-53
-    
-    public function __construct(
-        EnergyConversionService $conversionService, 
-        EnergyPredictionService $predictionService,
-        DashboardPredictionService $dashboardPredictionService // Behouden van SCRUM-53
-    )
+    private $notificationService;
+
+    public function __construct(EnergyConversionService $conversionService, EnergyPredictionService $predictionService, EnergyNotificationService $notificationService, DashboardPredictionService $dashboardPredictionService)
     {
         $this->energyVisController = new EnergyVisualizationController($conversionService, $predictionService);
-        $this->predictionService = $predictionService; // Behouden van SCRUM-53
-        $this->dashboardPredictionService = $dashboardPredictionService; // Behouden van SCRUM-53
+        $this->notificationService = $notificationService;
+        $this->predictionService = $predictionService;
+        $this->dashboardPredictionService = $dashboardPredictionService;
     }
 
     public function index(Request $request)
     {
         $user = Auth::user();
+
+        // Eerst data ophalen
+        $energydashboard_data = $this->energyVisController->dashboard($request);
+
+        $period = $energydashboard_data['period'] ?? 'month';
+
+        // Load user's smart meters with latest readings
 
         $user->load(['smartMeters', 'smartMeters.latestReading']);
 
@@ -39,7 +43,26 @@ class DashboardController extends Controller
         $defaultMeterId = optional(SmartMeter::getAllSmartMetersForCurrentUser()->first())->meter_id
                         ?? '2019-ETI-EMON-V01-105C4E-16405E';
 
-        // Code van dev branch behouden
+        if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
+            return redirect()->route('budget.form');
+        }
+
+        // Add last refresh time information
+        $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
+
+        // Include the user with smart meters data
+        $energydashboard_data['user'] = $user;
+
+        // Gebruik de juiste variabelen voor notificaties
+        if (Auth::check() && isset($energydashboard_data['totals'])) {
+            $this->notificationService->generateNotificationsForUser(
+                Auth::user(),
+                $energydashboard_data['totals']['electricity_prediction'] ?? [],
+                $energydashboard_data['totals']['gas_prediction'] ?? [],
+                $period
+            );
+        }
+
         if ($request->has('selectedMeterId')) {
             session(['selected_meter_id' => $request->input('selectedMeterId')]);
         }
@@ -68,14 +91,11 @@ class DashboardController extends Controller
         );
         $energydashboard_data['gridLayout'] = $userGridLayoutModel->layout;
 
-        if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
+        if (! isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
             return redirect()->route('budget.form');
         }
-        
-        // Add last refresh time information
+
         $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
-        
-        // Include the user with smart meters data
         $energydashboard_data['user'] = $user;
         $energydashboard_data['period'] = $period;
         $energydashboard_data['date'] = $date;
@@ -221,7 +241,7 @@ class DashboardController extends Controller
 
         $period      = $request->input('period');
         $housingType = $request->input('housing_type');
-        $inputDate   = $request->input('date');
+        $inputDate = $request->input('date');
 
         // Format the date based on the period type
         $formattedDate = $this->formatDateByPeriod($period, $inputDate);
