@@ -137,7 +137,7 @@ class EnergyVisualizationController extends Controller
             Log::error($e->getTraceAsString());
 
             // Toon een eenvoudige foutpagina
-            return view('energy.visualization.error', [
+            return view('energy.error', [
                 'error' => $e->getMessage()
             ]);
         }

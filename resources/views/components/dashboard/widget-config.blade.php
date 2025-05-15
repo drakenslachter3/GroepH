@@ -24,6 +24,8 @@
                 <option value="trend-analysis">Trend Analyse</option>
                 <option value="energy-suggestions">Energiebesparingstips</option>
                 <option value="budget-alert">Budget Waarschuwing</option>
+                <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling Grafiek</option>
+<option value="energy-prediction-chart-gas">Gas Voorspelling Grafiek</option>
             </select>
         </div>
         

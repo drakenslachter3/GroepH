@@ -19,6 +19,9 @@
                     <x-etc.nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
                         {{ __('Budget Instellen') }}
                     </x-etc.nav-link>
+
+          
+
                     
                     @if(Auth::user()->hasRole(['admin', 'owner']))
                         <x-etc.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
