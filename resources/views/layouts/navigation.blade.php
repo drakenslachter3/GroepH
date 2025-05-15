@@ -20,9 +20,7 @@
                         {{ __('Budget Instellen') }}
                     </x-etc.nav-link>
 
-                    <x-etc.nav-link :href="route('energy.predictions')" :active="request()->routeIs('energy.predictions')">
-    {{ __('Energievoorspelling') }}
-</x-etc.nav-link>
+          
 
                     
                     @if(Auth::user()->hasRole(['admin', 'owner']))
