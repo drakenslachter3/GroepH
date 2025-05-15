@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnergyBudgetController;
+use App\Http\Controllers\EnergyPredictionController;
 use App\Http\Controllers\EnergyVisualizationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmartMeterController;
+use App\Http\Controllers\InfluxController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InfluxDataController;
 
@@ -13,7 +15,11 @@ use App\Http\Controllers\InfluxDataController;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
-// Voeg dit toe aan routes/web.php
+
+// Behouden van beide routes uit de verschillende branches
+Route::get('/influx/explore', [InfluxController::class, 'explore']);
+
+// Toegevoegd vanuit dev branch
 Route::get('/energy/data-form', [InfluxDataController::class, 'showEnergyForm'])
     ->name('energy.form');
 
@@ -33,6 +39,7 @@ Route::middleware('auth')->group(function () {
 
     // Energie visualisatie routes
     Route::get('/energy/visualization', [EnergyVisualizationController::class, 'dashboard'])->name('energy.dashboard');
+    Route::get('/energy/predictions', [EnergyPredictionController::class, 'showPredictions'])->name('energy.predictions');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/set-widget', [DashboardController::class, 'setWidget'])->name('dashboard.setWidget');
@@ -62,6 +69,26 @@ Route::middleware('auth')->group(function () {
 // API route for smart meter search (used by AJAX)
 Route::middleware('auth')->prefix('api')->group(function () {
     Route::get('/smartmeters/search', [SmartMeterController::class, 'search'])->name('api.smartmeters.search');
+});
+
+// Energy notification routes
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [App\Http\Controllers\EnergyNotificationController::class, 'index'])
+        ->name('notifications.index');
+    Route::post('/notifications/{notification}/mark-as-read', [App\Http\Controllers\EnergyNotificationController::class, 'markAsRead'])
+        ->name('notifications.mark-as-read');
+    Route::post('/notifications/{notification}/dismiss', [App\Http\Controllers\EnergyNotificationController::class, 'dismiss'])
+        ->name('notifications.dismiss');
+    Route::get('/notifications/settings', [App\Http\Controllers\EnergyNotificationController::class, 'settings'])
+        ->name('notifications.settings');
+    Route::post('/notifications/settings', [App\Http\Controllers\EnergyNotificationController::class, 'updateSettings'])
+        ->name('notifications.update-settings');
+});
+
+// Testroutes - apart van de productie routes
+Route::middleware('auth')->prefix('testing')->group(function () {
+    Route::get('/generate-notification', [App\Http\Controllers\TestNotificationController::class, 'generateTestNotification'])
+        ->name('testing.notification');
 });
 
 
