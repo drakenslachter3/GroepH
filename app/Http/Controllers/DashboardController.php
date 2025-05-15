@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\EnergyVisualizationController;
+use App\Models\SmartMeter;
 use App\Models\UserGridLayout;
 use App\Services\EnergyConversionService;
 use App\Services\EnergyPredictionService;
@@ -18,34 +19,57 @@ class DashboardController extends Controller
         $this->energyVisController = new EnergyVisualizationController($conversionService, $predictionService);
     }
 
-    public function index(Request $request)
-    {
-        $user = Auth::user();
+ public function index(Request $request)
+{
+    $user = Auth::user();
 
-        // Load user's smart meters with latest readings
-        $user->load(['smartMeters', 'smartMeters.latestReading']);
+    $user->load(['smartMeters', 'smartMeters.latestReading']);
 
-        $energydashboard_data = $this->energyVisController->dashboard($request);
+    $defaultPeriod = 'day';
+    $defaultDate = Carbon::today()->format('Y-m-d');
+    $defaultMeterId = optional(SmartMeter::getAllSmartMetersForCurrentUser()->first())->meter_id
+                      ?? '2019-ETI-EMON-V01-105C4E-16405E';
 
-        $userGridLayoutModel = UserGridLayout::firstOrCreate(
-            ['user_id' => $user->id],
-            ['layout' => $this->getDefaultLayout()]
-        );
-
-        $energydashboard_data['gridLayout'] = $userGridLayoutModel->layout;
-
-        if (! isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
-            return redirect()->route('budget.form');
-        }
-
-        // Add last refresh time information
-        $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
-
-        // Include the user with smart meters data
-        $energydashboard_data['user'] = $user;
-
-        return view('dashboard', $energydashboard_data);
+    if ($request->has('selectedMeterId')) {
+        session(['selected_meter_id' => $request->input('selectedMeterId')]);
     }
+    if ($request->has('period') && $request->has('date')) {
+        session([
+            'dashboard_period' => $request->input('period'),
+            'dashboard_date'   => $request->input('date'),
+        ]);
+    }
+
+    $period = session('dashboard_period', $defaultPeriod);
+    $date = session('dashboard_date', $defaultDate);
+    $selectedMeterId = session('selected_meter_id', $defaultMeterId);
+
+    session([
+        'dashboard_period' => $period,
+        'dashboard_date' => $date,
+        'selected_meter_id' => $selectedMeterId,
+    ]);
+
+    $energydashboard_data = $this->energyVisController->dashboard($request);
+
+    $userGridLayoutModel = UserGridLayout::firstOrCreate(
+        ['user_id' => $user->id],
+        ['layout' => $this->getDefaultLayout()]
+    );
+    $energydashboard_data['gridLayout'] = $userGridLayoutModel->layout;
+
+    if (! isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
+        return redirect()->route('budget.form');
+    }
+
+    $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
+    $energydashboard_data['user'] = $user;
+    $energydashboard_data['period'] = $period;
+    $energydashboard_data['date'] = $date;
+    $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
+
+    return view('dashboard', $energydashboard_data);
+}
 
     // New method to handle date and period settings
     public function setTime(Request $request)
@@ -59,6 +83,8 @@ class DashboardController extends Controller
         $period      = $request->input('period');
         $housingType = $request->input('housing_type');
         $inputDate   = $request->input('date');
+
+
 
         // Format the date based on the period type
         $formattedDate = $this->formatDateByPeriod($period, $inputDate);
@@ -82,14 +108,14 @@ class DashboardController extends Controller
             case 'month':
                                                 // For month period, ensure we have YYYY-MM-DD with first day of month
                 if (strlen($inputDate) === 7) { // YYYY-MM format
-                    return $inputDate . '-01';
+                    return $inputDate;
                 }
                 return $inputDate;
 
             case 'year':
                                                 // For year period, ensure we have YYYY-MM-DD with first day of year
                 if (strlen($inputDate) === 4) { // YYYY format
-                    return $inputDate . '-01-01';
+                    return $inputDate;
                 }
                 return $inputDate;
 
@@ -167,17 +193,20 @@ class DashboardController extends Controller
 
     public function saveSelectedMeter(Request $request)
     {
-        $meterId = $request->meter;
+        $meterDatabaseId = $request->meter;
         $layout  = UserGridLayout::where('user_id', auth()->id())->first();
 
         if ($layout) {
-            $layout->selected_smartmeter = $meterId;
+            $layout->selected_smartmeter = $meterDatabaseId;
             $layout->save();
         } else {
             throw new \Exception('[SaveSelectedMeter, DashboardController]: meter kan niet opgeslagen worden, omdat user_grid_layout nog niet bestaat voor deze gebruiker!');
         }
 
-        return redirect()->route('dashboard')->with('status', 'Meterkeuze doorgevoerd - het dashboard is nu up-to-date!');
+        $smartMeterId = SmartMeter::getMeterIdByDatabaseId($meterDatabaseId);
+
+        return redirect()->route('dashboard', ['selectedMeterId' => $smartMeterId])
+                         ->with('status', 'Meterkeuze doorgevoerd - het dashboard is nu up-to-date!');
     }
 
     private function getEnergyData(string $meterId, string $period, string $date)

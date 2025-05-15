@@ -17,7 +17,7 @@
             {{-- @if(Auth::check())
                 @include('components.user-meter-readings', ['user' => Auth::user()])
             @endif --}}
-            
+
             <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4 border-gray-200">
@@ -217,6 +217,7 @@
                     'energy-chart-electricity', 'energy-chart-gas' => 'large',
                     'trend-analysis' => 'full',
                     'energy-suggestions' => 'large',
+                    'switch-meter' => 'medium',
                     default => 'full'
                 };
 
@@ -239,30 +240,30 @@
                         @break
 
                         @case('energy-status-electricity')
-<x-dashboard.energy-status
-    type="Elektriciteit"
-    :usage="$totals['electricity_kwh']"
-    :target="$totals['electricity_target']"
-    :cost="$totals['electricity_euro']"
-    :percentage="$totals['electricity_percentage']"
-    :status="$totals['electricity_status']"
-    :date="$date"
-    :period="$period"
-    unit="kWh" />
-@break
+                        <x-dashboard.energy-status
+                            type="Elektriciteit"
+                            :usage="$totals['electricity_kwh']"
+                            :target="$totals['electricity_target']"
+                            :cost="$totals['electricity_euro']"
+                            :percentage="$totals['electricity_percentage']"
+                            :status="$totals['electricity_status']"
+                            :date="$date"
+                            :period="$period"
+                            unit="kWh" />
+                        @break
 
-@case('energy-status-gas')
-<x-dashboard.energy-status
-    type="Gas"
-    :usage="$totals['gas_m3']"
-    :target="$totals['gas_target']"
-    :cost="$totals['gas_euro']"
-    :percentage="$totals['gas_percentage']"
-    :status="$totals['gas_status']"
-    :date="$date"
-    :period="$period"
-    unit="m³" />
-@break
+                        @case('energy-status-gas')
+                        <x-dashboard.energy-status
+                            type="Gas"
+                            :usage="$totals['gas_m3']"
+                            :target="$totals['gas_target']"
+                            :cost="$totals['gas_euro']"
+                            :percentage="$totals['gas_percentage']"
+                            :status="$totals['gas_status']"
+                            :date="$date"
+                            :period="$period"
+                            unit="m³" />
+                        @break
 
                         @case('historical-comparison')
                         <x-dashboard.historical-comparison
@@ -277,7 +278,7 @@
                             title="Elektriciteitsverbruik (kWh)"
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="blue"
-                            :chartData="$chartData"
+                            :chartData="$meterDataForPeriod['current_data'] ?? []"
                             :period="$period" 
                             :date="$date" />
                         @break
@@ -288,8 +289,9 @@
                             title="Gasverbruik (m³)"
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="yellow"
-                            :chartData="$chartData"
-                            :period="$period" />
+                            :chartData="$meterDataForPeriod['current_data'] ?? []"
+                            :period="$period"
+                            :date="$date" />
                         @break
 
                         @case('trend-analysis')
@@ -393,7 +395,7 @@
         let dateInput;
 
         if (period === 'day') {
-            dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
+            dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m-d') }}">`;
         } else if (period === 'month') {
             dateInput = `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
         } else if (period === 'year') {

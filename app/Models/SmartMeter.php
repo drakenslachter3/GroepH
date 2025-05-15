@@ -215,4 +215,8 @@ class SmartMeter extends Model
 
         return empty($types) ? 'Onbekend' : implode(' & ', $types);
     }
+
+    public static function getMeterIdByDatabaseId($database_id){
+        return self::where('id', $database_id)->value('meter_id');
+    }
 }
