@@ -19,7 +19,7 @@
                         </div>
                     @endif
 
-                    <form method="POST"
+                    <form method="POST" novalidate
                         action="{{ isset($smartmeter) ? route('smartmeters.update', $smartmeter->id) : route('smartmeters.store') }}">
                         @csrf
                         @if(isset($smartmeter)) <!-- Changed from $smartMeter -->
@@ -39,11 +39,11 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="location"
+                            <label for="name"
                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Naam</label>
                             <input type="text"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                   id="location" name="name"
+                                   id="name" name="name"
                                    value="{{ old('name', isset($smartmeter) ? $smartmeter->name : '') }}">
                             @error('name')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -142,7 +142,7 @@
                                 class="px-4 py-2 bg-gray-300 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-400 focus:bg-gray-400 active:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                 Annuleren
                             </a>
-                            <button type="submit"
+                            <button type="submit" dusk="save-button"
                                 class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                 {{ isset($smartmeter) ? 'Wijzigingen opslaan' : 'Meter aanmaken' }}
                             </button>

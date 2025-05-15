@@ -6,11 +6,18 @@
     </x-slot>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+            @if (session('status'))
+                    <div id="status-message" class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-6 transition-opacity duration-1000 ease-out opacity-100">
+                        {{ session('status') }}
+                    </div>
+             @endif
+
             <!-- Display smart meters for the user -->
             {{-- @if(Auth::check())
                 @include('components.user-meter-readings', ['user' => Auth::user()])
             @endif --}}
-            
+
             <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4 border-gray-200">
@@ -48,7 +55,7 @@
                                             <option value="{{ $i }}">Positie {{ $i + 1 }}</option>
                                         @endfor
                                     </select>
-                                </div>
+                                </div> 
 
                                 <div class="space-y-2">
                                     <label for="widget-type" class="block text-sm font-medium text-gray-700 dark:text-white">Widget Type:</label>
@@ -62,10 +69,11 @@
                                         <option value="trend-analysis">Trend Analyse</option>
                                         <option value="energy-suggestions">Energiebesparingstips</option>
                                         <option value="budget-alert">Budget Waarschuwing</option>
+                                        <option value="switch-meter">Selecteer meter</option>
                                     </select>
                                 </div>
 
-                                <button type="submit" class="w-full py-3 px-4 bg-green-500 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
+                                <button type="submit" class="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
                                     Widget Toevoegen
                                 </button>
                             </form>
@@ -78,7 +86,7 @@
                                     </button>
                                 </form>
 
-                                <button onclick="window.location.href='{{ route('budget.form') }}'" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-purple-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
+                                <button onclick="window.location.href='{{ route('budget.form') }}'" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
                                     Budget Aanpassen
                                 </button>
                             </div>
@@ -209,6 +217,7 @@
                     'energy-chart-electricity', 'energy-chart-gas' => 'large',
                     'trend-analysis' => 'full',
                     'energy-suggestions' => 'large',
+                    'switch-meter' => 'medium',
                     default => 'full'
                 };
 
@@ -231,30 +240,30 @@
                         @break
 
                         @case('energy-status-electricity')
-<x-dashboard.energy-status
-    type="Elektriciteit"
-    :usage="$totals['electricity_kwh']"
-    :target="$totals['electricity_target']"
-    :cost="$totals['electricity_euro']"
-    :percentage="$totals['electricity_percentage']"
-    :status="$totals['electricity_status']"
-    :date="$date"
-    :period="$period"
-    unit="kWh" />
-@break
+                        <x-dashboard.energy-status
+                            type="Elektriciteit"
+                            :usage="$totals['electricity_kwh']"
+                            :target="$totals['electricity_target']"
+                            :cost="$totals['electricity_euro']"
+                            :percentage="$totals['electricity_percentage']"
+                            :status="$totals['electricity_status']"
+                            :date="$date"
+                            :period="$period"
+                            unit="kWh" />
+                        @break
 
-@case('energy-status-gas')
-<x-dashboard.energy-status
-    type="Gas"
-    :usage="$totals['gas_m3']"
-    :target="$totals['gas_target']"
-    :cost="$totals['gas_euro']"
-    :percentage="$totals['gas_percentage']"
-    :status="$totals['gas_status']"
-    :date="$date"
-    :period="$period"
-    unit="m³" />
-@break
+                        @case('energy-status-gas')
+                        <x-dashboard.energy-status
+                            type="Gas"
+                            :usage="$totals['gas_m3']"
+                            :target="$totals['gas_target']"
+                            :cost="$totals['gas_euro']"
+                            :percentage="$totals['gas_percentage']"
+                            :status="$totals['gas_status']"
+                            :date="$date"
+                            :period="$period"
+                            unit="m³" />
+                        @break
 
                         @case('historical-comparison')
                         <x-dashboard.historical-comparison
@@ -269,7 +278,7 @@
                             title="Elektriciteitsverbruik (kWh)"
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="blue"
-                            :chartData="$chartData"
+                            :chartData="$meterDataForPeriod['current_data'] ?? []"
                             :period="$period" 
                             :date="$date" />
                         @break
@@ -280,8 +289,9 @@
                             title="Gasverbruik (m³)"
                             buttonLabel="Toon Vorig Jaar"
                             buttonColor="yellow"
-                            :chartData="$chartData"
-                            :period="$period" />
+                            :chartData="$meterDataForPeriod['current_data'] ?? []"
+                            :period="$period"
+                            :date="$date" />
                         @break
 
                         @case('trend-analysis')
@@ -295,6 +305,12 @@
                             :usagePattern="$usagePattern ?? 'avond'"
                             :housingType="$housingType"
                             :season="date('n') >= 3 && date('n') <= 5 ? 'lente' : (date('n') >= 6 && date('n') <= 8 ? 'zomer' : (date('n') >= 9 && date('n') <= 11 ? 'herfst' : 'winter'))" />
+                        @break
+
+                        @case('switch-meter')
+                        <x-dashboard.switch-meter 
+                            :meters="\App\Models\SmartMeter::getAllSmartMetersForCurrentUser()"
+                            :selectedMeterId="\App\Models\UserGridLayout::getSelectedSmartMeterForCurrentUser()" />
                         @break
 
                         @default
@@ -379,7 +395,7 @@
         let dateInput;
 
         if (period === 'day') {
-            dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ $date }}">`;
+            dateInput = `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m-d') }}">`;
         } else if (period === 'month') {
             dateInput = `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
         } else if (period === 'year') {
@@ -451,6 +467,19 @@
     
     // Roep de initiële setup aan
     initDatePickerListener();
+
+    // Status-message verwijderen na 5 seconden
+    setTimeout(() => {
+        const msg = document.getElementById('status-message');
+        if (msg) {
+            msg.classList.remove('opacity-100');
+            msg.classList.add('opacity-0');
+
+            setTimeout(() => {
+                msg.remove();
+            }, 1000);
+        }
+    }, 5000);
 });
     </script>
     @stack('chart-scripts')
