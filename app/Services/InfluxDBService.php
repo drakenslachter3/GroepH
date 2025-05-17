@@ -109,14 +109,16 @@ class InfluxDBService
      */
     public function getDailyEnergyUsage(string $meterId, string $date): array
     {
-        $start = Carbon::createFromFormat('Y-m-d', $date)->startOfDay()->toIso8601ZuluString();
-        $stop = Carbon::createFromFormat('Y-m-d', $date)->endOfDay()->toIso8601ZuluString();
+        $start = Carbon::createFromFormat('Y-m-d', $date, 'Europe/Amsterdam')->startOfDay()->setTimezone('UTC')->toIso8601ZuluString();
+        $stop = Carbon::createFromFormat('Y-m-d', $date, 'Europe/Amsterdam')->addDay()->startOfDay()->setTimezone('UTC')->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
         |> range(start: ' . $start . ', stop: ' . $stop . ')
-        |> filter(fn: (r) => r["signature"] == "' . $meterId . '" and r["_field"] == "energy_consumed" or r["_field"] == "energy_produced" or r["_field"] == "gas_delivered")
-        |> aggregateWindow(every: 1h, fn: last, createEmpty: false)
+        |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+        |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed" or r["_field"] == "energy_produced")
+        |> filter(fn: (r) => r["_measurement"] == "dsmr")
+        |> aggregateWindow(every: 1h, fn: last, createEmpty: true)
         |> derivative(unit: 1h, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
@@ -165,14 +167,15 @@ class InfluxDBService
         list($year, $month) = explode('-', $yearMonth);
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
 
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->toIso8601ZuluString();
-        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01", 'Europe/Amsterdam')->startOfDay()->setTimezone('UTC')->toIso8601ZuluString();
+        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}", 'Europe/Amsterdam')->endOfDay()->setTimezone('UTC')->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
-        |> range(start: time(v: "' . $startDate . '"), stop: time(v: "' . $endDate . '"))
-        |> filter(fn: (r) => r["signature"] == "' . $meterId . '" and (r["_field"] == "energy_consumed" or r["_field"] == "energy_produced" or r["_field"] == "gas_delivered"))
-        |> aggregateWindow(every: 1d, fn: last, createEmpty: false)
+        |> range(start: ' . $startDate . ', stop: ' . $endDate . ')
+        |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+        |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed" or r["_field"] == "energy_produced")
+        |> aggregateWindow(every: 1d, fn: last, createEmpty: true)
         |> derivative(unit: 1d, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
@@ -218,13 +221,14 @@ class InfluxDBService
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01")->startOfDay()->toIso8601ZuluString();
-        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31")->endOfDay()->toIso8601ZuluString();
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01", 'Europe/Amsterdam')->startOfDay()->setTimezone('UTC')->toIso8601ZuluString();
+        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31", 'Europe/Amsterdam')->endOfDay()->setTimezone('UTC')->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
-        |> range(start: time(v: "' . $startDate . '"), stop: time(v: "' . $endDate . '"))
-        |> filter(fn: (r) => r["signature"] == "' . $meterId . '" and (r["_field"] == "energy_consumed" or r["_field"] == "energy_produced" or r["_field"] == "gas_delivered"))
+        |> range(start: ' . $startDate . ', stop: ' . $endDate . ')
+        |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+        |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed" or r["_field"] == "energy_produced")
         |> aggregateWindow(every: 1mo, fn: last, createEmpty: false)
         |> derivative(unit: 1mo, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")

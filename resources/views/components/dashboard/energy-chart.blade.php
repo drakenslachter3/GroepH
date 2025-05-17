@@ -32,7 +32,7 @@
 
     $nextDate = match($period) {
         'day' => $currentDate->copy()->addDay(),
-        'month' => $currentDate->copy()->addMonthNoOverflow(), // handles Jan-Dec
+        'month' => $currentDate->copy()->addMonthNoOverflow(),
         'year' => $currentDate->copy()->addYear(),
         default => $currentDate
     };
