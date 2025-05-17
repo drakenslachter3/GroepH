@@ -58,14 +58,14 @@ class InfluxDBService
                     $time = Carbon::parse($record->values['_time'] ?? now());
 
                     // Save to MySQL
-                    // $influxData = InfluxData::create([
-                    //     'measurement' => $measurement,
-                    //     'tags'        => $tags,
-                    //     'fields'      => $fields,
-                    //     'time'        => $time,
-                    // ]);
+                    $influxData = InfluxData::create([
+                        'measurement' => $measurement,
+                        'tags'        => $tags,
+                        'fields'      => $fields,
+                        'time'        => $time,
+                    ]);
 
-                    // $savedData[] = $influxData;
+                    $savedData[] = $influxData;
                 }
             }
         }
@@ -109,8 +109,11 @@ class InfluxDBService
      */
     public function getDailyEnergyUsage(string $meterId, string $date): array
     {
-        $start = Carbon::createFromFormat('Y-m-d', $date)->subDay()->setTime(23, 0, 0)->toIso8601ZuluString();
-        $stop = Carbon::createFromFormat('Y-m-d', $date)->addDay()->startOfDay()->toIso8601ZuluString();
+        $start = Carbon::createFromFormat('Y-m-d', $date)->startOfDay()->toIso8601ZuluString();
+        $stop = Carbon::createFromFormat('Y-m-d', $date)->endOfDay()->toIso8601ZuluString();
+        echo $date . '<br>';
+        echo $start . '<br>';
+        echo $stop . '<br>';
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -124,35 +127,24 @@ class InfluxDBService
 
         $result = $this->query($query);
 
-        // Initialize arrays for 24 hours (0-23)
         $gasUsage              = array_fill(0, 24, 0);
         $electricityUsage      = array_fill(0, 24, 0);
         $electricityGeneration = array_fill(0, 24, 0);
 
-        // Process results with field mapping
-        if (! empty($result) && isset($result[0]->records)) {
+        if (!empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
-                // Make sure we have a valid _time value before trying to extract the hour
                 if (isset($record->values['_time'])) {
                     $hour = (int) date('G', strtotime($record->values['_time']));
 
-                    // Map gas_delivered to gas_usage
                     if (isset($record->values['gas_delivered'])) {
                         $gasUsage[$hour] = (float) $record->values['gas_delivered'];
                     }
-
-                    // Map energy_consumed to electricity_usage
                     if (isset($record->values['energy_consumed'])) {
                         $electricityUsage[$hour] = (float) $record->values['energy_consumed'];
                     }
-
-                    // Map energy_produced to electricity_generation
                     if (isset($record->values['energy_produced'])) {
                         $electricityGeneration[$hour] = (float) $record->values['energy_produced'];
                     }
-                } else {
-                    // Log warning that record doesn't have a timestamp
-                    Log::warning("Record missing _time field: " . json_encode($record->values));
                 }
             }
         }
@@ -174,13 +166,13 @@ class InfluxDBService
     public function getMonthlyEnergyUsage(string $meterId, string $yearMonth): array
     {
         list($year, $month) = explode('-', $yearMonth);
-        $daysInMonth        = cal_days_in_month(CAL_GREGORIAN, (int) $month, (int) $year);
+        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
 
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->subDay()->toIso8601ZuluString();
-        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")
-        ->addMonth()
-        ->startOfDay()
-        ->toIso8601ZuluString();
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->toIso8601ZuluString();
+        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
+        echo $yearMonth . '<br>';
+        echo $startDate . '<br>';
+        echo $endDate . '<br>';
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -194,25 +186,21 @@ class InfluxDBService
 
         $result = $this->query($query);
 
-        // Initialize arrays for all days of the month
-        $gasUsage              = array_fill(0, $daysInMonth, 0);
-        $electricityUsage      = array_fill(0, $daysInMonth, 0);
+        $gasUsage = array_fill(0, $daysInMonth, 0);
+        $electricityUsage = array_fill(0, $daysInMonth, 0);
         $electricityGeneration = array_fill(0, $daysInMonth, 0);
 
-        // Process results
-        if (! empty($result) && isset($result[0]->records)) {
+        if (!empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
                 if (isset($record->values['_time'])) {
-                    $day = (int) date('j', strtotime($record->values['_time'])) - 1; // 0-based index
+                    $day = (int) date('j', strtotime($record->values['_time'])) - 1;
 
                     if (isset($record->values['gas_delivered'])) {
                         $gasUsage[$day] = (float) $record->values['gas_delivered'];
                     }
-
                     if (isset($record->values['energy_consumed'])) {
                         $electricityUsage[$day] = (float) $record->values['energy_consumed'];
                     }
-
                     if (isset($record->values['energy_produced'])) {
                         $electricityGeneration[$day] = (float) $record->values['energy_produced'];
                     }
@@ -236,47 +224,46 @@ class InfluxDBService
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
-        $startDate = $year . "-01-01T00:00:00Z";
-        $endDate   = $year . "-12-31T23:59:59Z";
-        
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01")->startOfDay()->toIso8601ZuluString();
+        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31")->endOfDay()->toIso8601ZuluString();
+        echo $year . '<br>';
+        echo $startDate . '<br>';
+        echo $endDate . '<br>';
+
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
         |> range(start: time(v: "' . $startDate . '"), stop: time(v: "' . $endDate . '"))
         |> filter(fn: (r) => r["signature"] == "' . $meterId . '" and (r["_field"] == "energy_consumed" or r["_field"] == "energy_produced" or r["_field"] == "gas_delivered"))
         |> aggregateWindow(every: 1mo, fn: last, createEmpty: false)
+        |> derivative(unit: 1mo, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
         ';
-        
+
         $result = $this->query($query);
-        
-        // Initialize arrays for all months (0-11)
+
         $gasUsage              = array_fill(0, 12, 0);
         $electricityUsage      = array_fill(0, 12, 0);
         $electricityGeneration = array_fill(0, 12, 0);
-        
-        // Process results
-        if (! empty($result) && isset($result[0]->records)) {
+
+        if (!empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
                 if (isset($record->values['_time'])) {
-                    // Get the month index (0-11)
-                    $month = (int) date('n', strtotime($record->values['_time']))-2;
-                    
+                    $month = (int) date('n', strtotime($record->values['_time'])) - 1;
+
                     if (isset($record->values['gas_delivered'])) {
                         $gasUsage[$month] = (float) $record->values['gas_delivered'];
                     }
-                    
                     if (isset($record->values['energy_consumed'])) {
                         $electricityUsage[$month] = (float) $record->values['energy_consumed'];
                     }
-                    
                     if (isset($record->values['energy_produced'])) {
                         $electricityGeneration[$month] = (float) $record->values['energy_produced'];
                     }
                 }
             }
         }
-        
+
         return [
             'gas_delivered'   => $gasUsage,
             'energy_consumed' => $electricityUsage,
@@ -370,7 +357,7 @@ class InfluxDBService
         $lastGeneration   = 0;
 
         // Process first reading
-        if (! empty($firstResult) && isset($firstResult[0]->records) && ! empty($firstResult[0]->records)) {
+        if (!empty($firstResult) && isset($firstResult[0]->records) && !empty($firstResult[0]->records)) {
             $record = $firstResult[0]->records[0];
 
             if (isset($record->values['gas_delivered'])) {
@@ -387,7 +374,7 @@ class InfluxDBService
         }
 
         // Process last reading
-        if (! empty($lastResult) && isset($lastResult[0]->records) && ! empty($lastResult[0]->records)) {
+        if (!empty($lastResult) && isset($lastResult[0]->records) && !empty($lastResult[0]->records)) {
             $record = $lastResult[0]->records[0];
 
             if (isset($record->values['gas_delivered'])) {
@@ -412,9 +399,6 @@ class InfluxDBService
         $gasUsage              = max(0, $gasUsage);
         $electricityUsage      = max(0, $electricityUsage);
         $electricityGeneration = max(0, $electricityGeneration);
-
-        // Log the calculated values
-        Log::debug("Calculated usage: Gas={$gasUsage}, Electricity={$electricityUsage}, Generation={$electricityGeneration}");
 
         return [
             'gas_delivered'   => $gasUsage,
@@ -526,24 +510,24 @@ class InfluxDBService
         $dashboardData = $this->getEnergyDashboardData($meterId, $period, $date);
 
         // Sla huidige gegevens op
-        $influxData = \App\Models\InfluxData::create([
-            'measurement' => 'energy_dashboard',
-            'tags'        => [
-                'meter_id' => $meterId,
-                'period'   => $period,
-                'date'     => $date,
-            ],
-            'fields'      => [
-                'current_data'    => $dashboardData['current_data'],
-                'historical_data' => $dashboardData['historical_data'],
-                'total'           => $dashboardData['total'],
-            ],
-            'time'        => now(),
-        ]);
+        // $influxData = \App\Models\InfluxData::create([
+        //     'measurement' => 'energy_dashboard',
+        //     'tags'        => [
+        //         'meter_id' => $meterId,
+        //         'period'   => $period,
+        //         'date'     => $date,
+        //     ],
+        //     'fields'      => [
+        //         'current_data'    => $dashboardData['current_data'],
+        //         'historical_data' => $dashboardData['historical_data'],
+        //         'total'           => $dashboardData['total'],
+        //     ],
+        //     'time'        => now(),
+        // ]);
 
         return [
             'success' => true,
-            'id'      => $influxData->id,
+            'id'      => 0,
             'data'    => $dashboardData,
         ];
     }

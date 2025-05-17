@@ -1,7 +1,5 @@
 @props(['type', 'title', 'buttonLabel', 'buttonColor', 'chartData', 'period', 'date' => null])
 
-
-
 @php
     use Carbon\Carbon;
     
@@ -27,7 +25,7 @@
     
     $previousDate = match($period) {
         'day' => $currentDate->copy()->subDay(),
-        'month' => $currentDate->copy()->subMonthNoOverflow(), // handles Dec-Jan
+        'month' => $currentDate->copy()->subMonthNoOverflow(),
         'year' => $currentDate->copy()->subYear(),
         default => $currentDate
     };
@@ -116,6 +114,16 @@
         </button>
     </div>
 </div>
+
+@php
+    $totalUsage = is_array($chartData[$dataKey] ?? null)
+        ? array_sum($chartData[$dataKey])
+        : 0;
+@endphp
+
+<p class="mt-4 text-right text-sm text-gray-700 dark:text-gray-300">
+    Totaal verbruik: <strong>{{ number_format($totalUsage, 3, ',', '.') }} {{ $unitLabel }}</strong>
+</p>
 
 @push('chart-scripts')
 <script>
