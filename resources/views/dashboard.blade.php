@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">
             {{ __('Energieverbruik Dashboard') }}
         </h2>
     </x-slot>
@@ -19,9 +19,9 @@
                 @include('components.user-meter-readings', ['user' => Auth::user()])
             @endif --}}
 
-            <div class="bg-white shadow-lg rounded-lg border border-gray-100 mb-8 dark:bg-gray-800">
+            <div class="bg-white shadow-lg rounded-lg mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->
-                <div class="p-4 border-gray-200">
+                <div class="p-4">
                     <!-- Dropdown button, last update info & refresh button in one row -->
                     <div class="flex justify-between items-center">
                         <!-- Dropdown button with title and icon -->
@@ -260,27 +260,27 @@
                 @foreach ($gridLayout as $item)
                     @php
                         // Skip the date-selector since we've integrated it into the top section
-if ($item === 'date-selector') {
-    continue;
-}
+                        if ($item === 'date-selector') {
+                            continue;
+                        }
 
-$widgetSize = match ($item) {
-    'usage-prediction' => 'large',
-    'energy-status-electricity', 'energy-status-gas' => 'small',
-    'historical-comparison' => 'full',
-    'energy-chart-electricity', 'energy-chart-gas' => 'large',
-    'trend-analysis' => 'full',
-    'energy-suggestions' => 'large',
-    'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
-    'switch-meter' => 'medium',
-    default => 'full',
-};
+                        $widgetSize = match ($item) {
+                            'usage-prediction' => 'large',
+                            'energy-status-electricity', 'energy-status-gas' => 'small',
+                            'historical-comparison' => 'full',
+                            'energy-chart-electricity', 'energy-chart-gas' => 'large',
+                            'trend-analysis' => 'full',
+                            'energy-suggestions' => 'large',
+                            'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
+                            'switch-meter' => 'medium',
+                            default => 'full',
+                        };
 
-$widthClasses = match ($widgetSize) {
-    'small' => 'w-full sm:w-1/2 lg:w-1/4',
-    'medium' => 'w-full sm:w-1/2 lg:w-1/3',
-    'large' => 'w-full lg:w-1/2',
-    'full' => 'w-full',
+                        $widthClasses = match ($widgetSize) {
+                            'small' => 'w-full sm:w-1/2 lg:w-1/4',
+                            'medium' => 'w-full sm:w-1/2 lg:w-1/3',
+                            'large' => 'w-full lg:w-1/2',
+                            'full' => 'w-full',
                         };
                     @endphp
 

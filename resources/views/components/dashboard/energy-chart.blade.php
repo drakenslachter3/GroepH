@@ -83,11 +83,11 @@
             <canvas id="{{ $type }}Chart"></canvas>
         </div>
         
-        <!-- <div class="mt-4 flex justify-end">
+        <div class="mt-4 flex justify-end">
             <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
                 {{ $buttonLabel }}
             </button>
-        </div> -->
+        </div>
     </div>
 </div>
 
@@ -136,6 +136,10 @@
         // Get the correct data key based on the type
         const dataKey = "{{ $dataKey }}";
         const usageData = chartData[dataKey] || [];
+        const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        const axisColor = isDarkMode ? '#D1D5DB' : '#4B5563';
+        const titleColor = isDarkMode ? '#F9FAFB' : '#000000';
         
         // Create chart instance as a variable to access it later for toggles
         const chart = new Chart(chartCanvas, {
@@ -153,15 +157,22 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: axisColor
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         title: {
                             display: true,
                             text: periodTranslated,
-                            color: '#000'
+                            color: titleColor
                         },
                         ticks: {
-                            color: '#4B5563'
+                            color: axisColor
                         }
                     },
                     y: {
@@ -169,10 +180,10 @@
                         title: {
                             display: true,
                             text: '{{ $type === "electricity" ? "Elektriciteit (kWh)" : "Gas (m³)" }}',
-                            color: '#000'
+                            color: titleColor
                         },
                         ticks: {
-                            color: '#4B5563'
+                            color: axisColor
                         }
                     }
                 }
@@ -190,7 +201,7 @@
                     // Use the previous year data if available
                     const previousYearKey = `${dataKey}_previous_year`;
                     chart.data.datasets.push({
-                        label: 'Verbruik Vorig Jaar',
+                        label: '{{ $type === "electricity" ? "kWh" : "m³" }} Verbruik Vorig Jaar',
                         data: chartData[previousYearKey] || [],
                         backgroundColor: '{{ $type === "electricity" ? "rgba(34, 197, 94, 0.6)" : "rgba(234, 88, 12, 0.6)" }}',
                         borderColor: '{{ $type === "electricity" ? "rgb(22, 163, 74)" : "rgb(234, 88, 12)" }}',
