@@ -6,6 +6,12 @@
     } else {
         $daysInMonth = 30;
     }
+    
+    // Define the data key mapping based on the type
+    $dataKey = $type === 'electricity' ? 'energy_consumed' : 'gas_delivered';
+    $unitLabel = $type === 'electricity' ? 'kWh' : 'm³';
+    $backgroundColor = $type === 'electricity' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)';
+    $borderColor = $type === 'electricity' ? 'rgb(37, 99, 235)' : 'rgb(217, 119, 6)';
 @endphp
 
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
@@ -58,7 +64,7 @@
             </a>
             
             <span class="px-3 py-1 text-sm bg-{{ $buttonColor }}-500 text-white dark:bg-{{ $buttonColor }}-600 dark:text-white rounded-md">
-                {{ $type === "electricity" ? "kWh" : "m³" }} Verbruik
+                {{ $unitLabel }} Verbruik
             </span>
             
             <a href="{{ route('dashboard', [
@@ -74,7 +80,7 @@
         </div>
         
         <div class="relative" style="height: 300px;">
-            <canvas id="{{ $type }}Chart{{ $loop->index ?? 0 }}"></canvas>
+            <canvas id="{{ $type }}Chart"></canvas>
         </div>
         
         <!-- <div class="mt-4 flex justify-end">
@@ -120,23 +126,27 @@
                 console.error("Unknown period:", "{{ $period }}");
         }
         
-        const chartCanvas = document.getElementById('{{ $type }}Chart{{ $loop->index ?? 0 }}');
+        const chartCanvas = document.getElementById('{{ $type }}Chart');
         
         if (!chartCanvas) {
-            console.error('Canvas element not found: {{ $type }}Chart{{ $loop->index ?? 0 }}');
+            console.error('Canvas element not found: {{ $type }}Chart');
             return;
         }
         
-        const ctx = chartCanvas.getContext('2d');
-        const chart = new Chart(ctx, {
+        // Get the correct data key based on the type
+        const dataKey = "{{ $dataKey }}";
+        const usageData = chartData[dataKey] || [];
+        
+        // Create chart instance as a variable to access it later for toggles
+        const chart = new Chart(chartCanvas, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '{{ $type === "electricity" ? "kWh" : "m³" }} Verbruik',
-                    data: chartData['{{ $type }}_usage'] || [],
-                    backgroundColor: '{{ $type === "electricity" ? "rgba(59, 130, 246, 0.6)" : "rgba(245, 158, 11, 0.6)" }}',
-                    borderColor: '{{ $type === "electricity" ? "rgb(37, 99, 235)" : "rgb(217, 119, 6)" }}',
+                    label: '{{ $unitLabel }} Verbruik',
+                    data: usageData,
+                    backgroundColor: '{{ $backgroundColor }}',
+                    borderColor: '{{ $borderColor }}',
                     borderWidth: 1
                 }]
             },
@@ -177,9 +187,11 @@
                 if (isVisible) {
                     chart.data.datasets.pop();  // Remove the second dataset
                 } else {
+                    // Use the previous year data if available
+                    const previousYearKey = `${dataKey}_previous_year`;
                     chart.data.datasets.push({
                         label: 'Verbruik Vorig Jaar',
-                        data: chartData['{{ $type }}_usage_previous_year'] || [],
+                        data: chartData[previousYearKey] || [],
                         backgroundColor: '{{ $type === "electricity" ? "rgba(34, 197, 94, 0.6)" : "rgba(234, 88, 12, 0.6)" }}',
                         borderColor: '{{ $type === "electricity" ? "rgb(22, 163, 74)" : "rgb(234, 88, 12)" }}',
                         borderWidth: 1

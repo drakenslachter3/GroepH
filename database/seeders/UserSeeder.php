@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
     {
         User::where('email', 'gebruiker@example.com')->delete();
         User::where('email', 'admin@example.com')->delete();
-        SmartMeter::where('meter_id', 'SM001')->delete();
+        SmartMeter::where('meter_id', '2019-ETI-EMON-V01-105C4E-16405E')->delete();
         SmartMeter::where('meter_id', 'SM002')->delete();
 
         // Create a test user
@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
         ]);
 
         // Create an admin user
-        User::create([
+        $admin = User::create([
             'name' => 'Admin Gebruiker',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
 
         // Create some smart meters
         $meter1 = SmartMeter::create([
-            'meter_id' => 'SM001',
+            'meter_id' => '2019-ETI-EMON-V01-105C4E-16405E',
             'name' => 'smoothie',
             'location' => 'Woonkamer',
             'measures_electricity' => true,
@@ -58,7 +58,7 @@ class UserSeeder extends Seeder
         ]);
 
         // Link a meter to the test user
-        $meter1->account_id = $user->id;
+        $meter1->account_id = $admin->id;
         $meter1->save();
     }
 }
