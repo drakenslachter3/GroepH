@@ -111,9 +111,6 @@ class InfluxDBService
     {
         $start = Carbon::createFromFormat('Y-m-d', $date)->startOfDay()->toIso8601ZuluString();
         $stop = Carbon::createFromFormat('Y-m-d', $date)->endOfDay()->toIso8601ZuluString();
-        echo $date . '<br>';
-        echo $start . '<br>';
-        echo $stop . '<br>';
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -170,9 +167,6 @@ class InfluxDBService
 
         $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->toIso8601ZuluString();
         $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
-        echo $yearMonth . '<br>';
-        echo $startDate . '<br>';
-        echo $endDate . '<br>';
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -226,9 +220,6 @@ class InfluxDBService
     {
         $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01")->startOfDay()->toIso8601ZuluString();
         $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31")->endOfDay()->toIso8601ZuluString();
-        echo $year . '<br>';
-        echo $startDate . '<br>';
-        echo $endDate . '<br>';
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -318,9 +309,6 @@ class InfluxDBService
             default:
                 throw new \InvalidArgumentException("Ongeldige periode: {$period}");
         }
-
-        // Log the time range for debugging
-        Log::debug("Total energy usage time range: {$startDate} to {$now} for period {$period}");
 
         // Get first reading in the period
         $firstQuery = "

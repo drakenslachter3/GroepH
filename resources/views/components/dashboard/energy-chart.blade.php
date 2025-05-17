@@ -115,16 +115,6 @@
     </div>
 </div>
 
-@php
-    $totalUsage = is_array($chartData[$dataKey] ?? null)
-        ? array_sum($chartData[$dataKey])
-        : 0;
-@endphp
-
-<p class="mt-4 text-right text-sm text-gray-700 dark:text-gray-300">
-    Totaal verbruik: <strong>{{ number_format($totalUsage, 3, ',', '.') }} {{ $unitLabel }}</strong>
-</p>
-
 @push('chart-scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
