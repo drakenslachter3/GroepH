@@ -109,8 +109,10 @@ class InfluxDBService
      */
     public function getDailyEnergyUsage(string $meterId, string $date): array
     {
-        $start = Carbon::createFromFormat('Y-m-d', $date, 'Europe/Amsterdam')->startOfDay()->setTimezone('UTC')->toIso8601ZuluString();
-        $stop = Carbon::createFromFormat('Y-m-d', $date, 'Europe/Amsterdam')->addDay()->startOfDay()->setTimezone('UTC')->toIso8601ZuluString();
+        $start = Carbon::createFromFormat('Y-m-d', $date)->startOfDay()->subHours(2)->toIso8601ZuluString();
+        $stop = Carbon::createFromFormat('Y-m-d', $date)->endOfDay()->toIso8601ZuluString();
+        echo $start;
+        echo $stop;
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -167,8 +169,9 @@ class InfluxDBService
         list($year, $month) = explode('-', $yearMonth);
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
 
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01", 'Europe/Amsterdam')->startOfDay()->setTimezone('UTC')->toIso8601ZuluString();
-        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}", 'Europe/Amsterdam')->endOfDay()->setTimezone('UTC')->toIso8601ZuluString();
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->subHours(2)->toIso8601ZuluString();
+        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
+        // echo "Start: {$startDate}, End: {$endDate}";
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -221,8 +224,8 @@ class InfluxDBService
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01", 'Europe/Amsterdam')->startOfDay()->setTimezone('UTC')->toIso8601ZuluString();
-        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31", 'Europe/Amsterdam')->endOfDay()->setTimezone('UTC')->toIso8601ZuluString();
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01")->startOfDay()->subHours(2)->toIso8601ZuluString();;
+        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31")->endOfDay()->subHours(2)->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
