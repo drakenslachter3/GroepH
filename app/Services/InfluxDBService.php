@@ -109,10 +109,8 @@ class InfluxDBService
      */
     public function getDailyEnergyUsage(string $meterId, string $date): array
     {
-        $start = Carbon::createFromFormat('Y-m-d', $date)->startOfDay()->subHours(2)->toIso8601ZuluString();
-        $stop = Carbon::createFromFormat('Y-m-d', $date)->endOfDay()->toIso8601ZuluString();
-        echo $start;
-        echo $stop;
+        $start = Carbon::createFromFormat('Y-m-d', $date, 'UTC')->startOfDay()->toIso8601ZuluString();
+        $stop = Carbon::createFromFormat('Y-m-d', $date, 'UTC')->endOfDay()->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -120,10 +118,11 @@ class InfluxDBService
         |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
         |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed" or r["_field"] == "energy_produced")
         |> filter(fn: (r) => r["_measurement"] == "dsmr")
-        |> aggregateWindow(every: 1h, fn: last, createEmpty: true)
+        |> aggregateWindow(every: 1h, fn: mean, createEmpty: true)
         |> derivative(unit: 1h, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
+        |> timeShift(duration: -1h)
         ';
 
         $result = $this->query($query);
@@ -169,7 +168,7 @@ class InfluxDBService
         list($year, $month) = explode('-', $yearMonth);
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
 
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->subHours(2)->toIso8601ZuluString();
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->toIso8601ZuluString();
         $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
         // echo "Start: {$startDate}, End: {$endDate}";
 
@@ -182,6 +181,7 @@ class InfluxDBService
         |> derivative(unit: 1d, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
+        |> timeShift(duration: -1h)
         ';
 
         $result = $this->query($query);
@@ -224,8 +224,8 @@ class InfluxDBService
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01")->startOfDay()->subHours(2)->toIso8601ZuluString();;
-        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31")->endOfDay()->subHours(2)->toIso8601ZuluString();
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01")->startOfDay()->toIso8601ZuluString();;
+        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31")->endOfDay()->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -236,6 +236,7 @@ class InfluxDBService
         |> derivative(unit: 1mo, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
+        |> timeShift(duration: -1h)
         ';
 
         $result = $this->query($query);
