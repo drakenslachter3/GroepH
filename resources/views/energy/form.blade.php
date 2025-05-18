@@ -79,7 +79,7 @@
                                     Reset
                                 </button>
 
-                                <button type="submit" form="yearlyBudgetForm"
+                                <button type="submit" dusk="save-button" form="yearlyBudgetForm"
                                     class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700">
                                     Opslaan
                                 </button>
@@ -268,7 +268,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            
+
             // Configuration
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
             let activeUtility = 'electricity'; // 'electricity' or 'gas'
@@ -500,7 +500,7 @@
                     // Value display and input field
                     const valueContainer = document.createElement('div');
                     valueContainer.className = 'mt-1 flex flex-col items-center w-full';
-                    
+
                     // Add numeric input field for accessibility
                     const valueInput = document.createElement('input');
                     valueInput.type = 'number';
@@ -512,24 +512,24 @@
                     valueInput.disabled = isLocked;
                     valueInput.setAttribute('aria-label', `${month} ${unit} input`);
                     valueInput.setAttribute('id', `input-${index}`);
-                    
+
                     // Add event listener to update when input changes
                     valueInput.addEventListener('change', function() {
                         const newValue = parseFloat(this.value) || 0;
                         handleSliderChange(index, newValue);
-                        
+
                         // Also update slider position
                         const slider = document.getElementById(`slider-${index}`);
                         if (slider) {
                             slider.value = getSliderAppearanceValue(newValue);
                         }
                     });
-                    
+
                     // Add unit label below input
                     const unitLabel = document.createElement('span');
                     unitLabel.className = 'text-sm dark:text-gray-300 mt-1';
                     unitLabel.textContent = unit;
-                    
+
                     valueContainer.appendChild(valueInput);
                     valueContainer.appendChild(unitLabel);
                     monthDiv.appendChild(valueContainer);
@@ -638,7 +638,7 @@
 
                 // Change progress bar color based on percentage
                 budgetProgressBar.classList.remove('bg-red-500', 'bg-yellow-500', 'bg-amber-500', 'bg-blue-600');
-                
+
                 if (percentage > 95) {
                     budgetProgressBar.classList.add('bg-red-500');
                 } else if (percentage > 80) {
