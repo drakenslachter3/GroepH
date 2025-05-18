@@ -25,6 +25,16 @@
                             name="password"
                             required autocomplete="new-password" />
 
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {{ __('Het wachtwoord moet minstens 8 tekens lang zijn en bestaan uit:') }}
+            </p>
+            <ul class="mt-1 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
+                <li>{{ __('Eén hoofdletter') }}</li>
+                <li>{{ __('Eén kleine letter') }}</li>
+                <li>{{ __('Eén cijfer') }}</li>
+                <li>{{ __('Eén speciaal teken') }}</li>
+            </ul>
+
             <x-etc.input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -44,8 +54,8 @@
         <div class="flex items-center justify-between mt-4 mb-4">
             <x-primary-button>
                 {{ __('Registreren') }}
-            </x-primary-button>    
-            
+            </x-primary-button>
+
             <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
                 {{ __('Bent u al geregistreerd?') }}
             </a>

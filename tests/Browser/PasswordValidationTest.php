@@ -59,7 +59,7 @@ class PasswordValidationTest extends DuskTestCase
                     ->press('@save-button')
                     ->pause(500)
                     ->screenshot('after-creating-user-with-invalid-password')
-                    ->assertSee('Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.');
+                    ->assertSee('Het wachtwoord voldoet niet aan de eisen.');
             }
         });
     }
@@ -107,7 +107,7 @@ class PasswordValidationTest extends DuskTestCase
                 ->press('@save-button')
                 ->pause(500)
                 ->screenshot('after-updating-user-with-invalid-password')
-                ->assertSee('Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.');
+                ->assertSee('Het wachtwoord voldoet niet aan de eisen.');
         });
     }
 
@@ -148,7 +148,7 @@ class PasswordValidationTest extends DuskTestCase
                 ->press('@save-button')
                 ->pause(500)
                 ->screenshot('after-updating-profile-with-invalid-password')
-                ->assertSee('Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.');
+                ->assertSee('Het wachtwoord voldoet niet aan de eisen.');
 
             $browser->visit('/profile')
                 ->waitFor('#update_password_current_password')
