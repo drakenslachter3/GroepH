@@ -2,6 +2,8 @@
 
 @php
     use Carbon\Carbon;
+
+    $currentDate = Carbon::parse($date);
     
     $formattedDate = $date;
     if ($period == 'month' && $date) {
@@ -11,14 +13,7 @@
     } else {
         $daysInMonth = 30;
     }
-    
-    $dataKey = $type === 'electricity' ? 'energy_consumed' : 'gas_delivered';
-    $unitLabel = $type === 'electricity' ? 'kWh' : 'm³';
-    $backgroundColor = $type === 'electricity' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)';
-    $borderColor = $type === 'electricity' ? 'rgb(37, 99, 235)' : 'rgb(217, 119, 6)';
-    
-    $currentDate = Carbon::parse($date);
-    
+
     $previousDate = match($period) {
         'day' => $currentDate->copy()->subDay(),
         'month' => $currentDate->copy()->subMonthNoOverflow(),
@@ -32,12 +27,18 @@
         'year' => $currentDate->copy()->addYear(),
         default => $currentDate
     };
+    
+    $dataKey = $type === 'electricity' ? 'energy_consumed' : 'gas_delivered';
+    $previousYearKey = $dataKey . '_previous_year';
+    $unitLabel = $type === 'electricity' ? 'kWh' : 'm³';
+    $backgroundColor = $type === 'electricity' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)';
+    $borderColor = $type === 'electricity' ? 'rgb(37, 99, 235)' : 'rgb(217, 119, 6)';
 @endphp
 
-<div class="p-6">
+<section class="p-6" aria-labelledby="chart-widget-title">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <div class="flex flex-col mb-2 sm:mb-0">
-            <h3 class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
+            <h3 tabindex="0" id="chart-widget-title" class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
             
             <div class="mt-1 text-sm text-sky-600 dark:text-sky-300 font-medium">
                 @switch($period)
@@ -109,10 +110,123 @@
             {{ $buttonLabel }}
         </button>
     </div>
-</div>
+
+    {{-- Accessible data table for the chart to support screen readers --}}
+    <div class="focus:not-sr-only focus:absolute focus:z-10 focus:bg-white focus:dark:bg-gray-800 focus:p-4 focus:border focus:border-gray-300 focus:dark:border-gray-600 focus:shadow-lg focus:rounded-md focus:w-full focus:max-w-3xl">
+        <div id="{{ $type }}TableCaption" class="text-lg font-semibold mb-2 dark:text-white" tabindex="0">
+            {{ $title }} - Overzicht verbruik
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse table-auto">
+                <thead>
+                    <tr>
+                        <th scope="col" class="sr-only">Tijdsinterval</th>
+                        <th scope="col" class="sr-only">Huidig verbruik</th>
+                        @if(!empty($chartData[$dataKey . '_previous_year']))
+                        <th scope="col" class="sr-only">Vorig jaar verbruik</th>
+                        <th scope="col" class="sr-only">Verschil</th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $totalCurrent = 0;
+                        $totalPrevious = 0;
+                        $currentData = $chartData[$dataKey] ?? [];
+                        $previousData = $chartData[$previousYearKey] ?? [];
+                        $hasPreviousYearData = !empty($previousData);
+                        $currentDate = Carbon::parse($date);
+                        $unit = $type === 'electricity' ? 'kWh' : 'm³';
+                    @endphp
+
+                    @foreach($currentData as $index => $value)
+                        @php
+                            $totalCurrent += $value;
+                            $prevValue = $previousData[$index] ?? null;
+                            if ($prevValue !== null) {
+                                $totalPrevious += $prevValue;
+                            }
+                            $diff = $prevValue !== null ? $value - $prevValue : null;
+                            $percentChange = $prevValue && $prevValue != 0 ? (($value - $prevValue) / $prevValue) * 100 : null;
+                            
+                            // Format descriptive label based on period
+                            switch($period) {
+                                case 'day':
+                                    $startHour = str_pad($index, 2, '0', STR_PAD_LEFT);
+                                    $endHour = str_pad(($index + 1) % 24, 2, '0', STR_PAD_LEFT);
+                                    $dayName = $currentDate->translatedFormat('l j F Y');
+                                    $dateFormat = "Op {$dayName} van {$startHour}:00 tot {$endHour}:00 was je verbruik";
+                                    break;
+                                case 'month':
+                                    $dayDate = $currentDate->copy()->setDay($index + 1);
+                                    $dayName = $dayDate->translatedFormat('l j F Y');
+                                    $dateFormat = "Op {$dayName} was je verbruik";
+                                    break;
+                                case 'year':
+                                    $months = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", 
+                                            "Juli", "Augustus", "September", "Oktober", "November", "December"];
+                                    $monthName = $months[$index] ?? ($index + 1);
+                                    $yearNumber = $currentDate->format('Y');
+                                    $dateFormat = "In {$monthName} {$yearNumber} was je verbruik";
+                                    break;
+                                default:
+                                    $dateFormat = "Verbruik voor interval {$index}";
+                            }
+                        @endphp
+                        <tr>
+                            <td scope="row" class="border dark:border-gray-700" tabindex="0">
+                                {{ $dateFormat }} {{ number_format($value, 2, ',', '.') }} {{ $unit }}
+                                @if($hasPreviousYearData && $prevValue !== null)
+                                    . Vorig jaar: {{ number_format($prevValue, 2, ',', '.') }} {{ $unit }}
+                                    @if($diff !== null)
+                                        . Verschil: {{ $diff < 0 ? 'Je bespaarde ' : 'Je verbruikte ' }}{{ number_format(abs($diff), 2, ',', '.') }} {{ $unit }} 
+                                        ({{ $percentChange < 0 ? '-' : '+' }}{{ number_format(abs($percentChange), 1, ',', '.') }}%)
+                                    @endif
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td scope="row" class="border font-bold dark:border-gray-700" tabindex="0">
+                            Totaal verbruik: {{ number_format($totalCurrent, 2, ',', '.') }} {{ $unit }}
+                            @if($hasPreviousYearData)
+                                @php
+                                    $totalDiff = $totalCurrent - $totalPrevious;
+                                    $totalPercentChange = $totalPrevious != 0 ? (($totalCurrent - $totalPrevious) / $totalPrevious) * 100 : null;
+                                @endphp
+                                . Vorig jaar totaal: {{ number_format($totalPrevious, 2, ',', '.') }} {{ $unit }}
+                                . Verschil: {{ $totalDiff < 0 ? 'Je bespaarde ' : 'Je verbruikte ' }}{{ number_format(abs($totalDiff), 2, ',', '.') }} {{ $unit }}
+                                ({{ $totalPercentChange < 0 ? '-' : '+' }}{{ number_format(abs($totalPercentChange), 1, ',', '.') }}%)
+                            @endif
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <button onclick="document.getElementById('{{ $type }}TableCaption')?.focus();">
+            Ga naar de bovenkant van de {{ $title }} tabel
+        </button>
+    </div>
+</section>
 
 @push('chart-scripts')
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add back to chart functionality
+        const backButton = document.getElementById('back-to-chart-{{ $type }}');
+        if (backButton) {
+            backButton.addEventListener('click', function() {
+                const header = document.getElementById('{{ $type }}TableHeader');
+                if (header) {
+                    header.setAttribute('tabindex', '-1'); // Make sure it can be focused
+                    header.focus();
+                }
+            });
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof Chart === 'undefined') {
             console.error('Chart.js is not loaded!');

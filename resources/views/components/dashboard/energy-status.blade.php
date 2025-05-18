@@ -1,31 +1,38 @@
 @props(['type', 'usage', 'target', 'percentage', 'status', 'unit', 'date' => null, 'period' => null, 'liveData' => null])
 
 @php
-// Use live data if available, otherwise fall back to provided data
-$actualUsage = $liveData['usage'] ?? $usage ?? 0;
-$actualTarget = $liveData['target'] ?? $target ?? 0;
-$actualPercentage = $liveData['percentage'] ?? $percentage ?? 0;
-$actualStatus = $liveData['status'] ?? $status ?? 'goed';
-$actualCost = $liveData['cost'] ?? 0;
+    // Use live data if available, otherwise fall back to provided data
+    $actualUsage = $liveData['usage'] ?? $usage ?? 0;
+    $actualTarget = $liveData['target'] ?? $target ?? 0;
+    $actualPercentage = $liveData['percentage'] ?? $percentage ?? 0;
+    $actualStatus = $liveData['status'] ?? $status ?? 'goed';
+    $actualCost = $liveData['cost'] ?? 0;
 
-// Enhanced status calculation with better thresholds
-if ($actualPercentage > 100) {
-    $actualStatus = 'kritiek';
-} elseif ($actualPercentage > 85) {
-    $actualStatus = 'waarschuwing';
-} else {
-    $actualStatus = 'goed';
-}
+    // Enhanced status calculation with better thresholds
+    if ($actualPercentage > 100) {
+        $actualStatus = 'kritiek';
+    } elseif ($actualPercentage > 85) {
+        $actualStatus = 'waarschuwing';
+    } else {
+        $actualStatus = 'goed';
+    }
+    $difference = $actualUsage - $actualTarget;
+        $differenceText = $difference > 0 
+            ? 'boven target met ' . number_format($difference, 2) . " $unit" 
+            : ($difference < 0 
+                ? 'onder target met ' . number_format(abs($difference), 2) . " $unit" 
+                : 'precies op target');
 @endphp
 
-<section class="p-2">
+<section class="p-2" aria-labelledby="usage-widget-title">
     <div class="flex justify-between items-start mb-4">
         <div>
-            <h3 class="text-lg font-semibold dark:text-white">{{ $type }} Status</h3>
+            <!-- First tab stop: Title and date -->
+            <h3 id="usage-widget-title" class="text-lg font-semibold dark:text-white" tabindex="0">{{ $type }} Status</h3>
             
             <!-- Datum weergave -->
             @if(isset($date) && isset($period))
-                <div class="mt-1 inline-block bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300">
+                <div class="mt-1 inline-block bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300" tabindex="0">
                     @php
                         $carbonDate = \Carbon\Carbon::parse($date);
                         $formattedDate = match($period) {
@@ -35,42 +42,74 @@ if ($actualPercentage > 100) {
                             default => $carbonDate->translatedFormat('d F Y'),
                         };
                     @endphp
-                    <div>{{ $formattedDate }}</div>
+                    <span id="widget-date">{{ $formattedDate }}</span>
                 </div>
             @endif
         </div>
+
+        <!-- Add a button to skip to the next or previous widget for blind users -->
+        <div class="mt-6">
+            <button id="skip-button-prev" 
+                    tabindex="0" 
+                    class="sr-only focus:not-sr-only focus:p-2 focus:border focus:border-blue-500 focus:rounded-md focus:block"
+                    onclick="skipToPreviousWidget()"
+                    onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); skipToPreviousWidget(); }">
+                Ga naar vorige widget
+            </button>
+        </div>
+        <div class="mt-6">
+            <button id="skip-button-next" 
+                    tabindex="0" 
+                    class="sr-only focus:not-sr-only focus:p-2 focus:border focus:border-blue-500 focus:rounded-md focus:block"
+                    onclick="skipToNextWidget()"
+                    onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); skipToNextWidget(); }">
+                Ga naar volgende widget
+            </button>
+        </div>
         
+        
+        <!-- Info tooltip -->
         <div class="tooltip relative">
-            <button aria-label="Meer informatie over {{ strtolower($type) }} status" class="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full">
+            <button id="info-tooltip-button" 
+                    tabindex="0" 
+                    aria-label="Meer informatie over {{ strtolower($type) }} status" 
+                    aria-expanded="false"
+                    aria-controls="tooltip-content"
+                    class="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full p-1"
+                    onclick="toggleTooltip()"
+                    onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleTooltip(); }">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600 dark:text-gray-300 dark:hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </button>
-            <span class="tooltiptext invisible absolute z-10 px-3 py-2 text-sm bg-gray-800 text-white rounded shadow-lg -right-4 -bottom-20 w-48" role="tooltip">
+            <div id="tooltip-content" role="tooltip" class="tooltiptext invisible absolute z-10 px-3 py-2 text-sm bg-gray-800 text-white rounded shadow-lg -right-4 -bottom-20 w-48" aria-hidden="true">
                 Dit toont uw {{ strtolower($type) }}verbruik ten opzichte van uw budget. Een lager percentage is beter voor het milieu.
-            </span>
+            </div>
         </div>
     </div>
 
-    <div tabindex="0" class="space-y-2">
-        <p class="sr-only">{{ $type }} samenvatting: {{ $status === 'goed' ? 'Goed' : ($status === 'waarschuwing' ? 'Waarschuwing' : 'Alert') }}. {{ number_format($percentage, 1) }}% van uw target is verbruikt.</p>
+    <!-- Third tab stop: Complete summary that can be focused - IMPROVED READABLE FORMAT -->
+    <div id="usage-summary" tabindex="0" class="sr-only focus:not-sr-only focus:p-2 focus:border focus:border-blue-500 focus:rounded-md">
+        Uw {{ strtolower($type) }}verbruik is <strong>{{ $actualStatus }}</strong>. U heeft {{ number_format($actualUsage, 2) }} {{ $unit }} verbruikt, met een target van {{ number_format($actualTarget, 2) }} {{ $unit }}. 
+        Dat is {{ $differenceText }} ({{ number_format($actualPercentage, 1) }}% van target).
+    </div>
+
+    <!-- Individual metrics, each can be focused with IMPROVED READABILITY -->
+    <div class="space-y-2">
+        <!-- Usage value -->
         <div class="flex justify-between items-center">
-            <span class="text-gray-700 dark:text-gray-300">Verbruik:</span>
-            <span class="font-bold dark:text-white">{{ number_format($usage, 2) }} {{ $unit }}</span>
+            <span tabindex="0" class="text-gray-700 dark:text-gray-300">Verbruik:</span>
+            <span tabindex="0" class="font-bold dark:text-white">{{ number_format($actualUsage, 2) }} {{ $unit }}</span>
         </div>
+        
+        <!-- Target value -->
         <div class="flex justify-between items-center">
-            <span class="text-gray-700 dark:text-gray-300">Target:</span>
-            <span class="font-bold dark:text-white">{{ number_format($target, 2) }} {{ $unit }}</span>
+            <span tabindex="0" class="text-gray-700 dark:text-gray-300">Target:</span>
+            <span tabindex="0" class="font-bold dark:text-white">{{ number_format($actualTarget, 2) }} {{ $unit }}</span>
         </div>
-        @if($actualCost > 0)
-            <div class="flex justify-between items-center">
-                <span class="text-gray-700 dark:text-gray-300">Kosten:</span>
-                <span class="font-bold dark:text-white">€{{ number_format($actualCost, 2) }}</span>
-            </div>
-        @endif
     </div>
    
-    <!-- Progressbar met dynamische zwarte streep -->
+    <!-- Progress bar section -->
     <div class="mt-4">
         @php
             if ($actualPercentage <= 100) {
@@ -90,10 +129,18 @@ if ($actualPercentage > 100) {
                 $rightLabel = number_format($actualPercentage, 1) . '%'; // Label rechts
             }
         @endphp
-        <div class="relative" aria-hidden="true">
 
-            <!-- Labels boven bar -->
-            <div class="flex justify-between mt-1 relative">
+        <!-- Seventh tab stop: Focused progress bar with full description -->
+        <div tabindex="0" 
+             aria-label="Voortgangsbalk voor {{ strtolower($type) }} verbruik"
+             aria-valuemin="0" 
+             aria-valuemax="100" 
+             aria-valuenow="{{ min($actualPercentage, 100) }}"
+             aria-valuetext="@if($actualPercentage <= 100) U heeft {{ number_format($actualPercentage, 1) }}% van uw target verbruikt. U zit {{ number_format(100 - $actualPercentage, 1) }}% onder uw target. @else U heeft {{ number_format($actualPercentage, 1) }}% van uw target verbruikt. U zit {{ number_format($actualPercentage - 100, 1) }}% boven uw target. @endif"
+             class="relative mt-6">
+            
+            <!-- Progress bar visualization (hidden from screen readers) -->
+            <div class="flex justify-between mt-1 relative" aria-hidden="true">
                 <span class="text-xs text-gray-600 dark:text-gray-400">0%</span>
                 @if($actualPercentage > 100)
                     <span class="text-xs font-medium absolute 
@@ -112,7 +159,7 @@ if ($actualPercentage > 100) {
                 @endif
             </div>
             
-            <!-- Progress bar -->
+            <!-- Visual Progress bar -->
             <div class="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden relative">
                 <!-- Groene deel (loopt tot aan zwarte streep) -->
                 <div 
@@ -146,33 +193,32 @@ if ($actualPercentage > 100) {
                 @endif
             </div>
 
-            <!-- Labels onder bar -->
-            <div class="flex justify-between mt-1 relative">
+            <!-- IMPROVED: Clear status message with target comparison -->
+            <div class="flex justify-between mt-1 relative" aria-hidden="true">
                 <span class="text-xs text-gray-600 dark:text-gray-400 absolute transform -translate-x-1/2"
                     style="left: {{ $dividerPosition }}%;">{{ $streepLabel }}</span>
             </div>
         </div>
         
-        <!-- Status bericht -->
-        <div tabindex="0" class="mt-6 text-xs">
+        <!-- Eighth tab stop: Status message with IMPROVED target comparison -->
+        <div tabindex="0" class="mt-4 text-xs">
             @if($actualPercentage < 80)
-                <span class="text-green-600 dark:text-green-400">Uitstekend! Je verbruik ligt ruim onder je target.</span>
+                <span class="text-green-600 dark:text-green-400">Uitstekend! Je verbruik ligt {{ number_format(100 - $actualPercentage, 1) }}% onder je target.</span>
             @elseif($actualPercentage < 95)
-                <span class="text-green-600 dark:text-green-400">Goed! Je blijft onder je target.</span>
+                <span class="text-green-600 dark:text-green-400">Goed! Je blijft {{ number_format(100 - $actualPercentage, 1) }}% onder je target.</span>
             @elseif($actualPercentage < 100)
-                <span class="text-yellow-600 dark:text-yellow-400">Let op: Je nadert je target.</span>
+                <span class="text-yellow-600 dark:text-yellow-400">Let op: Je nadert je target. Nog {{ number_format(100 - $actualPercentage, 1) }}% te gaan.</span>
             @elseif($actualPercentage < 110)
-                <span class="text-orange-600 dark:text-orange-400">Waarschuwing: Je overschrijdt je target.</span>
+                <span class="text-orange-600 dark:text-orange-400">Waarschuwing: Je overschrijdt je target met {{ number_format($actualPercentage - 100, 1) }}%.</span>
             @else
-                <span class="text-red-600 dark:text-red-400">Alert: Je overschrijdt je target aanzienlijk!</span>
+                <span class="text-red-600 dark:text-red-400">Alert: Je overschrijdt je target aanzienlijk met {{ number_format($actualPercentage - 100, 1) }}%!</span>
             @endif
         </div>
-      
     </div>
    
-    <!-- Historische vergelijking -->
+    <!-- Historical comparison section -->
     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <h4 class="font-medium text-gray-700 mb-2 dark:text-gray-300">Vergelijking met vorig jaar</h4>
+        <h4 id="comparison-heading" class="font-medium text-gray-700 mb-2 dark:text-gray-300" tabindex="0">Vergelijking met vorig jaar</h4>
         <div class="flex items-center justify-between">
             <div class="flex items-center">
                 @php
@@ -184,17 +230,131 @@ if ($actualPercentage > 100) {
                     $previousYearValue = $actualUsage * (1 + $reductionPercent/100);
                 @endphp
                 
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $color }} mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    @if($reductionPercent > 0)
-                        <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
-                    @else
-                        <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
-                    @endif
-                </svg>
-                <span class="{{ $color }} text-xs">{{ abs($reductionPercent) }}% {{ $reductionPercent > 0 ? 'vermindering' : 'toename' }} vergeleken met vorig jaar</span>
+                <!-- Ninth tab stop: Comparison text -->
+                <div class="flex items-center" tabindex="0" aria-labelledby="comparison-heading">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $color }} mr-1" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        @if($reductionPercent > 0)
+                            <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+                        @else
+                            <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                        @endif
+                    </svg>
+                    <span class="{{ $color }} text-xs">{{ abs($reductionPercent) }}% {{ $reductionPercent > 0 ? 'vermindering' : 'toename' }} vergeleken met vorig jaar</span>
+                </div>
             </div>
-            <span class="text-xs text-gray-500 dark:text-gray-400">{{ number_format($previousYearValue, 2) }} {{ $unit }}</span>
+            
+            <!-- Tenth tab stop: Previous year value -->
+            <span class="text-xs text-gray-500 dark:text-gray-400" tabindex="0">{{ number_format($previousYearValue, 2) }} {{ $unit }}</span>
         </div>
     </div>
 </section>
 
+<script>
+// Add JavaScript functionality for keyboard interaction
+function toggleTooltip() {
+    const tooltip = document.getElementById('tooltip-content');
+    const button = document.getElementById('info-tooltip-button');
+    
+    if (tooltip.classList.contains('invisible')) {
+        // Show tooltip
+        tooltip.classList.remove('invisible');
+        tooltip.setAttribute('aria-hidden', 'false');
+        button.setAttribute('aria-expanded', 'true');
+        
+        // Announce to screen readers
+        const announcement = document.createElement('div');
+        announcement.setAttribute('role', 'status');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.textContent = tooltip.textContent;
+        document.body.appendChild(announcement);
+        setTimeout(() => document.body.removeChild(announcement), 3000);
+    } else {
+        // Hide tooltip
+        tooltip.classList.add('invisible');
+        tooltip.setAttribute('aria-hidden', 'true');
+        button.setAttribute('aria-expanded', 'false');
+    }
+    
+    // Close tooltip when focus is lost
+    document.addEventListener('focusin', function(e) {
+        if (e.target !== button && !tooltip.contains(e.target)) {
+            tooltip.classList.add('invisible');
+            tooltip.setAttribute('aria-hidden', 'true');
+            button.setAttribute('aria-expanded', 'false');
+        }
+    }, { once: true });
+}
+
+// Logic to skip to other widget
+function skipToNextWidget() {
+    const widgets = document.querySelectorAll('section[aria-labelledby]');
+    let currentWidgetIndex = -1;
+    
+    widgets.forEach((widget, index) => {
+        if (widget.contains(document.activeElement)) {
+            currentWidgetIndex = index;
+        }
+    });
+    
+    if (currentWidgetIndex >= 0 && currentWidgetIndex < widgets.length - 1) {
+        const nextWidget = widgets[currentWidgetIndex + 1];
+        const nextHeading = nextWidget.querySelector('[id]');
+        if (nextHeading) {
+            nextHeading.focus();
+        }
+    }
+}
+
+function skipToPreviousWidget() {
+    const widgets = document.querySelectorAll('section[aria-labelledby]');
+    let currentWidgetIndex = -1;
+
+    widgets.forEach((widget, index) => {
+        if (widget.contains(document.activeElement)) {
+            currentWidgetIndex = index;
+        }
+    });
+
+    if (currentWidgetIndex > 0) {
+        const previousWidget = widgets[currentWidgetIndex - 1];
+        const previousHeading = previousWidget.querySelector('[id]');
+        if (previousHeading) {
+            previousHeading.focus();
+        }
+    }
+}
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') skipToNextWidget();
+    if (e.key === 'ArrowLeft') skipToPreviousWidget();
+  });
+
+// Add keyboard listener for Escape key to close tooltips
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const tooltip = document.getElementById('tooltip-content');
+        const button = document.getElementById('info-tooltip-button');
+        
+        if (!tooltip.classList.contains('invisible')) {
+            tooltip.classList.add('invisible');
+            tooltip.setAttribute('aria-hidden', 'true');
+            button.setAttribute('aria-expanded', 'false');
+            button.focus();
+        }
+    }
+});
+
+// Make Enter key work on the progress bar to announce the status
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.getAttribute('aria-valuetext')) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'assertive');
+            announcement.textContent = activeElement.getAttribute('aria-valuetext');
+            document.body.appendChild(announcement);
+            setTimeout(() => document.body.removeChild(announcement), 3000);
+        }
+    }
+});
+</script>

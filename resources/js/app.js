@@ -1,6 +1,7 @@
-import './bootstrap';
+import "./bootstrap";
 
-import Alpine from 'alpinejs';
+import Alpine from "alpinejs";
+import "./scroll-focus-preservation";
 
 window.Alpine = Alpine;
 

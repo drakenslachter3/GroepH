@@ -11,119 +11,123 @@ $exceedingPercentage = $exceedingPercentage ?? round(abs(($predictedTotal / $yea
 $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarget);
 @endphp
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
-    <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
-    <h3 class="text-lg font-semibold mb-4 dark:text-white">
-    {{ $type === 'electricity' ? 'Elektriciteit' : 'Gas' }} Voorspelling 
-    <span class="text-sm bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-100 text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-800 px-2 py-1 rounded ml-2 dark:bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-900/30 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-300">
-        {{ ucfirst($period) }}
-    </span>
-    
-    @if(isset($currentMonthName) && $period === 'month')
-    <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded ml-2 dark:bg-gray-700 dark:text-gray-200">
-        {{ $currentMonthName }}
-    </span>
-    @endif
-</h3>
-        
-<div class="mb-4">
-    <div class="flex justify-between items-center">
-        <div class="flex items-center">
-            <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
-            <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
-                <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
-                     style="width: {{ $confidence }}%"></div>
-            </div>
-            <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
-        </div>
+<section aria-labelledby="prediction-chart-title">
+    <div>
+        <div class="p-2 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
+            <h3 tabindex="0" id="prediction-chart-title" class="text-lg font-semibold mb-4 dark:text-white">
+                {{ $type === 'electricity' ? 'Elektriciteit' : 'Gas' }} Voorspelling 
+                <span class="text-sm bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-100 text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-800 px-2 py-1 rounded ml-2 dark:bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-900/30 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-300">
+                    {{ ucfirst($period) }}
+                </span>
                 
-        <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
-            @if($period == 'year')
-                Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
-            @else
-                {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
-            @endif
+                @if(isset($currentMonthName) && $period === 'month')
+                <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded ml-2 dark:bg-gray-700 dark:text-gray-200">
+                    {{ $currentMonthName }}
+                </span>
+                @endif
+            </h3>
         </div>
     </div>
-        <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
-    @if($period == 'month' && isset($monthlyBudgetValue))
-        <span>Maandbudget: {{ number_format($monthlyBudgetValue, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-        <span>Dagelijks budget: {{ number_format($monthlyBudgetValue / 30, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
-    @else
-        <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-        <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-    @endif
-</div>    
-    <!-- Nieuwe verbruiksdetails toevoegen -->
-    
-</div>
-        
-        <!-- Prediction Chart Canvas -->
-        <div class="relative" style="height: 350px;">
-            <canvas id="predictionChart{{ $type }}{{ $period }}"></canvas>
+            
+    <div class="mb-4">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
+                <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
+                    <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
+                        style="width: {{ $confidence }}%"></div>
+                </div>
+                <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
+            </div>
+                    
+            <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
+                @if($period == 'year')
+                    Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
+                @else
+                    {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
+                @endif
+            </div>
         </div>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
+        @if($period == 'month' && isset($monthlyBudgetValue))
+            <span>Maandbudget: {{ number_format($monthlyBudgetValue, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+            <span>Dagelijks budget: {{ number_format($monthlyBudgetValue / 30, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
+        @else
+            <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+            <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+        @endif
+    </div>    
+        <!-- Nieuwe verbruiksdetails toevoegen -->
         
-        <!-- Predictions Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <!-- Expected Scenario Card -->
-            <div class="bg-gray-50 p-4 rounded-lg dark:bg-gray-700">
-                <h4 class="font-medium text-gray-700 mb-2 dark:text-white">Verwachte uitkomst</h4>
-                <p class="text-2xl font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
-                    {{ number_format($currentData['expected'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
-                </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    @if($isExceedingBudget)
-                        Overschrijding budget: {{ number_format($exceedingPercentage, 1) }}%
+    </div>
+            
+            <!-- Prediction Chart Canvas -->
+            <div class="relative" style="height: 350px;">
+                <canvas id="predictionChart{{ $type }}{{ $period }}"></canvas>
+            </div>
+            
+            <!-- Predictions Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <!-- Expected Scenario Card -->
+                <div class="bg-gray-50 p-4 rounded-lg dark:bg-gray-700">
+                    <h4 class="font-medium text-gray-700 mb-2 dark:text-white">Verwachte uitkomst</h4>
+                    <p class="text-2xl font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
+                        {{ number_format($currentData['expected'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
+                    </p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        @if($isExceedingBudget)
+                            Overschrijding budget: {{ number_format($exceedingPercentage, 1) }}%
+                        @else
+                            Onder budget: {{ number_format($exceedingPercentage, 1) }}%
+                        @endif
+                    </p>
+                </div>
+                
+                <!-- Best Case Card -->
+                <div class="bg-green-50 p-4 rounded-lg dark:bg-green-900/30">
+                    <h4 class="font-medium text-green-700 mb-2 dark:text-green-400">Best case scenario</h4>
+                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {{ number_format($currentData['best_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
+                    </p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
+                        {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
+                    </p>
+                </div>
+                
+                <!-- Worst Case Card -->
+                <div class="bg-red-50 p-4 rounded-lg dark:bg-red-900/30">
+                    <h4 class="font-medium text-red-700 mb-2 dark:text-red-400">Worst case scenario</h4>
+                    <p class="text-2xl font-bold text-red-600 dark:text-red-400">
+                        {{ number_format($currentData['worst_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
+                    </p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
+                        {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Recommendations Based on Prediction -->
+            <div class="mt-6 p-4 bg-{{ $isExceedingBudget ? 'red' : 'green' }}-50 rounded-lg dark:bg-{{ $isExceedingBudget ? 'red' : 'green' }}-900/30">
+                <h4 class="font-medium text-{{ $isExceedingBudget ? 'red' : 'green' }}-700 dark:text-{{ $isExceedingBudget ? 'red' : 'green' }}-400 mb-2">
+                    {{ $isExceedingBudget ? 'Actie nodig' : 'Goed op weg' }}
+                </h4>
+                <p class="text-gray-700 dark:text-gray-300">
+                    @if($exceedingPercentage > 30 && $isExceedingBudget)
+                        U zit momenteel significant boven uw jaarbudget. Overweeg maatregelen om uw {{ $type === 'electricity' ? 'elektriciteits' : 'gas' }}verbruik te verminderen.
+                    @elseif($isExceedingBudget)
+                        U zit momenteel iets boven uw jaarbudget. Let op uw verbruik om binnen het budget te blijven.
+                    @elseif($exceedingPercentage < 10)
+                        U zit goed op schema om binnen uw jaarbudget te blijven. Blijf uw verbruik in de gaten houden.
                     @else
-                        Onder budget: {{ number_format($exceedingPercentage, 1) }}%
+                        U zit goed op schema en gebruikt minder dan verwacht. Ga zo door!
                     @endif
                 </p>
             </div>
-            
-            <!-- Best Case Card -->
-            <div class="bg-green-50 p-4 rounded-lg dark:bg-green-900/30">
-                <h4 class="font-medium text-green-700 mb-2 dark:text-green-400">Best case scenario</h4>
-                <p class="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {{ number_format($currentData['best_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
-                </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                    {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
-                </p>
-            </div>
-            
-            <!-- Worst Case Card -->
-            <div class="bg-red-50 p-4 rounded-lg dark:bg-red-900/30">
-                <h4 class="font-medium text-red-700 mb-2 dark:text-red-400">Worst case scenario</h4>
-                <p class="text-2xl font-bold text-red-600 dark:text-red-400">
-                    {{ number_format($currentData['worst_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
-                </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                    {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
-                </p>
-            </div>
-        </div>
-        
-        <!-- Recommendations Based on Prediction -->
-        <div class="mt-6 p-4 bg-{{ $isExceedingBudget ? 'red' : 'green' }}-50 rounded-lg dark:bg-{{ $isExceedingBudget ? 'red' : 'green' }}-900/30">
-            <h4 class="font-medium text-{{ $isExceedingBudget ? 'red' : 'green' }}-700 dark:text-{{ $isExceedingBudget ? 'red' : 'green' }}-400 mb-2">
-                {{ $isExceedingBudget ? 'Actie nodig' : 'Goed op weg' }}
-            </h4>
-            <p class="text-gray-700 dark:text-gray-300">
-                @if($exceedingPercentage > 30 && $isExceedingBudget)
-                    U zit momenteel significant boven uw jaarbudget. Overweeg maatregelen om uw {{ $type === 'electricity' ? 'elektriciteits' : 'gas' }}verbruik te verminderen.
-                @elseif($isExceedingBudget)
-                    U zit momenteel iets boven uw jaarbudget. Let op uw verbruik om binnen het budget te blijven.
-                @elseif($exceedingPercentage < 10)
-                    U zit goed op schema om binnen uw jaarbudget te blijven. Blijf uw verbruik in de gaten houden.
-                @else
-                    U zit goed op schema en gebruikt minder dan verwacht. Ga zo door!
-                @endif
-            </p>
         </div>
     </div>
-</div>
+</section>
 
 @push('prediction-chart-scripts')
 <script>

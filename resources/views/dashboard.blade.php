@@ -250,7 +250,8 @@
                             'energy-chart-electricity', 'energy-chart-gas' => 'large',
                             'trend-analysis' => 'full',
                             'energy-suggestions' => 'large',
-                            'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
+                            'energy-prediction-chart-electricity' => 'full',
+                            'energy-prediction-chart-gas' => 'full',
                             'switch-meter' => 'large',
                             default => 'full',
                         };
@@ -264,7 +265,7 @@
                     @endphp
 
                     <div class="p-2 {{ $widthClasses }}">
-                        <div tabindex="0" class="h-full p-4 bg-white shadow-md rounded-lg dark:bg-gray-800 dark:text-white">
+                        <div class="h-full p-4 bg-white shadow-md rounded-lg dark:bg-gray-800 dark:text-white">
                             @switch($item)
                                 @case('usage-prediction')
                                     <x-dashboard.usage-prediction :electricityData="[
@@ -319,9 +320,9 @@
                                 @break
 
                                 @case('energy-prediction-chart-gas')
-                                    <x-dashboard.energy-prediction-chart :currentData="$predictionData['gas'] ?? []" :budgetData="$budgetData['gas'] ?? []" type="gas"
-                                        :period="$period" :percentage="$predictionPercentage['gas'] ?? 0" :confidence="$predictionConfidence['gas'] ?? 75" :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0"
-                                        :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0" />
+                                    <x-dashboard.energy-prediction-chart :currentData="$predictionData['gas'] ?? []" :budgetData="$budgetData['gas'] ?? []" 
+                                        type="gas" :period="$period" :percentage="$predictionPercentage['gas'] ?? 0" :confidence="$predictionConfidence['gas'] ?? 75" 
+                                        :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0" :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0" />
                                 @break
 
                                 @case('switch-meter')

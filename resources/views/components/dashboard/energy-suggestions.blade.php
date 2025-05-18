@@ -1,8 +1,8 @@
 @props(['usagePattern', 'housingType', 'season'])
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
+<section aria-labelledby="suggestion-widget-title">
     <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
-        <h3 class="text-lg font-semibold mb-4">Gepersonaliseerde Energiebesparingstips</h3>
+        <h3 tabindex="0" id="suggestion-widget-title" class="text-lg font-semibold mb-4">Gepersonaliseerde Energiebesparingstips</h3>
         
         <div class="space-y-4">
             <!-- Elektriciteit tips -->
@@ -67,4 +67,4 @@
             </div>
         </div>
     </div>
-</div>
+</section>
