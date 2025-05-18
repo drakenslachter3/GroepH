@@ -3,24 +3,20 @@
 @php
     use Carbon\Carbon;
     
-    // Handle date formatting properly based on period
     $formattedDate = $date;
     if ($period == 'month' && $date) {
-        // For month view, ensure we have the correct format for calculating days in month
         $dateObj = Carbon::parse($date);
         $formattedDate = $dateObj->format('Y-m');
         $daysInMonth = Carbon::createFromFormat('Y-m', $formattedDate)->daysInMonth;
     } else {
-        $daysInMonth = 30; // Default fallback
+        $daysInMonth = 30;
     }
     
-    // Define the data key mapping based on the type
     $dataKey = $type === 'electricity' ? 'energy_consumed' : 'gas_delivered';
     $unitLabel = $type === 'electricity' ? 'kWh' : 'm³';
     $backgroundColor = $type === 'electricity' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)';
     $borderColor = $type === 'electricity' ? 'rgb(37, 99, 235)' : 'rgb(217, 119, 6)';
     
-    // Parse the current date for navigation
     $currentDate = Carbon::parse($date);
     
     $previousDate = match($period) {

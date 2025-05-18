@@ -82,8 +82,7 @@
                                         <option value="energy-chart-gas">Gas Grafiek</option>
                                         <option value="trend-analysis">Trend Analyse</option>
                                         <option value="energy-suggestions">Energiebesparingstips</option>
-                                        <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling
-                                        </option>
+                                        <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling</option>
                                         <option value="energy-prediction-chart-gas">Gas Voorspelling</option>
                                         <option value="budget-alert">Budget Waarschuwing</option>
                                         <option value="switch-meter">Selecteer meter</option>
@@ -147,26 +146,20 @@
                                     <h3 class="text-lg font-medium mb-2 text-black dark:text-white">Tijdsperiode</h3>
                                     <div class="flex space-x-4">
                                         <label class="inline-flex items-center">
-                                            <input type="radio" name="period" value="day"
-                                                {{ $period === 'day' ? 'checked' : '' }} class="hidden">
-                                            <span
-                                                class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                            <input type="radio" name="period" value="day" {{ $period === 'day' ? 'checked' : '' }} class="hidden">
+                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                                 Dag
                                             </span>
                                         </label>
                                         <label class="inline-flex items-center">
-                                            <input type="radio" name="period" value="month"
-                                                {{ $period === 'month' ? 'checked' : '' }} class="hidden">
-                                            <span
-                                                class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                            <input type="radio" name="period" value="month" {{ $period === 'month' ? 'checked' : '' }} class="hidden">
+                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                                 Maand
                                             </span>
                                         </label>
                                         <label class="inline-flex items-center">
-                                            <input type="radio" name="period" value="year"
-                                                {{ $period === 'year' ? 'checked' : '' }} class="hidden">
-                                            <span
-                                                class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                            <input type="radio" name="period" value="year" {{ $period === 'year' ? 'checked' : '' }} class="hidden">
+                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                                 Jaar
                                             </span>
                                         </label>
@@ -219,37 +212,23 @@
                                             class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-r-md">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 5l7 7-7 7" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                             </svg>
                                         </a>
                                     </div>
                                 </div>
 
-                                <!-- Housing type selection -->
+                                <!-- Housing type selection TODO -->
                                 <div class="hidden">
                                     <h3 class="text-lg font-medium mb-2">Woningtype</h3>
-                                    <select name="housing_type" id="housingType"
-                                        class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md">
-                                        <option value="appartement"
-                                            {{ $housingType === 'appartement' ? 'selected' : '' }}>Appartement</option>
-                                        <option value="tussenwoning"
-                                            {{ $housingType === 'tussenwoning' ? 'selected' : '' }}>Tussenwoning
-                                        </option>
-                                        <option value="hoekwoning"
-                                            {{ $housingType === 'hoekwoning' ? 'selected' : '' }}>Hoekwoning</option>
-                                        <option value="twee_onder_een_kap"
-                                            {{ $housingType === 'twee_onder_een_kap' ? 'selected' : '' }}>2-onder-1-kap
-                                        </option>
-                                        <option value="vrijstaand"
-                                            {{ $housingType === 'vrijstaand' ? 'selected' : '' }}>Vrijstaand</option>
+                                    <select name="housing_type" id="housingType" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md">
+                                        <option value="appartement" {{ $housingType === 'appartement' ? 'selected' : '' }}>Appartement</option>
+                                        <option value="tussenwoning" {{ $housingType === 'tussenwoning' ? 'selected' : '' }}>Tussenwoning</option>
+                                        <option value="hoekwoning" {{ $housingType === 'hoekwoning' ? 'selected' : '' }}>Hoekwoning</option>
+                                        <option value="twee_onder_een_kap" {{ $housingType === 'twee_onder_een_kap' ? 'selected' : '' }}>2-onder-1-kap</option>
+                                        <option value="vrijstaand" {{ $housingType === 'vrijstaand' ? 'selected' : '' }}>Vrijstaand</option>
                                     </select>
                                 </div>
-
-                                <button type="submit"
-                                    class="hidden w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
-                                    Toepassen
-                                </button>
                             </form>
                         </div>
                     </div>
@@ -272,7 +251,7 @@
                             'trend-analysis' => 'full',
                             'energy-suggestions' => 'large',
                             'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
-                            'switch-meter' => 'medium',
+                            'switch-meter' => 'large',
                             default => 'full',
                         };
 
@@ -285,7 +264,7 @@
                     @endphp
 
                     <div class="p-2 {{ $widthClasses }}">
-                        <div class="h-full p-4 bg-white shadow-md rounded-lg dark:bg-gray-800 dark:text-white">
+                        <div tabindex="0" class="h-full p-4 bg-white shadow-md rounded-lg dark:bg-gray-800 dark:text-white">
                             @switch($item)
                                 @case('usage-prediction')
                                     <x-dashboard.usage-prediction :electricityData="[
