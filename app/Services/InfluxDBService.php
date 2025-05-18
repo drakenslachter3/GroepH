@@ -118,7 +118,7 @@ class InfluxDBService
         |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
         |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed" or r["_field"] == "energy_produced")
         |> filter(fn: (r) => r["_measurement"] == "dsmr")
-        |> aggregateWindow(every: 1h, fn: mean, createEmpty: true)
+        |> aggregateWindow(every: 1h, fn: last, createEmpty: true)
         |> derivative(unit: 1h, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
