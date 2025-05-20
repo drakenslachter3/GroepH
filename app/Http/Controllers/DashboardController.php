@@ -2,18 +2,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\EnergyVisualizationController;
+use App\Models\EnergyStatusData;
 use App\Models\SmartMeter;
 use App\Models\UserGridLayout;
 use App\Services\DashboardPredictionService;
-use App\Services\EnergyConversionService;
-use App\Services\EnergyNotificationService; // Add this import
+use App\Services\EnergyConversionService; // Add this import
+use App\Services\EnergyNotificationService;
 use App\Services\EnergyPredictionService;
 use App\Services\InfluxDBService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Models\EnergyStatusData;
 
 class DashboardController extends Controller
 {
@@ -99,41 +99,73 @@ class DashboardController extends Controller
         $energydashboard_data['period']      = $period;
         $energydashboard_data['date']        = $date;
 
-        // Get InfluxDB meter data for the period
-        $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
-
-        // Get live InfluxDB data for current usage
+        // Get live InfluxDB data for current usage and historical data
         $liveInfluxData = $this->getLiveInfluxData($selectedMeterId, $period, $date);
 
+        // Get the complete meter data for the period (for charts and predictions)
         $meterDataForPeriod = $this->getEnergyData($selectedMeterId, $period, $date);
 
-// Get electricity prediction data using the real InfluxDB data
-        $electricityPredictionResult = $this->dashboardPredictionService->getDashboardPredictionDataWithRealData(
-            'electricity',
-            $period,
-            $date,
-            $meterDataForPeriod
-        );
-        $predictionData['electricity']       = $electricityPredictionResult['predictionData'];
-        $budgetData['electricity']           = $electricityPredictionResult['budgetData'];
-        $predictionConfidence['electricity'] = $electricityPredictionResult['confidence'];
+        // Log the meter data for debugging
+        \Log::debug("Meter data structure: " . json_encode(array_keys($meterDataForPeriod)));
 
-// Get gas prediction data using the real InfluxDB data
-        $gasPredictionResult = $this->dashboardPredictionService->getDashboardPredictionDataWithRealData(
-            'gas',
-            $period,
-            $date,
-            $meterDataForPeriod
+        // If the meterDataForPeriod has valid data, use it for predictions
+        $hasValidInfluxData =
+        isset($meterDataForPeriod['current_data']) &&
+            (
+            (isset($meterDataForPeriod['current_data']['energy_consumed']) && ! empty($meterDataForPeriod['current_data']['energy_consumed'])) ||
+            (isset($meterDataForPeriod['current_data']['gas_delivered']) && ! empty($meterDataForPeriod['current_data']['gas_delivered']))
         );
-        $predictionData['gas']       = $gasPredictionResult['predictionData'];
-        $budgetData['gas']           = $gasPredictionResult['budgetData'];
-        $predictionConfidence['gas'] = $gasPredictionResult['confidence'];
 
-        // Get electricity prediction data
-        $electricityPredictionResult         = $this->dashboardPredictionService->getDashboardPredictionData('electricity', $period, $date);
-        $predictionData['electricity']       = $electricityPredictionResult['predictionData'];
-        $budgetData['electricity']           = $electricityPredictionResult['budgetData'];
-        $predictionConfidence['electricity'] = $electricityPredictionResult['confidence'];
+        // Clear log of what we're using
+        if ($hasValidInfluxData) {
+            \Log::debug("Using real InfluxDB data for predictions");
+        } else {
+            \Log::debug("Using simulated data for predictions - no valid InfluxDB data available");
+        }
+
+        // Process electricity prediction using real data if available
+        if ($hasValidInfluxData) {
+            // Get electricity prediction data using the real InfluxDB data
+            $electricityPredictionResult = $this->dashboardPredictionService->getDashboardPredictionDataWithRealData(
+                'electricity',
+                $period,
+                $date,
+                $meterDataForPeriod
+            );
+            $predictionData['electricity']       = $electricityPredictionResult['predictionData'];
+            $budgetData['electricity']           = $electricityPredictionResult['budgetData'];
+            $predictionConfidence['electricity'] = $electricityPredictionResult['confidence'];
+
+            // Get gas prediction data using the real InfluxDB data
+            $gasPredictionResult = $this->dashboardPredictionService->getDashboardPredictionDataWithRealData(
+                'gas',
+                $period,
+                $date,
+                $meterDataForPeriod
+            );
+            $predictionData['gas']       = $gasPredictionResult['predictionData'];
+            $budgetData['gas']           = $gasPredictionResult['budgetData'];
+            $predictionConfidence['gas'] = $gasPredictionResult['confidence'];
+        } else {
+            // Fallback to simulated data if no valid InfluxDB data
+            $electricityPredictionResult = $this->dashboardPredictionService->getDashboardPredictionData(
+                'electricity',
+                $period,
+                $date
+            );
+            $predictionData['electricity']       = $electricityPredictionResult['predictionData'];
+            $budgetData['electricity']           = $electricityPredictionResult['budgetData'];
+            $predictionConfidence['electricity'] = $electricityPredictionResult['confidence'];
+
+            $gasPredictionResult = $this->dashboardPredictionService->getDashboardPredictionData(
+                'gas',
+                $period,
+                $date
+            );
+            $predictionData['gas']       = $gasPredictionResult['predictionData'];
+            $budgetData['gas']           = $gasPredictionResult['budgetData'];
+            $predictionConfidence['gas'] = $gasPredictionResult['confidence'];
+        }
 
         // Calculate electricity percentage and get live data
         $actualElectricity = $liveInfluxData['total']['electricity_usage'] ?? 0;
@@ -159,12 +191,6 @@ class DashboardController extends Controller
         $yearlyConsumptionToDate['electricity'] = $this->getYearlyConsumptionToDate('electricity');
         $daysPassedThisYear                     = max(1, Carbon::now()->dayOfYear);
         $dailyAverageConsumption['electricity'] = $yearlyConsumptionToDate['electricity'] / $daysPassedThisYear;
-
-        // Get gas prediction data
-        $gasPredictionResult         = $this->dashboardPredictionService->getDashboardPredictionData('gas', $period, $date);
-        $predictionData['gas']       = $gasPredictionResult['predictionData'];
-        $budgetData['gas']           = $gasPredictionResult['budgetData'];
-        $predictionConfidence['gas'] = $gasPredictionResult['confidence'];
 
         // Calculate gas percentage and get live data
         $actualGas = $liveInfluxData['total']['gas_usage'] ?? 0;
@@ -206,9 +232,9 @@ class DashboardController extends Controller
             'electricity' => [
                 'usage'         => $actualElectricity,
                 'target'        => $electricityTarget,
-                'cost'          => $this->conversionService->kwhToEuro($actualElectricity),
+                'cost'          => $electricityCost,
                 'percentage'    => $electricityTarget > 0 ? ($actualElectricity / $electricityTarget) * 100 : 0,
-                'status'        => $this->determineStatus($electricityTarget > 0 ? ($actualElectricity / $electricityTarget) * 100 : 0),
+                'status'        => $electricityStatus,
                 'previous_year' => [
                     'usage'             => $liveInfluxData['historical_data']['energy_consumed'] ?? [],
                     'reduction_percent' => $this->calculateReductionPercentage(
@@ -221,9 +247,9 @@ class DashboardController extends Controller
             'gas'         => [
                 'usage'         => $actualGas,
                 'target'        => $gasTarget,
-                'cost'          => $this->conversionService->m3ToEuro($actualGas),
+                'cost'          => $gasCost,
                 'percentage'    => $gasTarget > 0 ? ($actualGas / $gasTarget) * 100 : 0,
-                'status'        => $this->determineStatus($gasTarget > 0 ? ($actualGas / $gasTarget) * 100 : 0),
+                'status'        => $gasStatus,
                 'previous_year' => [
                     'usage'             => $liveInfluxData['historical_data']['gas_delivered'] ?? [],
                     'reduction_percent' => $this->calculateReductionPercentage(
@@ -256,8 +282,8 @@ class DashboardController extends Controller
         $energydashboard_data['yearlyConsumptionToDate'] = $yearlyConsumptionToDate;
         $energydashboard_data['dailyAverageConsumption'] = $dailyAverageConsumption;
 
-        // Get InfluxDB meter data for the period
-        $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
+        // Add meter data for the period to the view
+        $energydashboard_data['meterDataForPeriod'] = $meterDataForPeriod;
 
         // Generate notifications using live data
         if (Auth::check() && isset($energydashboard_data['totals'])) {
