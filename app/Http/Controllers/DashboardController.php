@@ -484,15 +484,15 @@ class DashboardController extends Controller
     private function getEnergyData(string $meterId, string $period, string $date)
     {
         // // Probeer eerst uit de MySQL database op te halen
-        // $latestData = \App\Models\InfluxData::where('tags->meter_id', $meterId)
-        //     ->where('tags->period', $period)
-        //     ->where('tags->date', $date)
-        //     ->orderBy('time', 'desc')
-        //     ->first();
+        $latestData = \App\Models\InfluxData::where('tags->meter_id', $meterId)
+            ->where('tags->period', $period)
+            ->where('tags->date', $date)
+            ->orderBy('time', 'desc')
+            ->first();
 
-        // if ($latestData) {
-        //     return $latestData->fields;
-        // }
+        if ($latestData) {
+            return $latestData->fields;
+        }
 
         // Als er geen gegevens zijn, haal ze dan op en sla ze op
         $influxService = app(\App\Services\InfluxDBService::class);
