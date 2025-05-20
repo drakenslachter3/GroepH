@@ -1,4 +1,4 @@
-@props(['title', 'type', 'unit', 'period', 'date' => null, 'buttonLabel', 'buttonColor', 'chartData'])
+@props(['title', 'type', 'unit', 'period', 'date' => null, 'buttonLabel', 'buttonColor', 'chartData', 'previousYearData'])
 
 @php
     use Carbon\Carbon;
@@ -37,10 +37,10 @@
 
 <section class="p-2" aria-labelledby="chart-widget-title">
     <div aria-label="Dashboard navigatie en periode selectie" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <x-widget-navigation :showPrevious="true" aria-label="Vorige widget" />
-        <x-widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
+        <x-dashboard.widget-navigation :showPrevious="true" aria-label="Vorige widget" />
+        <x-dashboard.widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
         <span tabindex="0" class="sr-only"> - tabelweergave voor schermlezers</span>
-        <x-widget-navigation :showNext="true" aria-label="Volgende widget" />
+        <x-dashboard.widget-navigation :showNext="true" aria-label="Volgende widget" />
         
         <div role="group" aria-label="Periode selectie" class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
             @foreach (['day' => 'Dag', 'month' => 'Maand', 'year' => 'Jaar'] as $key => $label)
@@ -50,7 +50,8 @@
                     <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
                     <button 
                         type="submit"
-                        class="px-3 py-1 text-sm transition-colors
+                        class="
+                            px-3 py-1 text-sm transition-colors
                             {{ $loop->first ? 'rounded-l-md' : '' }}
                             {{ $loop->last ? 'rounded-r-md' : '' }}
                             {{ $period === $key 
@@ -58,7 +59,7 @@
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}"
                         aria-pressed="{{ $period === $key ? 'true' : 'false' }}"
                         aria-label="Toon gegevens per {{ strtolower($label) }} {{ $period === $key ? '(huidige instelling)' : '' }}"
-                    >
+                        >
                         {{ $label }}
                     </button>
                 </form>
@@ -101,6 +102,26 @@
     <div class="relative" style="height: 300px;">
         <canvas id="{{ $type }}Chart"></canvas>
     </div>
+
+    @php
+        $currentData = $chartData[$dataKey] ?? [];
+        $previousData = $previousYearData[$dataKey] ?? [];
+
+        $currentTotal = array_sum($currentData);
+        $previousTotal = array_sum($previousData);
+    @endphp
+    
+    <div class="mt-4 flex flex-col gap-2 text-sm text-gray-800 dark:text-gray-100">
+        <div class="flex items-center justify-between">
+            <span class="font-medium">Huidig Jaar Totaal:</span>
+            <span>{{ number_format($currentTotal, 2, ',', '.') }} {{ $unit }}</span>
+        </div>
+        <div id="previous-year-total" class="flex items-center justify-between transition-all duration-300 opacity-0 h-6 pointer-events-none">
+            <span class="font-medium">Vorig Jaar Totaal:</span>
+            <span>{{ number_format($previousTotal, 2, ',', '.') }} {{ $unit }}</span>
+        </div>
+    </div>
+
     
     <div class="mt-4 flex justify-end">
         <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
@@ -136,7 +157,7 @@
                         $totalCurrent = 0;
                         $totalPrevious = 0;
                         $currentData = $chartData[$dataKey] ?? [];
-                        $previousData = empty($chartData[$dataKey . '_previous_year']) ?? [];
+                        $previousData = $previousYearData[$dataKey] ?? [];
                         $hasPreviousYearData = true;
                         $currentDate = Carbon::parse($date);
                     @endphp
@@ -350,21 +371,30 @@
         // Toggle comparison with last year
         const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}');
         if (toggleButton) {
-            toggleButton.addEventListener('click', function() {
+            toggleButton.addEventListener('click', function () {
                 const isVisible = chart.data.datasets.length > 1;
+                const previousTotalEl = document.getElementById('previous-year-total');
+
                 if (isVisible) {
-                    chart.data.datasets.pop();  // Remove the second dataset
+                    chart.data.datasets.pop(); // Remove previous year dataset
+                    if (previousTotalEl) {
+                        previousTotalEl.classList.remove('opacity-100');
+                        previousTotalEl.classList.add('opacity-0', 'pointer-events-none');
+                    }
                 } else {
-                    // Use the previous year data if available
-                    const previousYearKey = `${dataKey}_previous_year`;
                     chart.data.datasets.push({
                         label: '{{$unit}} Verbruik Vorig Jaar',
-                        data: chartData[previousYearKey] || [],
-                        backgroundColor: '{{ $type === "electricity" ? "rgba(34, 197, 94, 0.6)" : "rgba(234, 88, 12, 0.6)" }}',
-                        borderColor: '{{ $type === "electricity" ? "rgb(22, 163, 74)" : "rgb(234, 88, 12)" }}',
+                        data: @json($previousData),
+                        backgroundColor: '{{ $type === "electricity" ? "rgba(139, 92, 246, 0.6)" : "rgba(251, 191, 36, 0.6)" }}',
+                        borderColor: '{{ $type === "electricity" ? "rgb(124, 58, 237)" : "rgb(202, 138, 4)" }}',
                         borderWidth: 1
                     });
+                    if (previousTotalEl) {
+                        previousTotalEl.classList.remove('opacity-0', 'pointer-events-none');
+                        previousTotalEl.classList.add('opacity-100');
+                    }
                 }
+
                 chart.update();
             });
         }

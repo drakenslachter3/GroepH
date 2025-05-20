@@ -26,9 +26,9 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
                 </span>
                 @endif
             </h3>
-            <x-widget-navigation :showPrevious="true" />
-            <x-widget-heading :title="$title" :period="$period" :date="$date" />
-            <x-widget-navigation :showNext="true" />
+            <x-dashboard.widget-navigation :showPrevious="true" />
+            <x-dashboard.widget-heading :title="$title" :period="$period" :date="$date" />
+            <x-dashboard.widget-navigation :showNext="true" />
         </div>
     </div>
             

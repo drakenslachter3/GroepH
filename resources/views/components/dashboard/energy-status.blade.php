@@ -37,9 +37,9 @@
 
 <section class="p-2" aria-labelledby="usage-widget-title">
     <div class="flex justify-between mb-4">
-        <x-widget-navigation :showPrevious="true" />
-        <x-widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
-        <x-widget-navigation :showNext="true" />
+        <x-dashboard.widget-navigation :showPrevious="true" />
+        <x-dashboard.widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
+        <x-dashboard.widget-navigation :showNext="true" />
         
         <!-- Info tooltip -->
         <div class="tooltip relative">
@@ -112,7 +112,6 @@
             }
         @endphp
 
-        <!-- Seventh tab stop: Focused progress bar with full description -->
         <div
              aria-label="Voortgangsbalk voor {{ strtolower($type) }} verbruik"
              aria-valuemin="0" 
@@ -121,7 +120,6 @@
              aria-valuetext="@if($actualPercentage <= 100) U heeft {{ number_format($actualPercentage, 1) }}% van uw target verbruikt. U zit {{ number_format(100 - $actualPercentage, 1) }}% onder uw target. @else U heeft {{ number_format($actualPercentage, 1) }}% van uw target verbruikt. U zit {{ number_format($actualPercentage - 100, 1) }}% boven uw target. @endif"
              class="relative mt-6">
             
-            <!-- Progress bar visualization (hidden from screen readers) -->
             <div class="flex justify-between mt-1 relative" aria-hidden="true">
                 <span class="text-xs text-gray-600 dark:text-gray-400">0%</span>
                 @if($actualPercentage > 100)
@@ -215,6 +213,7 @@
                 }
                 $differenceType = $reductionPercent > 0 ? 'vermindering' : 'toename';
             @endphp
+            
 
             <!-- Samengevoegd blok met visuele en screenreader-inhoud -->
             <div class="flex items-center text-xs" tabindex="0" 

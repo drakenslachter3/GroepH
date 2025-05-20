@@ -9,7 +9,10 @@
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Favicon -->
-        <link rel="icon" href="{{ asset('images/mnext_logo_light.svg') }}" type="image/svg+xml">
+        <link rel="icon" href="{{ asset('images/mnext_logo_light.svg') }}" type="image/svg+xml" media="(prefers-color-scheme: light)">
+
+        <!-- Dark mode favicon -->
+        <link rel="icon" href="{{ asset('images/mnext_logo_dark.svg') }}" type="image/svg+xml" media="(prefers-color-scheme: dark)">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -25,7 +28,7 @@
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
+                <header class="">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>

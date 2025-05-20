@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Components;
+namespace App\View\Components\Dashboard;
 
 use Illuminate\View\Component;
 
@@ -25,6 +25,6 @@ class WidgetNavigation extends Component
 
     public function render()
     {
-        return view('components.etc.widget-navigation');
+        return view('components.dashboard.widget-navigation');
     }
 }

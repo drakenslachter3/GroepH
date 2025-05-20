@@ -5,9 +5,18 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <img src="{{ asset('images/mnext_logo_light.svg') }}" alt="Mnext Logo" class="block h-9 w-auto">
-                    </a>
+                    <a href="{{ route('dashboard') }}" aria-label="Ga naar dashboard">
+                        <!-- Light mode logo -->
+                        <img src="{{ asset('images/mnext_logo_light.svg') }}" 
+                             alt="" 
+                             class="block h-9 w-auto dark:hidden" 
+                             aria-hidden="true">
+                        <!-- Dark mode logo -->
+                        <img src="{{ asset('images/mnext_logo_dark.svg') }}" 
+                             alt="" 
+                             class="hidden h-12 w-auto dark:block overflow-visible" 
+                             aria-hidden="true">
+                      </a>
                 </div>
 
                 <!-- Navigation Links -->

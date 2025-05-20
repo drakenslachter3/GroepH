@@ -7,7 +7,7 @@
 
 @if($showPrevious)
     <button tabindex="0"
-            class="skip-button-prev sr-only"
+            class="skip-button-prev sr-only focus:not-sr-only"
             onclick="skipToPreviousWidget()"
             onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); skipToPreviousWidget(); }">
         {{ $previousText }}
@@ -16,7 +16,7 @@
 
 @if($showNext)
     <button tabindex="0"
-            class="skip-button-next sr-only"
+            class="skip-button-next sr-only focus:not-sr-only"
             onclick="skipToNextWidget()"
             onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); skipToNextWidget(); }">
             {{ $nextText }}

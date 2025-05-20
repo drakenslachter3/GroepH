@@ -1,5 +1,5 @@
 <?php
-namespace App\View\Components;
+namespace App\View\Components\Dashboard;
 
 use Illuminate\View\Component;
 
@@ -20,6 +20,6 @@ class WidgetHeading extends Component
 
     public function render()
     {
-        return view('components.etc.widget-heading');
+        return view('components.dashboard.widget-heading');
     }
 }

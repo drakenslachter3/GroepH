@@ -2,9 +2,9 @@
 
 <section aria-labelledby="suggestion-widget-title">
     <div class="p-2 mb-4">
-        <x-widget-navigation :showPrevious="true" />
-        <x-widget-heading :title="$title" />
-        <x-widget-navigation :showNext="true" />
+        <x-dashboard.widget-navigation :showPrevious="true" />
+        <x-dashboard.widget-heading :title="$title" />
+        <x-dashboard.widget-navigation :showNext="true" />
     </div>
     <div class="space-y-4">
         <!-- Elektriciteit tips -->

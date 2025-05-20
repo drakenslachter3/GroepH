@@ -99,8 +99,15 @@ class DashboardController extends Controller
         $energydashboard_data['period']      = $period;
         $energydashboard_data['date']        = $date;
 
-        // Get InfluxDB meter data for the period
+        // $previousYearDate = Carbon::parse($date)->subYear()->format('Y-m-d');
+
+        // // Get InfluxDB meter data for the period
+        // $energydashboard_data['meterDataForPeriod'] = [
+        //     'current_data' => $this->getEnergyData($selectedMeterId, $period, $date),
+        //     'previous_data' => $this->getEnergyData($selectedMeterId, $period, $previousYearDate),
+        // ];
         $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
+        // dd($energydashboard_data['meterDataForPeriod']);
 
         // Get live InfluxDB data for current usage
         $liveInfluxData = $this->getLiveInfluxData($selectedMeterId, $period, $date);

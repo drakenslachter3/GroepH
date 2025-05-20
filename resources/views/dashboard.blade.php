@@ -1,9 +1,9 @@
 <x-app-layout>
-    <x-slot name="header">
+    {{-- <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">
             {{ __('Energieverbruik Dashboard') }}
         </h2>
-    </x-slot>
+    </x-slot> --}}
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
@@ -26,7 +26,7 @@
                     <div class="flex justify-between items-center">
                         <!-- Dropdown button with title and icon -->
                         <button id="toggleConfigSection"
-                            class="flex items-center text-left focus:outline-none dark:text-white">
+                            class="flex items-center text-left dark:text-white">
                             <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Dashboard Configuratie</h2>
                             <svg id="configSectionIcon" xmlns="http://www.w3.org/2000/svg"
                                 class="h-5 w-5 ml-2 transform transition-transform duration-200" viewBox="0 0 20 20"
@@ -56,41 +56,60 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border-t">
                         <!-- Widget Configuration Section -->
                         <div>
-                            <h2 class="text-xl font-semibold text-gray-800 mb-6 dark:text-white">Widget Configuratie
-                            </h2>
+                            <h2 class="text-xl font-semibold text-gray-800 mb-6 dark:text-white">Widget Configuratie</h2>
                             <form action="{{ route('dashboard.setWidget') }}" method="POST" class="space-y-6">
                                 @csrf
                                 <div class="space-y-2">
                                     <label for="grid-position"
                                         class="block text-sm font-medium text-gray-700 dark:text-white">Positie:</label>
                                     <select name="grid_position" id="grid-position"
-                                        class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
+                                        class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700"
+                                        aria-label="Selecteer de positie van de widget"
+                                        aria-required="true">
                                         @for ($i = 0; $i < count($gridLayout); $i++)
-                                            <option value="{{ $i }}">Positie {{ $i + 1 }}</option>
+                                            <option value="{{ $i }}" {{ old('grid_position') == $i ? 'selected' : '' }} aria-selected="{{ old('grid_position') == $i ? 'true' : 'false' }}">
+                                                Positie {{ $i + 1 }}
+                                            </option>
                                         @endfor
                                     </select>
                                 </div>
 
                                 <div class="space-y-2">
                                     <label for="widget-type"
-                                        class="block text-sm font-medium text-gray-700 dark:text-white">Widget
-                                        Type:</label>
-                                    <select name="widget_type" id="widget-type"
-                                        class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
-                                        <option value="energy-status-electricity">Electra Status</option>
-                                        <option value="energy-status-gas">Gas Status</option>
-                                        <option value="energy-chart-electricity">Electra Grafiek</option>
-                                        <option value="energy-chart-gas">Gas Grafiek</option>
-                                        <option value="energy-suggestions">Energiebesparingstips</option>
-                                        <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling</option>
-                                        <option value="energy-prediction-chart-gas">Gas Voorspelling</option>
-                                        <option value="budget-alert">Budget Waarschuwing</option>
-                                        <option value="switch-meter">Selecteer meter</option>
-                                    </select>
+                                        class="block text-sm font-medium text-gray-700 dark:text-white">Widget Type:</label>
+                                        <select name="widget_type" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
+                                            <option value="energy-status-electricity" {{ old('widget_type') == 'energy-status-electricity' ? 'selected' : '' }}>
+                                                Electra Status
+                                            </option>
+                                            <option value="energy-status-gas" {{ old('widget_type') == 'energy-status-gas' ? 'selected' : '' }}>
+                                                Gas Status
+                                            </option>
+                                            <option value="energy-chart-electricity" {{ old('widget_type') == 'energy-chart-electricity' ? 'selected' : '' }}>
+                                                Electra Grafiek
+                                            </option>
+                                            <option value="energy-chart-gas" {{ old('widget_type') == 'energy-chart-gas' ? 'selected' : '' }}>
+                                                Gas Grafiek
+                                            </option>
+                                            <option value="energy-suggestions" {{ old('widget_type') == 'energy-suggestions' ? 'selected' : '' }}>
+                                                Energiebesparingstips
+                                            </option>
+                                            <option value="energy-prediction-chart-electricity" {{ old('widget_type') == 'energy-prediction-chart-electricity' ? 'selected' : '' }}>
+                                                Elektriciteit Voorspelling
+                                            </option>
+                                            <option value="energy-prediction-chart-gas" {{ old('widget_type') == 'energy-prediction-chart-gas' ? 'selected' : '' }}>
+                                                Gas Voorspelling
+                                            </option>
+                                            <option value="budget-alert" {{ old('widget_type') == 'budget-alert' ? 'selected' : '' }}>
+                                                Budget Waarschuwing
+                                            </option>
+                                            <option value="switch-meter" {{ old('widget_type') == 'switch-meter' ? 'selected' : '' }}>
+                                                Selecteer meter
+                                            </option>
+                                        </select>
                                 </div>
 
                                 <button type="submit"
-                                    class="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
+                                    class="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
                                     Widget Toevoegen
                                 </button>
                             </form>
@@ -99,13 +118,13 @@
                                 <form action="{{ route('dashboard.resetLayout') }}" method="POST" class="flex-1">
                                     @csrf
                                     <button type="submit"
-                                        class="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
+                                        class="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-sm transition duration-200 focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
                                         Reset Layout
                                     </button>
                                 </form>
 
                                 <button onclick="window.location.href='{{ route('budget.form') }}'"
-                                    class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
+                                    class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200 focus:ring-2 focus:ring-purple-400 focus:ring-offset-2">
                                     Budget Aanpassen
                                 </button>
                             </div>
@@ -144,21 +163,23 @@
                                 <!-- Period selection -->
                                 <div class="mb-4">
                                     <h3 class="text-lg font-medium mb-2 text-black dark:text-white">Tijdsperiode</h3>
-                                    <div class="flex space-x-4">
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="period" value="day" {{ $period === 'day' ? 'checked' : '' }} class="hidden">
+                                    <div class="flex space-x-4" role="radiogroup" aria-label="Selecteer periode">
+                                        <label class="inline-flex items-center" role="radio" aria-checked="{{ $period === 'day' ? 'true' : 'false' }}" tabindex="0">
+                                            <input type="radio" name="period" value="day" {{ $period === 'day' ? 'checked' : '' }} class="sr-only">
                                             <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                                 Dag
                                             </span>
                                         </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="period" value="month" {{ $period === 'month' ? 'checked' : '' }} class="hidden">
+                                    
+                                        <label class="inline-flex items-center" role="radio" aria-checked="{{ $period === 'month' ? 'true' : 'false' }}" tabindex="0">
+                                            <input type="radio" name="period" value="month" {{ $period === 'month' ? 'checked' : '' }} class="sr-only">
                                             <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                                 Maand
                                             </span>
                                         </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="period" value="year" {{ $period === 'year' ? 'checked' : '' }} class="hidden">
+                                    
+                                        <label class="inline-flex items-center" role="radio" aria-checked="{{ $period === 'year' ? 'true' : 'false' }}" tabindex="0">
+                                            <input type="radio" name="period" value="year" {{ $period === 'year' ? 'checked' : '' }} class="sr-only">
                                             <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                                 Jaar
                                             </span>
@@ -303,13 +324,15 @@
                                 @case('energy-chart-electricity')
                                     <x-dashboard.energy-chart type="electricity" title="Grafiek Elektriciteitsverbruik"
                                         :period="$period" :date="$date" unit="kWh"
-                                        buttonLabel="Toon Vorig Jaar" buttonColor="blue" :chartData="$meterDataForPeriod['current_data'] ?? []" />
+                                        buttonLabel="Toon Vorig Jaar" buttonColor="blue" :chartData="$meterDataForPeriod['current_data'] ?? []"
+                                        :previousYearData="$meterDataForPeriod['historical_data'] ?? []" />
                                 @break
 
                                 @case('energy-chart-gas')
                                     <x-dashboard.energy-chart type="gas" title="Grafiek Gasverbruik"
                                         :period="$period" :date="$date" unit="m³"
-                                        buttonLabel="Toon Vorig Jaar" buttonColor="yellow" :chartData="$meterDataForPeriod['current_data'] ?? []" />
+                                        buttonLabel="Toon Vorig Jaar" buttonColor="yellow" :chartData="$meterDataForPeriod['current_data'] ?? []"
+                                        :previousYearData="$meterDataForPeriod['historical_data'] ?? []" />
                                 @break
 
                                 @case('energy-suggestions')

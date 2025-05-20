@@ -3,9 +3,9 @@
 <section class="w-full p-2" aria-labelledby="switch-widget-title">
     <div class="flex flex-col">
         <div class="flex flex-row justify-between items-center w-full">
-            <x-widget-navigation :showPrevious="true" />
-            <x-widget-heading :title="$title" />
-            <x-widget-navigation :showNext="true" />
+            <x-dashboard.widget-navigation :showPrevious="true" />
+            <x-dashboard.widget-heading :title="$title" />
+            <x-dashboard.widget-navigation :showNext="true" />
             
             <div class="tooltip relative">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600 dark:text-gray-300 dark:hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
