@@ -275,13 +275,15 @@
                                 @break
 
                                 @case('energy-status-electricity')
-                                    <x-dashboard.energy-status type="Elektriciteit" :usage="$liveData['electricity']['usage'] ?? 0" :target="$liveData['electricity']['target'] ?? 0"
+                                    <x-dashboard.energy-status type="Elektriciteit" title="Status Elektriciteitsverbruik (kWh)"
+                                        :usage="$liveData['electricity']['usage'] ?? 0" :target="$liveData['electricity']['target'] ?? 0"
                                         :cost="$liveData['electricity']['cost'] ?? 0" :percentage="$liveData['electricity']['percentage'] ?? 0" :status="$liveData['electricity']['status'] ?? 'goed'" :date="$date"
                                         :period="$period" :liveData="$liveData['electricity'] ?? null" unit="kWh" />
                                 @break
 
                                 @case('energy-status-gas')
-                                    <x-dashboard.energy-status type="Gas" :usage="$liveData['gas']['usage'] ?? 0" :target="$liveData['gas']['target'] ?? 0"
+                                    <x-dashboard.energy-status type="Gas" title="Status Gasverbruik (m³)"
+                                        :usage="$liveData['gas']['usage'] ?? 0" :target="$liveData['gas']['target'] ?? 0"
                                         :cost="$liveData['gas']['cost'] ?? 0" :percentage="$liveData['gas']['percentage'] ?? 0" :status="$liveData['gas']['status'] ?? 'goed'" :date="$date"
                                         :period="$period" :liveData="$liveData['gas'] ?? null" unit="m³" />
                                 @break
@@ -292,13 +294,13 @@
                                 @break
 
                                 @case('energy-chart-electricity')
-                                    <x-dashboard.energy-chart type="electricity" title="Elektriciteitsverbruik (kWh)"
+                                    <x-dashboard.energy-chart type="electricity" title="Grafiek Elektriciteitsverbruik (kWh)"
                                         buttonLabel="Toon Vorig Jaar" buttonColor="blue" :chartData="$meterDataForPeriod['current_data'] ?? []" :period="$period"
                                         :date="$date" />
                                 @break
 
                                 @case('energy-chart-gas')
-                                    <x-dashboard.energy-chart type="gas" title="Gasverbruik (m³)"
+                                    <x-dashboard.energy-chart type="gas" title="Grafiek Gasverbruik (m³)"
                                         buttonLabel="Toon Vorig Jaar" buttonColor="yellow" :chartData="$meterDataForPeriod['current_data'] ?? []"
                                         :period="$period" :date="$date" />
                                 @break

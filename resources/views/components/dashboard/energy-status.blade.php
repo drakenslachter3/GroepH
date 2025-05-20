@@ -1,5 +1,6 @@
 @props([
     'type',
+    'title',
     'usage',
     'target',
     'percentage',
@@ -37,26 +38,7 @@
 <section class="p-2" aria-labelledby="usage-widget-title">
     <div class="flex justify-between items-start mb-4">
         <x-widget-navigation :showPrevious="true" />
-        <div>
-            <!-- First tab stop: Title and date -->
-            <h3 id="usage-widget-title-{{ $type }}" class="text-lg font-semibold dark:text-white" tabindex="0">{{ $type }} Status</h3>
-            
-            <!-- Datum weergave -->
-            @if(isset($date) && isset($period))
-                <div class="mt-1 inline-block bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300" tabindex="0">
-                    @php
-                        $carbonDate = \Carbon\Carbon::parse($date);
-                        $formattedDate = match($period) {
-                            'day' => $carbonDate->translatedFormat('d F Y'),
-                            'month' => $carbonDate->translatedFormat('F Y'),
-                            'year' => $carbonDate->translatedFormat('Y'),
-                            default => $carbonDate->translatedFormat('d F Y'),
-                        };
-                    @endphp
-                    <span id="widget-date">{{ $formattedDate }}</span>
-                </div>
-            @endif
-        </div>
+        <x-widget-heading :title="$title" :type="$type" :date="$date" :period="$period" />
         <x-widget-navigation :showNext="true" />
         
         <!-- Info tooltip -->

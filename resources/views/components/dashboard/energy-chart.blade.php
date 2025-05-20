@@ -38,23 +38,7 @@
 <section class="p-6" aria-labelledby="chart-widget-title">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <x-widget-navigation :showPrevious="true" />
-        <div class="flex flex-col mb-2 sm:mb-0">
-            <h3 tabindex="0" id="chart-widget-title-{{ $type }}" class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
-            
-            <div class="mt-1 text-sm text-sky-600 dark:text-sky-300 font-medium">
-                @switch($period)
-                    @case('day')
-                        {{ Carbon::parse($date)->format('d F Y') }}
-                        @break
-                    @case('month')
-                        {{ Carbon::parse($date)->format('F Y') }}
-                        @break
-                    @case('year')
-                        {{ Carbon::parse($date)->format('Y') }}
-                        @break
-                @endswitch
-            </div>
-        </div>
+        <x-widget-heading :title="$title" :type="$type" :date="$date" :period="$period" />
         <x-widget-navigation :showNext="true" />
         
         <div class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
