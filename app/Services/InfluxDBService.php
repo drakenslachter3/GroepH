@@ -110,7 +110,7 @@ class InfluxDBService
     public function getDailyEnergyUsage(string $meterId, string $date): array
     {
         $start = Carbon::createFromFormat('Y-m-d', $date, 'UTC')->startOfDay()->toIso8601ZuluString();
-        $stop = Carbon::createFromFormat('Y-m-d', $date, 'UTC')->endOfDay()->toIso8601ZuluString();
+        $stop  = Carbon::createFromFormat('Y-m-d', $date, 'UTC')->endOfDay()->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -131,7 +131,7 @@ class InfluxDBService
         $electricityUsage      = array_fill(0, 24, 0);
         $electricityGeneration = array_fill(0, 24, 0);
 
-        if (!empty($result) && isset($result[0]->records)) {
+        if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
                 if (isset($record->values['_time'])) {
                     $hour = (int) date('G', strtotime($record->values['_time']));
@@ -166,10 +166,10 @@ class InfluxDBService
     public function getMonthlyEnergyUsage(string $meterId, string $yearMonth): array
     {
         list($year, $month) = explode('-', $yearMonth);
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
+        $daysInMonth        = cal_days_in_month(CAL_GREGORIAN, (int) $month, (int) $year);
 
         $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->toIso8601ZuluString();
-        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
+        $endDate   = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -185,11 +185,11 @@ class InfluxDBService
 
         $result = $this->query($query);
 
-        $gasUsage = array_fill(0, $daysInMonth, 0);
-        $electricityUsage = array_fill(0, $daysInMonth, 0);
+        $gasUsage              = array_fill(0, $daysInMonth, 0);
+        $electricityUsage      = array_fill(0, $daysInMonth, 0);
         $electricityGeneration = array_fill(0, $daysInMonth, 0);
 
-        if (!empty($result) && isset($result[0]->records)) {
+        if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
                 if (isset($record->values['_time'])) {
                     $day = (int) date('j', strtotime($record->values['_time'])) - 1;
@@ -223,8 +223,8 @@ class InfluxDBService
      */
     public function getYearlyEnergyUsage(string $meterId, string $year): array
     {
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01")->startOfDay()->toIso8601ZuluString();;
-        $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-12-31")->endOfDay()->toIso8601ZuluString();
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-01-01")->startOfDay()->toIso8601ZuluString();
+        $endDate   = Carbon::createFromFormat('Y-m-d', "{$year}-12-31")->endOfDay()->toIso8601ZuluString();
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -244,7 +244,7 @@ class InfluxDBService
         $electricityUsage      = array_fill(0, 12, 0);
         $electricityGeneration = array_fill(0, 12, 0);
 
-        if (!empty($result) && isset($result[0]->records)) {
+        if (! empty($result) && isset($result[0]->records)) {
             foreach ($result[0]->records as $record) {
                 if (isset($record->values['_time'])) {
                     $month = (int) date('n', strtotime($record->values['_time'])) - 1;
@@ -277,6 +277,14 @@ class InfluxDBService
  * @param string $date De referentiedatum
  * @return array
  */
+    /**
+     * Haal historische gegevens op voor vergelijking (vorig jaar)
+     *
+     * @param string $meterId De ID van de slimme meter
+     * @param string $period Periode ('day', 'month', 'year')
+     * @param string $date De referentiedatum
+     * @return array
+     */
     public function getHistoricalComparison(string $meterId, string $period, string $date): array
     {
         switch ($period) {
@@ -285,12 +293,12 @@ class InfluxDBService
                 return $this->getDailyEnergyUsage($meterId, $previousDate);
 
             case 'month':
-                list($year, $month) = explode('-', $date);
+                list($year, $month) = explode('-', substr($date, 0, 7));
                 $previousYearMonth  = ($year - 1) . '-' . $month;
                 return $this->getMonthlyEnergyUsage($meterId, $previousYearMonth);
 
             case 'year':
-                $previousYear = (int) $date - 1;
+                $previousYear = (int) substr($date, 0, 4) - 1;
                 return $this->getYearlyEnergyUsage($meterId, $previousYear);
 
             default:
@@ -352,7 +360,7 @@ class InfluxDBService
         $lastGeneration   = 0;
 
         // Process first reading
-        if (!empty($firstResult) && isset($firstResult[0]->records) && !empty($firstResult[0]->records)) {
+        if (! empty($firstResult) && isset($firstResult[0]->records) && ! empty($firstResult[0]->records)) {
             $record = $firstResult[0]->records[0];
 
             if (isset($record->values['gas_delivered'])) {
@@ -369,7 +377,7 @@ class InfluxDBService
         }
 
         // Process last reading
-        if (!empty($lastResult) && isset($lastResult[0]->records) && !empty($lastResult[0]->records)) {
+        if (! empty($lastResult) && isset($lastResult[0]->records) && ! empty($lastResult[0]->records)) {
             $record = $lastResult[0]->records[0];
 
             if (isset($record->values['gas_delivered'])) {
