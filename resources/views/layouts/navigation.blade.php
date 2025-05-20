@@ -19,6 +19,9 @@
                     <x-etc.nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
                         {{ __('Budget Instellen') }}
                     </x-etc.nav-link>
+
+          
+
                     
                     @if(Auth::user()->hasRole(['admin', 'owner']))
                         <x-etc.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
@@ -37,6 +40,11 @@
                 @if (Auth::check() && (Auth::user()->isAdmin() || Auth::user()->isOwner()))
                     <div class="mr-3">
                         <x-admin-notification-inbox />
+                    </div>
+                @endif
+                @if (Auth::check())
+                    <div class="mr-3">
+                        <x-energy-notification-inbox />
                     </div>
                 @endif
                 <div class="hidden sm:flex sm:items-center sm:ms-6">
