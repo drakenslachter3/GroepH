@@ -514,6 +514,14 @@
                 }
             }, 5000);
         });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const select = document.getElementById('meter-selector');
+        select.addEventListener('change', function () {
+            select.form.submit();
+        });
+    });
+
     </script>
     @stack('chart-scripts')
     @stack('trend-scripts')
