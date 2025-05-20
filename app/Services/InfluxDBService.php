@@ -170,7 +170,6 @@ class InfluxDBService
 
         $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->toIso8601ZuluString();
         $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
-        // echo "Start: {$startDate}, End: {$endDate}";
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -523,7 +522,7 @@ class InfluxDBService
 
         return [
             'success' => true,
-            'id'      => 0,
+            'id'      => $influxData->id,
             'data'    => $dashboardData,
         ];
     }

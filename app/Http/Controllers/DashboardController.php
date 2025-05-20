@@ -64,13 +64,10 @@ class DashboardController extends Controller
 
         if ($period === 'year' && !preg_match('/^\d{4}$/', $date)) {
             $date = Carbon::today()->format('Y');
-            session(['dashboard_date' => $date]);
-        } elseif ($period === 'month' && preg_match('/^\d{4}$/', $date)) {
-            $date .= '-01'; // add default month
-            session(['dashboard_date' => $date]);
+        } elseif ($period === 'month' && preg_match('/^\d{4}$/', $date)) { 
+            $date .= '-01';
         } elseif ($period === 'day' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             $date = $defaultDate;
-            session(['dashboard_date' => $date]);
         }
 
         session([
