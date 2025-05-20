@@ -27,33 +27,22 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
 </h3>
         
 <div class="mb-4">
-    <div class="flex justify-between items-center">
-        <div class="flex items-center">
-            <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
-            <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
-                <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
-                     style="width: {{ $confidence }}%"></div>
-            </div>
-            <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
-        </div>
-                
-        <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
-            @if($period == 'year')
-                Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
-            @else
-                {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
-            @endif
-        </div>
-    </div>
-        <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
-    @if($period == 'month' && isset($monthlyBudgetValue))
+  
+    <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
+    @if($period == 'day')
+        {{-- Day view: Show daily budget using the values from budgetData --}}
+        <span>Dagelijks budget: {{ number_format($budgetData['monthly_target'] * 12 / 365, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
+        <span>Uurlijks budget: {{ number_format(($budgetData['monthly_target'] * 12 / 365) / 24, 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/uur</span>
+    @elseif($period == 'month' && isset($monthlyBudgetValue))
+        {{-- Month view: Show monthly budget --}}
         <span>Maandbudget: {{ number_format($monthlyBudgetValue, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
         <span>Dagelijks budget: {{ number_format($monthlyBudgetValue / 30, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
     @else
+        {{-- Year view: Show yearly budget --}}
         <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-        <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+        <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/maand</span>
     @endif
-</div>    
+</div>
     <!-- Nieuwe verbruiksdetails toevoegen -->
     
 </div>
@@ -71,13 +60,7 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
                 <p class="text-2xl font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
                     {{ number_format($currentData['expected'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
                 </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    @if($isExceedingBudget)
-                        Overschrijding budget: {{ number_format($exceedingPercentage, 1) }}%
-                    @else
-                        Onder budget: {{ number_format($exceedingPercentage, 1) }}%
-                    @endif
-                </p>
+             
             </div>
             
             <!-- Best Case Card -->
@@ -86,10 +69,7 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
                 <p class="text-2xl font-bold text-green-600 dark:text-green-400">
                     {{ number_format($currentData['best_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
                 </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                    {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
-                </p>
+              
             </div>
             
             <!-- Worst Case Card -->
@@ -98,10 +78,7 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
                 <p class="text-2xl font-bold text-red-600 dark:text-red-400">
                     {{ number_format($currentData['worst_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
                 </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                    {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
-                </p>
+               
             </div>
         </div>
         

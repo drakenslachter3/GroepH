@@ -1,6 +1,7 @@
 <?php
-namespace App\Services;
 
+namespace App\Services;
+use App\Models\PredictionSetting;
 /**
  * Class EnergyPredictionService
  * 
@@ -201,8 +202,9 @@ class EnergyPredictionService
         
         // Calculate best and worst case scenarios based on margin
         // Make best case closer to expected for a more optimistic view
-        $bestCaseMargin = $marginPercentage * 0.8; // 80% of the full margin for best case
-        $worstCaseMargin = $marginPercentage * 1.1; // 110% of the full margin for worst case
+        $settings = PredictionSetting::getSettings($type, $period);
+        $bestCaseMargin = ($settings['best_case_margin'] / 100); // Convert percentage to decimal
+        $worstCaseMargin = ($settings['worst_case_margin'] / 100); // Convert percentage to decimal
         
         $bestCaseUsage = $predictedTotalUsage * (1 - $bestCaseMargin);
         $worstCaseUsage = $predictedTotalUsage * (1 + $worstCaseMargin);
