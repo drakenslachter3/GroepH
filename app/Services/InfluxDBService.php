@@ -170,7 +170,6 @@ class InfluxDBService
 
         $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfDay()->toIso8601ZuluString();
         $endDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-{$daysInMonth}")->endOfDay()->toIso8601ZuluString();
-        // echo "Start: {$startDate}, End: {$endDate}";
 
         $query = '
         from(bucket: "' . config('influxdb.bucket') . '")
@@ -181,7 +180,7 @@ class InfluxDBService
         |> derivative(unit: 1d, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
-        |> timeShift(duration: -1h)
+        |> timeShift(duration: -1d)
         ';
 
         $result = $this->query($query);
@@ -236,7 +235,7 @@ class InfluxDBService
         |> derivative(unit: 1mo, nonNegative: true)
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> keep(columns:["_time", "energy_consumed", "energy_produced", "gas_delivered"])
-        |> timeShift(duration: -1h)
+        |> timeShift(duration: -1mo)
         ';
 
         $result = $this->query($query);
@@ -506,24 +505,24 @@ class InfluxDBService
         $dashboardData = $this->getEnergyDashboardData($meterId, $period, $date);
 
         // Sla huidige gegevens op
-        // $influxData = \App\Models\InfluxData::create([
-        //     'measurement' => 'energy_dashboard',
-        //     'tags'        => [
-        //         'meter_id' => $meterId,
-        //         'period'   => $period,
-        //         'date'     => $date,
-        //     ],
-        //     'fields'      => [
-        //         'current_data'    => $dashboardData['current_data'],
-        //         'historical_data' => $dashboardData['historical_data'],
-        //         'total'           => $dashboardData['total'],
-        //     ],
-        //     'time'        => now(),
-        // ]);
+        $influxData = \App\Models\InfluxData::create([
+            'measurement' => 'energy_dashboard',
+            'tags'        => [
+                'meter_id' => $meterId,
+                'period'   => $period,
+                'date'     => $date,
+            ],
+            'fields'      => [
+                'current_data'    => $dashboardData['current_data'],
+                'historical_data' => $dashboardData['historical_data'],
+                'total'           => $dashboardData['total'],
+            ],
+            'time'        => now(),
+        ]);
 
         return [
             'success' => true,
-            'id'      => 0,
+            'id'      => $influxData->id,
             'data'    => $dashboardData,
         ];
     }
