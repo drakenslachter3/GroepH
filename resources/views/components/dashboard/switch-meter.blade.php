@@ -17,8 +17,8 @@
         <div class="mt-5">
             <form action="{{ route('dashboard.saveSelectedMeter') }}" method="POST">
                 @csrf 
-                <label id="listbox-label" class="block text-sm font-medium text-gray-900">Meterlijst</label>
-                <select class="border rounded border-gray-300 px-2 py-1 w-full mb-2" name="meter">
+                <label id="listbox-label" class="block text-sm font-medium text-gray-900 dark:text-white">Meterlijst</label>
+                <select class="rounded px-2 py-1 w-full mb-2 dark:bg-gray-700" name="meter">
                     @if($meters->isEmpty())
                         <option value="">Nog geen meters gekoppeld</option>
                     @else

@@ -39,22 +39,20 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Get default values
         $defaultPeriod = 'day';
         $defaultDate = Carbon::today()->format('Y-m-d');
         $defaultMeterId = optional(SmartMeter::getAllSmartMetersForCurrentUser()->first())->meter_id
                         ?? '2019-ETI-EMON-V01-105C4E-16405E';
 
-        // Get current session values
         $period = session('dashboard_period', $defaultPeriod);
         $date = session('dashboard_date', $defaultDate);
         $selectedMeterId = session('selected_meter_id', $defaultMeterId);
 
-        // Update session if new values are provided
         if ($request->has('selectedMeterId')) {
-            session(['selected_meter_id' => $request->input('selectedMeterId')]);
             $selectedMeterId = $request->input('selectedMeterId');
+            session(['selected_meter_id' => $selectedMeterId]);
         }
+
         if ($request->has('period') && $request->has('date')) {
             $period = $request->input('period');
             $date = $request->input('date');
@@ -64,7 +62,14 @@ class DashboardController extends Controller
             ]);
         }
 
-        // Store updated values in session
+        if ($period === 'year' && !preg_match('/^\d{4}$/', $date)) {
+            $date = Carbon::today()->format('Y');
+        } elseif ($period === 'month' && preg_match('/^\d{4}$/', $date)) { 
+            $date .= '-01';
+        } elseif ($period === 'day' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $date = $defaultDate;
+        }
+
         session([
             'dashboard_period' => $period,
             'dashboard_date' => $date,
@@ -478,7 +483,7 @@ class DashboardController extends Controller
 
     private function getEnergyData(string $meterId, string $period, string $date)
     {
-        // Probeer eerst uit de MySQL database op te halen
+        // // Probeer eerst uit de MySQL database op te halen
         $latestData = \App\Models\InfluxData::where('tags->meter_id', $meterId)
             ->where('tags->period', $period)
             ->where('tags->date', $date)
