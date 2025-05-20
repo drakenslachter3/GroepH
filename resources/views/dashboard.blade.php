@@ -74,13 +74,10 @@
                                         Type:</label>
                                     <select name="widget_type" id="widget-type"
                                         class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200">
-                                        <option value="usage-prediction">Voorspelling en Prognose</option>
                                         <option value="energy-status-electricity">Electra Status</option>
                                         <option value="energy-status-gas">Gas Status</option>
-                                        <option value="historical-comparison">Historische Vergelijking</option>
                                         <option value="energy-chart-electricity">Electra Grafiek</option>
                                         <option value="energy-chart-gas">Gas Grafiek</option>
-                                        <option value="trend-analysis">Trend Analyse</option>
                                         <option value="energy-suggestions">Energiebesparingstips</option>
                                         <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling
                                         </option>
@@ -260,40 +257,31 @@
                 @foreach ($gridLayout as $item)
                     @php
                         // Skip the date-selector since we've integrated it into the top section
-                        if ($item === 'date-selector') {
-                            continue;
-                        }
+if ($item === 'date-selector') {
+    continue;
+}
 
-                        $widgetSize = match ($item) {
-                            'usage-prediction' => 'large',
-                            'energy-status-electricity', 'energy-status-gas' => 'small',
-                            'historical-comparison' => 'full',
-                            'energy-chart-electricity', 'energy-chart-gas' => 'large',
-                            'trend-analysis' => 'full',
-                            'energy-suggestions' => 'large',
-                            'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
-                            'switch-meter' => 'medium',
-                            default => 'full',
-                        };
+$widgetSize = match ($item) {
+    'usage-prediction' => 'large',
+    'energy-status-electricity', 'energy-status-gas' => 'small',
+    'energy-chart-electricity', 'energy-chart-gas' => 'large',
+    'energy-suggestions' => 'large',
+    'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
+    'switch-meter' => 'medium',
+    default => 'full',
+};
 
-                        $widthClasses = match ($widgetSize) {
-                            'small' => 'w-full sm:w-1/2 lg:w-1/4',
-                            'medium' => 'w-full sm:w-1/2 lg:w-1/3',
-                            'large' => 'w-full lg:w-1/2',
-                            'full' => 'w-full',
+$widthClasses = match ($widgetSize) {
+    'small' => 'w-full sm:w-1/2 lg:w-1/4',
+    'medium' => 'w-full sm:w-1/2 lg:w-1/3',
+    'large' => 'w-full lg:w-1/2',
+    'full' => 'w-full',
                         };
                     @endphp
 
                     <div class="p-2 {{ $widthClasses }}">
                         <div class="h-full p-4 bg-white shadow-md rounded-lg dark:bg-gray-800 dark:text-white">
                             @switch($item)
-                                @case('usage-prediction')
-                                    <x-dashboard.usage-prediction :electricityData="[
-                                        'kwh' => $totals['electricity_kwh'],
-                                        'percentage' => $totals['electricity_percentage'],
-                                    ]" :gasData="['m3' => $totals['gas_m3'], 'percentage' => $totals['gas_percentage']]" :period="$period" />
-                                @break
-
                                 @case('energy-status-electricity')
                                     <x-dashboard.energy-status type="Elektriciteit" :usage="$liveData['electricity']['usage'] ?? 0" :target="$liveData['electricity']['target'] ?? 0"
                                         :cost="$liveData['electricity']['cost'] ?? 0" :percentage="$liveData['electricity']['percentage'] ?? 0" :status="$liveData['electricity']['status'] ?? 'goed'" :date="$date"
@@ -304,11 +292,6 @@
                                     <x-dashboard.energy-status type="Gas" :usage="$liveData['gas']['usage'] ?? 0" :target="$liveData['gas']['target'] ?? 0"
                                         :cost="$liveData['gas']['cost'] ?? 0" :percentage="$liveData['gas']['percentage'] ?? 0" :status="$liveData['gas']['status'] ?? 'goed'" :date="$date"
                                         :period="$period" :liveData="$liveData['gas'] ?? null" unit="m³" />
-                                @break
-
-                                @case('historical-comparison')
-                                    <x-dashboard.historical-comparison :weekData="['electricity' => 42.8, 'gas' => 12.3]" :monthData="['electricity' => 180.5, 'gas' => 52.7]"
-                                        :yearComparisonData="['electricity' => 210.3, 'gas' => 57.1]" />
                                 @break
 
                                 @case('energy-chart-electricity')
@@ -350,6 +333,9 @@
                                 @break
 
                                 @default
+                                    <?php
+                                    echo $item;
+                                    ?>
                             @endswitch
                         </div>
                     </div>

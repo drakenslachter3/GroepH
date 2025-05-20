@@ -12,6 +12,7 @@ use App\Services\InfluxDBService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -237,6 +238,9 @@ class DashboardController extends Controller
         $energydashboard_data['predictionConfidence']    = $predictionConfidence;
         $energydashboard_data['yearlyConsumptionToDate'] = $yearlyConsumptionToDate;
         $energydashboard_data['dailyAverageConsumption'] = $dailyAverageConsumption;
+
+        // Get InfluxDB meter data for the period
+        $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
 
         // Generate notifications using live data
         if (Auth::check() && isset($energydashboard_data['totals'])) {
@@ -533,10 +537,7 @@ class DashboardController extends Controller
             'energy-status-gas',
             'energy-chart-electricity',
             'energy-chart-gas',
-            'usage-prediction',
             'date-selector',
-            'historical-comparison',
-            'trend-analysis', // Behouden van dev branch
             'energy-suggestions',
             'energy-prediction-chart-electricity', // Behouden van SCRUM-53
             'energy-prediction-chart-gas',         // Behouden van SCRUM-53
@@ -579,5 +580,138 @@ class DashboardController extends Controller
         $result        = $influxService->storeEnergyDashboardData($meterId, $period, $date);
 
         return $result['data'];
+    }
+
+    /**
+     * Get aggregated data for a date range
+     *
+     * @param string $meterId The meter ID
+     * @param string $startDate Start date in Y-m-d format
+     * @param string $endDate End date in Y-m-d format
+     * @return array Aggregated energy data
+     */
+    private function getAggregatedData(string $meterId, string $startDate, string $endDate): array
+    {
+        try {
+            // Use getUsageBetweenDates method which already works correctly
+            return $this->getUsageBetweenDates($meterId, $startDate, $endDate);
+        } catch (\Exception $e) {
+            Log::error('Error in getAggregatedData: ' . $e->getMessage());
+            return ['energy_consumed' => 0, 'gas_delivered' => 0];
+        }
+    }
+
+/**
+ * Get usage between two dates (first and last readings)
+ */
+    private function getUsageBetweenDates(string $meterId, string $startDate, string $endDate): array
+    {
+        $startTime = Carbon::parse($startDate)->startOfDay()->toIso8601ZuluString();
+        $endTime   = Carbon::parse($endDate)->endOfDay()->toIso8601ZuluString();
+
+        // Query for first reading in period
+        $firstQuery = '
+    from(bucket: "' . config('influxdb.bucket') . '")
+    |> range(start: ' . $startTime . ', stop: ' . $endTime . ')
+    |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+    |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed")
+    |> filter(fn: (r) => r["_measurement"] == "dsmr")
+    |> first()
+    ';
+
+        // Query for last reading in period
+        $lastQuery = '
+    from(bucket: "' . config('influxdb.bucket') . '")
+    |> range(start: ' . $startTime . ', stop: ' . $endTime . ')
+    |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+    |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed")
+    |> filter(fn: (r) => r["_measurement"] == "dsmr")
+    |> last()
+    ';
+
+        try {
+            $firstResult = $this->influxService->query($firstQuery);
+            $lastResult  = $this->influxService->query($lastQuery);
+
+            // Extract values
+            $firstElectricity = 0;
+            $firstGas         = 0;
+            $lastElectricity  = 0;
+            $lastGas          = 0;
+
+            // Process first results
+            if (! empty($firstResult)) {
+                foreach ($firstResult as $table) {
+                    if (! isset($table->records) || empty($table->records)) {
+                        continue;
+                    }
+
+                    foreach ($table->records as $record) {
+                        if (isset($record->values['_field']) && isset($record->values['_value'])) {
+                            if ($record->values['_field'] === 'energy_consumed') {
+                                $firstElectricity = (float) $record->values['_value'];
+                            } else if ($record->values['_field'] === 'gas_delivered') {
+                                $firstGas = (float) $record->values['_value'];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Process last results
+            if (! empty($lastResult)) {
+                foreach ($lastResult as $table) {
+                    if (! isset($table->records) || empty($table->records)) {
+                        continue;
+                    }
+
+                    foreach ($table->records as $record) {
+                        if (isset($record->values['_field']) && isset($record->values['_value'])) {
+                            if ($record->values['_field'] === 'energy_consumed') {
+                                $lastElectricity = (float) $record->values['_value'];
+                            } else if ($record->values['_field'] === 'gas_delivered') {
+                                $lastGas = (float) $record->values['_value'];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Calculate differences
+            $electricityUsage = max(0, $lastElectricity - $firstElectricity);
+            $gasUsage         = max(0, $lastGas - $firstGas);
+
+            return [
+                'energy_consumed' => $electricityUsage,
+                'gas_delivered'   => $gasUsage,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error getting usage between dates: ' . $e->getMessage());
+            return ['energy_consumed' => 0, 'gas_delivered' => 0];
+        }
+    }
+
+/**
+ * Build a custom InfluxDB query for a date range
+ */
+    private function buildCustomRangeQuery(string $meterId, string $startDate, string $endDate): string
+    {
+        $startTime = Carbon::parse($startDate)->startOfDay()->toIso8601ZuluString();
+        $endTime   = Carbon::parse($endDate)->endOfDay()->toIso8601ZuluString();
+
+        // The error is in the sum() function which expects a single column name, not an array
+        // Let's correct the query syntax
+        return '
+    from(bucket: "' . config('influxdb.bucket') . '")
+    |> range(start: ' . $startTime . ', stop: ' . $endTime . ')
+    |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+    |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed")
+    |> filter(fn: (r) => r["_measurement"] == "dsmr")
+    |> aggregateWindow(every: 1d, fn: last, createEmpty: false)
+    |> difference()
+    |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
+    |> group()
+    |> sum()
+    ';
     }
 }
