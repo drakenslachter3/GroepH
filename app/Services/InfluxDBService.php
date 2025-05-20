@@ -534,4 +534,21 @@ class InfluxDBService
             'data'    => $dashboardData,
         ];
     }
+    /**
+     * Execute a custom query directly
+     *
+     * @param string $query The Flux query to execute
+     * @return array Query result
+     */
+    public function executeCustomQuery(string $query): array
+    {
+        try {
+            $queryApi = $this->client->createQueryApi();
+            return $queryApi->query($query);
+        } catch (\Exception $e) {
+            Log::error('Error executing custom InfluxDB query: ' . $e->getMessage());
+            Log::error('Query: ' . $query);
+            return [];
+        }
+    }
 }

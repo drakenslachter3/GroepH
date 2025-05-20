@@ -12,6 +12,8 @@ use App\Services\InfluxDBService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Models\EnergyStatusData;
 
 class DashboardController extends Controller
 {
@@ -103,13 +105,29 @@ class DashboardController extends Controller
         // Get live InfluxDB data for current usage
         $liveInfluxData = $this->getLiveInfluxData($selectedMeterId, $period, $date);
 
-        // Add energy prediction data for both electricity and gas
-        $predictionData          = [];
-        $budgetData              = [];
-        $predictionPercentage    = [];
-        $predictionConfidence    = [];
-        $yearlyConsumptionToDate = [];
-        $dailyAverageConsumption = [];
+        $meterDataForPeriod = $this->getEnergyData($selectedMeterId, $period, $date);
+
+// Get electricity prediction data using the real InfluxDB data
+        $electricityPredictionResult = $this->dashboardPredictionService->getDashboardPredictionDataWithRealData(
+            'electricity',
+            $period,
+            $date,
+            $meterDataForPeriod
+        );
+        $predictionData['electricity']       = $electricityPredictionResult['predictionData'];
+        $budgetData['electricity']           = $electricityPredictionResult['budgetData'];
+        $predictionConfidence['electricity'] = $electricityPredictionResult['confidence'];
+
+// Get gas prediction data using the real InfluxDB data
+        $gasPredictionResult = $this->dashboardPredictionService->getDashboardPredictionDataWithRealData(
+            'gas',
+            $period,
+            $date,
+            $meterDataForPeriod
+        );
+        $predictionData['gas']       = $gasPredictionResult['predictionData'];
+        $budgetData['gas']           = $gasPredictionResult['budgetData'];
+        $predictionConfidence['gas'] = $gasPredictionResult['confidence'];
 
         // Get electricity prediction data
         $electricityPredictionResult         = $this->dashboardPredictionService->getDashboardPredictionData('electricity', $period, $date);
@@ -238,6 +256,9 @@ class DashboardController extends Controller
         $energydashboard_data['yearlyConsumptionToDate'] = $yearlyConsumptionToDate;
         $energydashboard_data['dailyAverageConsumption'] = $dailyAverageConsumption;
 
+        // Get InfluxDB meter data for the period
+        $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
+
         // Generate notifications using live data
         if (Auth::check() && isset($energydashboard_data['totals'])) {
             $this->notificationService->generateNotificationsForUser(
@@ -264,13 +285,35 @@ class DashboardController extends Controller
         return round((($previousValue - $currentValue) / $previousValue) * 100, 1);
     }
 
-    /**
-     * Get live InfluxDB data for the selected meter and period
-     */
+    // In app/Http/Controllers/DashboardController.php
+
+/**
+ * Get live energy status data with MySQL caching
+ */
     private function getLiveInfluxData(string $meterId, string $period, string $date): array
     {
         try {
-            // Get real-time meter data from InfluxDB
+            // Check if we have recent data in MySQL (less than 15 minutes old)
+            $cachedData = EnergyStatusData::where('meter_id', $meterId)
+                ->where('period', $period)
+                ->where('date', $date)
+                ->where('last_updated', '>', now()->subMinutes(15))
+                ->first();
+
+            if ($cachedData) {
+                // Return cached data from MySQL
+                return [
+                    'current_data'    => $this->getEnergyData($meterId, $period, $date)['current_data'] ?? [],
+                    'historical_data' => $this->getEnergyData($meterId, $period, $date)['historical_data'] ?? [],
+                    'total'           => [
+                        'electricity_usage'      => $cachedData->electricity_usage,
+                        'gas_usage'              => $cachedData->gas_usage,
+                        'electricity_generation' => 0, // Default value if not stored
+                    ],
+                ];
+            }
+
+            // If no cached data or it's stale, fetch from InfluxDB
             $influxData = $this->influxService->getEnergyDashboardData($meterId, $period, $date);
 
             // Calculate totals for the given period
@@ -302,6 +345,65 @@ class DashboardController extends Controller
             if ($gasUsage == 0 && isset($influxData['total']['month']['gas_usage'])) {
                 $gasUsage = $influxData['total']['month']['gas_usage'];
             }
+
+            // Calculate targets for the selected period
+            $electricityTarget = $this->calculateTargetForPeriod('electricity', $period, $date, $budgetData['electricity'] ?? []);
+            $gasTarget         = $this->calculateTargetForPeriod('gas', $period, $date, $budgetData['gas'] ?? []);
+
+            // Calculate costs using the conversion service
+            $electricityCost = $this->conversionService->kwhToEuro($electricityUsage);
+            $gasCost         = $this->conversionService->m3ToEuro($gasUsage);
+
+            // Calculate percentages
+            $electricityPercentage = $electricityTarget > 0 ? ($electricityUsage / $electricityTarget) * 100 : 0;
+            $gasPercentage         = $gasTarget > 0 ? ($gasUsage / $gasTarget) * 100 : 0;
+
+            // Determine status based on percentage
+            $electricityStatus = $this->determineStatus($electricityPercentage);
+            $gasStatus         = $this->determineStatus($gasPercentage);
+
+            // Calculate reduction percentages
+            $electricityReductionPercent = $this->calculateReductionPercentage(
+                $electricityUsage,
+                isset($influxData['historical_data']['energy_consumed']) ?
+                array_sum(array_filter($influxData['historical_data']['energy_consumed'], 'is_numeric')) : 0
+            );
+
+            $gasReductionPercent = $this->calculateReductionPercentage(
+                $gasUsage,
+                isset($influxData['historical_data']['gas_delivered']) ?
+                array_sum(array_filter($influxData['historical_data']['gas_delivered'], 'is_numeric')) : 0
+            );
+
+            // Save to MySQL for future use
+            EnergyStatusData::updateOrCreate(
+                [
+                    'meter_id' => $meterId,
+                    'period'   => $period,
+                    'date'     => $date,
+                ],
+                [
+                    'electricity_usage'         => $electricityUsage,
+                    'electricity_target'        => $electricityTarget,
+                    'electricity_cost'          => $electricityCost,
+                    'electricity_percentage'    => $electricityPercentage,
+                    'electricity_status'        => $electricityStatus,
+                    'electricity_previous_year' => [
+                        'usage'             => $influxData['historical_data']['energy_consumed'] ?? [],
+                        'reduction_percent' => $electricityReductionPercent,
+                    ],
+                    'gas_usage'                 => $gasUsage,
+                    'gas_target'                => $gasTarget,
+                    'gas_cost'                  => $gasCost,
+                    'gas_percentage'            => $gasPercentage,
+                    'gas_status'                => $gasStatus,
+                    'gas_previous_year'         => [
+                        'usage'             => $influxData['historical_data']['gas_delivered'] ?? [],
+                        'reduction_percent' => $gasReductionPercent,
+                    ],
+                    'last_updated'              => now(),
+                ]
+            );
 
             // Return structured data for both charts and status components
             return [
@@ -533,10 +635,7 @@ class DashboardController extends Controller
             'energy-status-gas',
             'energy-chart-electricity',
             'energy-chart-gas',
-            'usage-prediction',
             'date-selector',
-            'historical-comparison',
-            'trend-analysis', // Behouden van dev branch
             'energy-suggestions',
             'energy-prediction-chart-electricity', // Behouden van SCRUM-53
             'energy-prediction-chart-gas',         // Behouden van SCRUM-53
@@ -579,5 +678,181 @@ class DashboardController extends Controller
         $result        = $influxService->storeEnergyDashboardData($meterId, $period, $date);
 
         return $result['data'];
+    }
+
+    /**
+     * Get aggregated data for a date range
+     *
+     * @param string $meterId The meter ID
+     * @param string $startDate Start date in Y-m-d format
+     * @param string $endDate End date in Y-m-d format
+     * @return array Aggregated energy data
+     */
+    private function getAggregatedData(string $meterId, string $startDate, string $endDate): array
+    {
+        try {
+            // Use getUsageBetweenDates method which already works correctly
+            return $this->getUsageBetweenDates($meterId, $startDate, $endDate);
+        } catch (\Exception $e) {
+            Log::error('Error in getAggregatedData: ' . $e->getMessage());
+            return ['energy_consumed' => 0, 'gas_delivered' => 0];
+        }
+    }
+
+/**
+ * Get usage between two dates (first and last readings)
+ */
+    private function getUsageBetweenDates(string $meterId, string $startDate, string $endDate): array
+    {
+        $startTime = Carbon::parse($startDate)->startOfDay()->toIso8601ZuluString();
+        $endTime   = Carbon::parse($endDate)->endOfDay()->toIso8601ZuluString();
+
+        // Query for first reading in period
+        $firstQuery = '
+    from(bucket: "' . config('influxdb.bucket') . '")
+    |> range(start: ' . $startTime . ', stop: ' . $endTime . ')
+    |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+    |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed")
+    |> filter(fn: (r) => r["_measurement"] == "dsmr")
+    |> first()
+    ';
+
+        // Query for last reading in period
+        $lastQuery = '
+    from(bucket: "' . config('influxdb.bucket') . '")
+    |> range(start: ' . $startTime . ', stop: ' . $endTime . ')
+    |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+    |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed")
+    |> filter(fn: (r) => r["_measurement"] == "dsmr")
+    |> last()
+    ';
+
+        try {
+            $firstResult = $this->influxService->query($firstQuery);
+            $lastResult  = $this->influxService->query($lastQuery);
+
+            // Extract values
+            $firstElectricity = 0;
+            $firstGas         = 0;
+            $lastElectricity  = 0;
+            $lastGas          = 0;
+
+            // Process first results
+            if (! empty($firstResult)) {
+                foreach ($firstResult as $table) {
+                    if (! isset($table->records) || empty($table->records)) {
+                        continue;
+                    }
+
+                    foreach ($table->records as $record) {
+                        if (isset($record->values['_field']) && isset($record->values['_value'])) {
+                            if ($record->values['_field'] === 'energy_consumed') {
+                                $firstElectricity = (float) $record->values['_value'];
+                            } else if ($record->values['_field'] === 'gas_delivered') {
+                                $firstGas = (float) $record->values['_value'];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Process last results
+            if (! empty($lastResult)) {
+                foreach ($lastResult as $table) {
+                    if (! isset($table->records) || empty($table->records)) {
+                        continue;
+                    }
+
+                    foreach ($table->records as $record) {
+                        if (isset($record->values['_field']) && isset($record->values['_value'])) {
+                            if ($record->values['_field'] === 'energy_consumed') {
+                                $lastElectricity = (float) $record->values['_value'];
+                            } else if ($record->values['_field'] === 'gas_delivered') {
+                                $lastGas = (float) $record->values['_value'];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Calculate differences
+            $electricityUsage = max(0, $lastElectricity - $firstElectricity);
+            $gasUsage         = max(0, $lastGas - $firstGas);
+
+            return [
+                'energy_consumed' => $electricityUsage,
+                'gas_delivered'   => $gasUsage,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error getting usage between dates: ' . $e->getMessage());
+            return ['energy_consumed' => 0, 'gas_delivered' => 0];
+        }
+    }
+
+/**
+ * Build a custom InfluxDB query for a date range
+ */
+    private function buildCustomRangeQuery(string $meterId, string $startDate, string $endDate): string
+    {
+        $startTime = Carbon::parse($startDate)->startOfDay()->toIso8601ZuluString();
+        $endTime   = Carbon::parse($endDate)->endOfDay()->toIso8601ZuluString();
+
+        // The error is in the sum() function which expects a single column name, not an array
+        // Let's correct the query syntax
+        return '
+    from(bucket: "' . config('influxdb.bucket') . '")
+    |> range(start: ' . $startTime . ', stop: ' . $endTime . ')
+    |> filter(fn: (r) => r["signature"] == "' . $meterId . '")
+    |> filter(fn: (r) => r["_field"] == "gas_delivered" or r["_field"] == "energy_consumed")
+    |> filter(fn: (r) => r["_measurement"] == "dsmr")
+    |> aggregateWindow(every: 1d, fn: last, createEmpty: false)
+    |> difference()
+    |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
+    |> group()
+    |> sum()
+    ';
+    }
+
+    /**
+     * Refresh data from InfluxDB to MySQL
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function refreshData(Request $request)
+    {
+        $user            = Auth::user();
+        $period          = session('dashboard_period', 'day');
+        $date            = session('dashboard_date', Carbon::today()->format('Y-m-d'));
+        $selectedMeterId = session('selected_meter_id', null);
+
+        if (! $selectedMeterId) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Geen slimme meter geselecteerd!');
+        }
+
+        try {
+            // Get InfluxDB service
+            $influxService = app(\App\Services\InfluxDBService::class);
+
+            // Force refresh chart data by fetching from InfluxDB directly
+            $result = $influxService->storeEnergyDashboardData($selectedMeterId, $period, $date);
+
+            // Force refresh status data by removing old MySQL records
+            EnergyStatusData::where('meter_id', $selectedMeterId)
+                ->where('period', $period)
+                ->where('date', $date)
+                ->delete();
+
+            // Trigger a fresh fetch by calling getLiveInfluxData (which will now store to MySQL)
+            $this->getLiveInfluxData($selectedMeterId, $period, $date);
+
+            return redirect()->route('dashboard')
+                ->with('status', 'Data succesvol vernieuwd! Laatste update: ' . Carbon::now()->format('H:i:s'));
+        } catch (\Exception $e) {
+            \Log::error('Error refreshing data: ' . $e->getMessage());
+            return redirect()->route('dashboard')
+                ->with('error', 'Fout bij het vernieuwen van data: ' . $e->getMessage());
+        }
     }
 }
