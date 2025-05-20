@@ -36,56 +36,67 @@
 @endphp
 
 <section class="p-2" aria-labelledby="chart-widget-title">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <x-widget-navigation :showPrevious="true" />
+    <div aria-label="Dashboard navigatie en periode selectie" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <x-widget-navigation :showPrevious="true" aria-label="Vorige widget" />
         <x-widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
-        <x-widget-navigation :showNext="true" />
+        <span tabindex="0" class="sr-only"> - tabelweergave voor schermlezers</span>
+        <x-widget-navigation :showNext="true" aria-label="Volgende widget" />
         
-        <div class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
+        <div role="group" aria-label="Periode selectie" class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
             @foreach (['day' => 'Dag', 'month' => 'Maand', 'year' => 'Jaar'] as $key => $label)
-                <a href="{{ route('dashboard', ['period' => $key, 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}"
-                class="px-3 py-1 text-sm transition-colors
-                    {{ $loop->first ? 'rounded-l-md' : '' }}
-                    {{ $loop->last ? 'rounded-r-md' : '' }}
-                    {{ $period === $key 
-                        ? 'bg-' . $buttonColor . '-500 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
-                    {{ $label }}
-                </a>
+                <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
+                    <input type="hidden" name="period" value="{{ $key }}">
+                    <input type="hidden" name="date" value="{{ $date }}">
+                    <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
+                    <button 
+                        type="submit"
+                        class="px-3 py-1 text-sm transition-colors
+                            {{ $loop->first ? 'rounded-l-md' : '' }}
+                            {{ $loop->last ? 'rounded-r-md' : '' }}
+                            {{ $period === $key 
+                                ? 'bg-' . $buttonColor . '-500 text-white' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}"
+                        aria-pressed="{{ $period === $key ? 'true' : 'false' }}"
+                        aria-label="Toon gegevens per {{ strtolower($label) }} {{ $period === $key ? '(huidige instelling)' : '' }}"
+                    >
+                        {{ $label }}
+                    </button>
+                </form>
             @endforeach
         </div>
     </div>
-
-    <div class="flex justify-between items-center mb-4">
+    
+    <div role="region" aria-label="Datum navigatie" class="flex justify-between items-center mb-4">
         {{-- Previous Button --}}
-        <a href="{{ route('dashboard', [
-            'period' => $period, 
-            'date' => $previousDate->format('Y-m-d'),
-            'housing_type' => request('housing_type', 'tussenwoning')
-        ]) }}" 
-        class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
-        </a>
-
+        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0" aria-label="Vorige periode">
+            <input type="hidden" name="period" value="{{ $period }}">
+            <input type="hidden" name="date" value="{{ $previousDate->format('Y-m-d') }}">
+            <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
+            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="Ga naar vorige {{ $period }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </form>
+    
         {{-- Label --}}
-        <span class="px-3 py-1 text-sm bg-{{ $buttonColor }}-500 text-white dark:bg-{{ $buttonColor }}-600 dark:text-white rounded-md">
+        <span class="px-3 py-1 text-sm bg-{{ $buttonColor }}-500 text-white dark:bg-{{ $buttonColor }}-600 dark:text-white rounded-md" aria-live="polite" aria-atomic="true">
             {{ $unitLabel }} Verbruik
         </span>
-
+    
         {{-- Next Button --}}
-        <a href="{{ route('dashboard', [
-            'period' => $period, 
-            'date' => $nextDate->format('Y-m-d'),
-            'housing_type' => request('housing_type', 'tussenwoning')
-        ]) }}" 
-        class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-            </svg>
-        </a>
+        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0" aria-label="Volgende periode">
+            <input type="hidden" name="period" value="{{ $period }}">
+            <input type="hidden" name="date" value="{{ $nextDate->format('Y-m-d') }}">
+            <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
+            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="Ga naar volgende {{ $period }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </form>
     </div>
+    
     
     <div class="relative" style="height: 300px;">
         <canvas id="{{ $type }}Chart"></canvas>
@@ -99,7 +110,7 @@
 
     {{-- Accessible data table for the chart to support screen readers --}}
     <div class="focus:not-sr-only focus:absolute focus:z-10 focus:bg-white focus:dark:bg-gray-800 focus:p-4 focus:border focus:border-gray-300 focus:dark:border-gray-600 focus:shadow-lg focus:rounded-md focus:w-full focus:max-w-3xl">
-        <div id="{{ $type }}TableCaption" class="text-lg font-semibold mb-2 dark:text-white" tabindex="0">
+        <div class="text-lg font-semibold mb-2 dark:text-white">
             @php
                 $formattedPeriodDate = match($period) {
                     'day' => Carbon::parse($date)->translatedFormat('l j F Y'),
@@ -109,18 +120,15 @@
                 };
             @endphp
 
-            {{ $title }} - Overzicht verbruik voor {{ $formattedPeriodDate }}
+            
         </div>
         <div class="overflow-x-auto">
             <table class="w-full border-collapse table-auto">
                 <thead>
                     <tr>
-                        <th scope="col" class="sr-only">Tijdsinterval</th>
-                        <th scope="col" class="sr-only">Huidig verbruik</th>
-                        @if(!empty($chartData[$dataKey . '_previous_year']))
-                        <th scope="col" class="sr-only">Vorig jaar verbruik</th>
-                        <th scope="col" class="sr-only">Verschil</th>
-                        @endif
+                        <th tabindex="0" id="{{ $type }}TableCaption" >
+                            {{ $title }} - Overzicht verbruik voor {{ $formattedPeriodDate }}
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -147,7 +155,7 @@
                                 case 'day':
                                     $hour = str_pad($index, 2);
                                     $nextHour = str_pad($index + 1, 2);
-                                    $dateFormat = "Tussen {$hour} uur en {$nextHour} uur was je verbruik";
+                                    $dateFormat = "Tussen {$hour} en {$nextHour} uur was uw verbruik";
                                     break;
 
                                 case 'month':
@@ -155,7 +163,7 @@
                                     $dayNumber = $index + 1;
                                     $dayFormat = "{$dayNumber}e";
 
-                                    $dateFormat = "Op {$dayFormat} was je verbruik";
+                                    $dateFormat = "Op {$dayFormat} was uw verbruik";
                                     break;
 
                                 case 'year':
@@ -164,7 +172,7 @@
                                         "Juli", "Augustus", "September", "Oktober", "November", "December"
                                     ];
                                     $monthName = $months[$index] ?? "Maand " . ($index + 1);
-                                    $dateFormat = "In {$monthName} was je verbruik";
+                                    $dateFormat = "In {$monthName} was uw verbruik";
                                     break;
 
                                 default:
@@ -176,9 +184,9 @@
                             <td scope="row" class="border dark:border-gray-700" tabindex="0">
                                 {{ $dateFormat }} {{ number_format($value, 2, ',', '.') }} {{ $unit }}.
                                 @if($hasPreviousYearData && $prevValue !== null)
-                                    Vorig jaar verbruikte je {{ number_format($prevValue, 2, ',', '.') }} {{ $unit }}.
+                                    Vorig jaar verbruikte u {{ number_format($prevValue, 2, ',', '.') }} {{ $unit }}.
                                     @if($diff !== null)
-                                        {{ $diff < 0 ? 'Je bespaarde ' : 'Je verbruikte ' }}{{ number_format(abs($diff), 2, ',', '.') }} {{ $unit }} meer dan vorig jaar.
+                                        {{ $diff < 0 ? 'U bespaarde ' : 'U verbruikte ' }}{{ number_format(abs($diff), 2, ',', '.') }} {{ $unit }} meer dan vorig jaar.
                                         {{-- ({{ $percentChange < 0 ? '-' : '+' }}{{ number_format(abs($percentChange), 1, ',', '.') }}%) --}}
                                     @endif
                                 @endif
@@ -189,14 +197,14 @@
                 <tfoot>
                     <tr>
                         <td scope="row" class="border font-bold dark:border-gray-700" tabindex="0">
-                            In totaal verbruikte je {{ number_format($totalCurrent, 2, ',', '.') }} {{ $unit }}.
+                            In totaal verbruikte u {{ number_format($totalCurrent, 2, ',', '.') }} {{ $unit }}.
                             @if($hasPreviousYearData && $prevValue !== null)
                                 @php
                                     $totalDiff = $totalCurrent - $totalPrevious;
                                     $totalPercentChange = $totalPrevious != 0 ? (($totalCurrent - $totalPrevious) / $totalPrevious) * 100 : null;
                                 @endphp
-                                Vorig jaar verbruikte je {{ number_format($totalPrevious, 2, ',', '.') }} {{ $unit }}.
-                                {{ $totalDiff < 0 ? 'Je bespaarde' : 'Je verbruikte' }} {{ number_format(abs($totalDiff), 2, ',', '.') }} {{ $unit }} meer dan vorig jaar.
+                                Vorig jaar verbruikte u {{ number_format($totalPrevious, 2, ',', '.') }} {{ $unit }}.
+                                {{ $totalDiff < 0 ? 'U bespaarde' : 'U verbruikte' }} {{ number_format(abs($totalDiff), 2, ',', '.') }} {{ $unit }} meer dan vorig jaar.
                                 {{-- ({{ $totalPercentChange < 0 ? '-' : '+' }}{{ number_format(abs($totalPercentChange), 1, ',', '.') }}%) --}}
                             @endif
                         </td>

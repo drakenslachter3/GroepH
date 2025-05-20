@@ -63,22 +63,31 @@
 
     <!-- Third tab stop: Complete summary that can be focused - IMPROVED READABLE FORMAT -->
     <div id="usage-summary" tabindex="0" class="sr-only focus:not-sr-only focus:p-2 focus:border focus:border-blue-500 focus:rounded-md">
-        Uw {{ strtolower($type) }}verbruik is <strong>{{ $actualStatus }}</strong>. U heeft {{ number_format($actualUsage, 2) }} {{ $unit }} verbruikt, met een target van {{ number_format($actualTarget, 2) }} {{ $unit }}. 
-        Dat is {{ $differenceText }} ({{ number_format($actualPercentage, 1) }}% van target).
+        U heeft {{ number_format($actualUsage, 2) }} {{ $unit }} verbruikt, met een target van {{ number_format($actualTarget, 2) }} {{ $unit }}. 
+        Dat is {{ $differenceText }} ({{ number_format($actualPercentage, 1) }}% van uw target).
     </div>
 
     <!-- Individual metrics, each can be focused with IMPROVED READABILITY -->
     <div class="space-y-2">
         <!-- Usage value -->
         <div class="flex justify-between items-center">
-            <span tabindex="0" class="text-gray-700 dark:text-gray-300">Verbruik:</span>
-            <span tabindex="0" class="font-bold dark:text-white">{{ number_format($actualUsage, 2) }} {{ $unit }}</span>
+            <span class="text-gray-700 dark:text-gray-300">Verbruik:</span>
+            <span tabindex="0"
+                aria-label="Uw verbruik op {{ \Carbon\Carbon::parse($date)->translatedFormat('d F') }} was {{ number_format($actualUsage, 2) }} {{ $unit }}. 
+                U zit {{ $differenceText }} ({{ number_format($actualPercentage, 1) }}% van uw target)."
+                class="font-bold dark:text-white">
+                {{ number_format($actualUsage, 2) }} {{ $unit }}
+            </span>
         </div>
         
         <!-- Target value -->
         <div class="flex justify-between items-center">
-            <span tabindex="0" class="text-gray-700 dark:text-gray-300">Target:</span>
-            <span tabindex="0" class="font-bold dark:text-white">{{ number_format($actualTarget, 2) }} {{ $unit }}</span>
+            <span class="text-gray-700 dark:text-gray-300">Target:</span>
+            <span tabindex="0"
+                aria-label="Uw target op {{ \Carbon\Carbon::parse($date)->translatedFormat('d F') }} was {{ number_format($actualTarget, 2) }} {{ $unit }}"
+                class="font-bold dark:text-white">
+                {{ number_format($actualTarget, 2) }} {{ $unit }}
+            </span>
         </div>
     </div>
    
@@ -104,7 +113,7 @@
         @endphp
 
         <!-- Seventh tab stop: Focused progress bar with full description -->
-        <div tabindex="0" 
+        <div
              aria-label="Voortgangsbalk voor {{ strtolower($type) }} verbruik"
              aria-valuemin="0" 
              aria-valuemax="100" 
@@ -189,40 +198,48 @@
         </div>
     </div>
    
-    <!-- Historical comparison section -->
+    <!-- Historical comparison section --> 
     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <h4 id="comparison-heading" class="font-medium text-gray-700 mb-2 dark:text-gray-300" tabindex="0">Vergelijking met vorig jaar</h4>
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                @php
-                    // Use real data from InfluxDB instead of random values
-                    $reductionPercent = $liveData['previous_year']['reduction_percent'] ?? 0;
-                    $icon = $reductionPercent > 0 ? 'trending-down' : 'trending-up';
-                    $color =
-                        $reductionPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-                    $previousYearValue = $liveData['previous_year']['usage'] ?? 0;
-                    if (is_array($previousYearValue)) {
-                        $previousYearValue = array_sum(array_filter($previousYearValue, 'is_numeric'));
-                    }
-                @endphp
-                
-                <!-- Ninth tab stop: Comparison text -->
-                <div class="flex items-center" tabindex="0" aria-labelledby="comparison-heading">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $color }} mr-1" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        @if($reductionPercent > 0)
-                            <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
-                        @else
-                            <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
-                        @endif
-                    </svg>
-                    <span class="{{ $color }} text-xs">{{ abs($reductionPercent) }}% {{ $reductionPercent > 0 ? 'vermindering' : 'toename' }} vergeleken met vorig jaar</span>
-                </div>
+        <h4 id="comparison-heading" class="font-medium text-gray-700 mb-2 dark:text-gray-300" tabindex="0">
+            Vergelijking met vorig jaar
+        </h4>
+
+        <div class="flex items-center justify-between" aria-labelledby="comparison-heading">
+            @php
+                $reductionPercent = $liveData['previous_year']['reduction_percent'] ?? 0;
+                $icon = $reductionPercent > 0 ? 'trending-down' : 'trending-up';
+                $color = $reductionPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+                $previousYearValue = $liveData['previous_year']['usage'] ?? 0;
+                if (is_array($previousYearValue)) {
+                    $previousYearValue = array_sum(array_filter($previousYearValue, 'is_numeric'));
+                }
+                $differenceType = $reductionPercent > 0 ? 'vermindering' : 'toename';
+            @endphp
+
+            <!-- Samengevoegd blok met visuele en screenreader-inhoud -->
+            <div class="flex items-center text-xs" tabindex="0" 
+                aria-label="{{ abs($reductionPercent) }} procent {{ $differenceType }} ten opzichte van vorig jaar, dat was {{ number_format($previousYearValue, 2) }} {{ $unit }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $color }} mr-1" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    @if($reductionPercent > 0)
+                        <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+                    @else
+                        <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                    @endif
+                </svg>
+
+                <!-- Procentuele verandering -->
+                <span class="{{ $color }} mr-2">
+                    {{ abs($reductionPercent) }}% {{ $differenceType }}
+                </span>
+
+                <!-- Waarde vorig jaar -->
+                <span class="text-gray-500 dark:text-gray-400">
+                    ({{ number_format($previousYearValue, 2) }} {{ $unit }})
+                </span>
             </div>
-            
-            <!-- Tenth tab stop: Previous year value -->
-            <span class="text-xs text-gray-500 dark:text-gray-400" tabindex="0">{{ number_format($previousYearValue, 2) }} {{ $unit }}</span>
         </div>
     </div>
+
 </section>
 
 <script>
