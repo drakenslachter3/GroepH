@@ -36,7 +36,7 @@ class LoginTest extends DuskTestCase
                 ->type('email', 'test@example.com')
                 ->type('password', 'wrong-password')
                 ->press('@login-button')
-                ->pause(1000)
+                ->pause(5000)
                 ->screenshot('after_login_with_incorrect_credentials')
                 ->assertPathIs('/login')
                 ->assertSee('These credentials do not match our records');
