@@ -1,4 +1,4 @@
-@props(['currentData', 'budgetData', 'type', 'period', 'percentage', 'confidence', 'yearlyConsumptionToDate' => 0, 'dailyAverageConsumption' => 0])
+@props(['title', 'currentData', 'budgetData', 'type', 'period', 'percentage', 'confidence', 'yearlyConsumptionToDate' => 0, 'dailyAverageConsumption' => 0])
 
 {{-- Set default values for any missing props --}}
 @php
@@ -26,6 +26,9 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
                 </span>
                 @endif
             </h3>
+            <x-widget-navigation :showPrevious="true" />
+            <x-widget-heading :title="$title" :period="$period" :date="$date" />
+            <x-widget-navigation :showNext="true" />
         </div>
     </div>
             

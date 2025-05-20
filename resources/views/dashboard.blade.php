@@ -235,7 +235,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap -mx-2 justify-center">
+            <div class="flex flex-wrap -mx-2 justify-between">
                 @foreach ($gridLayout as $item)
                     @php
                         // Skip the date-selector since we've integrated it into the top section
@@ -261,7 +261,7 @@
                             'energy-chart-electricity', 'energy-chart-gas' => 'large',
                             'energy-suggestions' => 'large',
                             'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
-                            'switch-meter' => 'medium',
+                            'switch-meter' => 'full',
                             default => 'full',
                         };
 
@@ -276,34 +276,45 @@
                     <div class="p-2 {{ $widthClasses }}">
                         <div class="h-full p-4 bg-white shadow-md rounded-lg dark:bg-gray-800 dark:text-white">
                             @switch($item)
+                                @case('switch-meter')
+                                    <x-dashboard.switch-meter title="Selecteer een meter"
+                                    :meters="\App\Models\SmartMeter::getAllSmartMetersForCurrentUser()" 
+                                    :selectedMeterId="\App\Models\UserGridLayout::getSelectedSmartMeterForCurrentUser()" />
+                                @break
+
                                 @case('energy-status-electricity')
-                                    <x-dashboard.energy-status type="Elektriciteit" title="Status Elektriciteitsverbruik (kWh)"
+                                    <x-dashboard.energy-status type="electricity" title="Status Elektriciteitsverbruik"
+                                        :period="$period" :date="$date" unit="kWh"
                                         :usage="$liveData['electricity']['usage'] ?? 0" :target="$liveData['electricity']['target'] ?? 0"
-                                        :cost="$liveData['electricity']['cost'] ?? 0" :percentage="$liveData['electricity']['percentage'] ?? 0" :status="$liveData['electricity']['status'] ?? 'goed'" :date="$date"
-                                        :period="$period" :liveData="$liveData['electricity'] ?? null" unit="kWh" />
+                                        :cost="$liveData['electricity']['cost'] ?? 0" :percentage="$liveData['electricity']['percentage'] ?? 0" 
+                                        :status="$liveData['electricity']['status'] ?? 'goed'"
+                                        :liveData="$liveData['electricity'] ?? null" />
                                 @break
 
                                 @case('energy-status-gas')
-                                    <x-dashboard.energy-status type="Gas" title="Status Gasverbruik (m³)"
+                                    <x-dashboard.energy-status type="gas" title="Status Gasverbruik"
+                                        :period="$period" :date="$date" unit="m³"
                                         :usage="$liveData['gas']['usage'] ?? 0" :target="$liveData['gas']['target'] ?? 0"
-                                        :cost="$liveData['gas']['cost'] ?? 0" :percentage="$liveData['gas']['percentage'] ?? 0" :status="$liveData['gas']['status'] ?? 'goed'" :date="$date"
-                                        :period="$period" :liveData="$liveData['gas'] ?? null" unit="m³" />
+                                        :cost="$liveData['gas']['cost'] ?? 0" :percentage="$liveData['gas']['percentage'] ?? 0" 
+                                        :status="$liveData['gas']['status'] ?? 'goed'"
+                                        :liveData="$liveData['gas'] ?? null" />
                                 @break
 
                                 @case('energy-chart-electricity')
-                                    <x-dashboard.energy-chart type="electricity" title="Grafiek Elektriciteitsverbruik (kWh)"
-                                        buttonLabel="Toon Vorig Jaar" buttonColor="blue" :chartData="$meterDataForPeriod['current_data'] ?? []" :period="$period"
-                                        :date="$date" />
+                                    <x-dashboard.energy-chart type="electricity" title="Grafiek Elektriciteitsverbruik"
+                                        :period="$period" :date="$date" unit="kWh"
+                                        buttonLabel="Toon Vorig Jaar" buttonColor="blue" :chartData="$meterDataForPeriod['current_data'] ?? []" />
                                 @break
 
                                 @case('energy-chart-gas')
-                                    <x-dashboard.energy-chart type="gas" title="Grafiek Gasverbruik (m³)"
-                                        buttonLabel="Toon Vorig Jaar" buttonColor="yellow" :chartData="$meterDataForPeriod['current_data'] ?? []"
-                                        :period="$period" :date="$date" />
+                                    <x-dashboard.energy-chart type="gas" title="Grafiek Gasverbruik"
+                                        :period="$period" :date="$date" unit="m³"
+                                        buttonLabel="Toon Vorig Jaar" buttonColor="yellow" :chartData="$meterDataForPeriod['current_data'] ?? []" />
                                 @break
 
                                 @case('energy-suggestions')
-                                    <x-dashboard.energy-suggestions :usagePattern="$usagePattern ?? 'avond'" :housingType="$housingType" :season="date('n') >= 3 && date('n') <= 5
+                                    <x-dashboard.energy-suggestions title="Gepersonaliseerde Energiebesparingstips"
+                                        :usagePattern="$usagePattern ?? 'avond'" :housingType="$housingType" :season="date('n') >= 3 && date('n') <= 5
                                         ? 'lente'
                                         : (date('n') >= 6 && date('n') <= 8
                                             ? 'zomer'
@@ -313,19 +324,19 @@
                                 @break
 
                                 @case('energy-prediction-chart-electricity')
-                                    <x-dashboard.energy-prediction-chart :currentData="$predictionData['electricity'] ?? []" :budgetData="$budgetData['electricity'] ?? []"
-                                        type="electricity" :period="$period" :percentage="$predictionPercentage['electricity'] ?? 0" :confidence="$predictionConfidence['electricity'] ?? 75"
+                                    <x-dashboard.energy-prediction-chart type="electricity" title="Voorspelling Elektriciteitsverbruik"
+                                        :period="$period" :date="$date" unit="kWh"
+                                        :currentData="$predictionData['electricity'] ?? []" :budgetData="$budgetData['electricity'] ?? []"
+                                        :percentage="$predictionPercentage['electricity'] ?? 0" :confidence="$predictionConfidence['electricity'] ?? 75"
                                         :yearlyConsumptionToDate="$yearlyConsumptionToDate['electricity'] ?? 0" :dailyAverageConsumption="$dailyAverageConsumption['electricity'] ?? 0" />
                                 @break
 
                                 @case('energy-prediction-chart-gas')
-                                    <x-dashboard.energy-prediction-chart :currentData="$predictionData['gas'] ?? []" :budgetData="$budgetData['gas'] ?? []" 
-                                        type="gas" :period="$period" :percentage="$predictionPercentage['gas'] ?? 0" :confidence="$predictionConfidence['gas'] ?? 75" 
+                                    <x-dashboard.energy-prediction-chart type="gas" title="Voorspelling Gasverbruik"
+                                        :period="$period" :date="$date" unit="m³"
+                                        :currentData="$predictionData['gas'] ?? []" :budgetData="$budgetData['gas'] ?? []" 
+                                        :percentage="$predictionPercentage['gas'] ?? 0" :confidence="$predictionConfidence['gas'] ?? 75" 
                                         :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0" :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0" />
-                                @break
-
-                                @case('switch-meter')
-                                    <x-dashboard.switch-meter :meters="\App\Models\SmartMeter::getAllSmartMetersForCurrentUser()" :selectedMeterId="\App\Models\UserGridLayout::getSelectedSmartMeterForCurrentUser()" />
                                 @break
 
                                 @default

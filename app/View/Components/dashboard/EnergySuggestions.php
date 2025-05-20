@@ -7,26 +7,14 @@ use Illuminate\View\View;
 
 class EnergySuggestions extends Component
 {
-    /**
-     * Gebruikspatroon van de gebruiker
-     */
+    public $title;
     public $usagePattern;
-    
-    /**
-     * Type woning van de gebruiker
-     */
     public $housingType;
-    
-    /**
-     * Huidig seizoen
-     */
     public $season;
-    
-    /**
-     * Maak een nieuwe component instantie.
-     */
-    public function __construct($usagePattern = null, $housingType = 'tussenwoning', $season = null)
+
+    public function __construct($title, $usagePattern = null, $housingType = 'tussenwoning', $season = null)
     {
+        $this->title = $title;
         $this->usagePattern = $usagePattern;
         $this->housingType = $housingType;
         

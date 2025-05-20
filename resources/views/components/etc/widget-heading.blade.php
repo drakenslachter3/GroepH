@@ -40,7 +40,7 @@
         }
     @endphp
 
-    <h3 id="usage-widget-title-{{ $type }}" class="text-lg font-semibold dark:text-white" tabindex="0" aria-label="{{ $ariaLabel }}">
+    <h3 id="{{$title}}-widget-title-{{ $type }}" class="text-lg font-semibold dark:text-white" tabindex="0" aria-label="{{ $ariaLabel }}">
         {{ $title }}
         @if($formattedDate)
             <span class="sr-only text-sm font-normal text-gray-500 dark:text-gray-300 ml-2">

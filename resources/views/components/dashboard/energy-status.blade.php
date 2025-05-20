@@ -36,9 +36,9 @@
 @endphp
 
 <section class="p-2" aria-labelledby="usage-widget-title">
-    <div class="flex justify-between items-start mb-4">
+    <div class="flex justify-between mb-4">
         <x-widget-navigation :showPrevious="true" />
-        <x-widget-heading :title="$title" :type="$type" :date="$date" :period="$period" />
+        <x-widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
         <x-widget-navigation :showNext="true" />
         
         <!-- Info tooltip -->

@@ -12,9 +12,13 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <a href="#main-content" class="focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2 rounded shadow">
-                        Skip to main content
-                    </a>
+                    <button
+                        class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2 rounded shadow"
+                        type="button"
+                        onclick="document.getElementById('main-content').focus(); window.location.hash = '#main-content';"
+                        >
+                        Ga naar de hoofdinhoud
+                    </button>
                     <x-etc.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-etc.nav-link>
@@ -22,9 +26,6 @@
                     <x-etc.nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
                         {{ __('Budget Instellen') }}
                     </x-etc.nav-link>
-
-          
-
                     
                     @if(Auth::user()->hasRole(['admin', 'owner']))
                         <x-etc.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">

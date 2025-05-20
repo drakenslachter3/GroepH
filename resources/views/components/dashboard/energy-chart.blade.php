@@ -1,4 +1,4 @@
-@props(['type', 'title', 'buttonLabel', 'buttonColor', 'chartData', 'period', 'date' => null])
+@props(['title', 'type', 'unit', 'period', 'date' => null, 'buttonLabel', 'buttonColor', 'chartData'])
 
 @php
     use Carbon\Carbon;
@@ -35,10 +35,10 @@
     $borderColor = $type === 'electricity' ? 'rgb(37, 99, 235)' : 'rgb(217, 119, 6)';
 @endphp
 
-<section class="p-6" aria-labelledby="chart-widget-title">
+<section class="p-2" aria-labelledby="chart-widget-title">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <x-widget-navigation :showPrevious="true" />
-        <x-widget-heading :title="$title" :type="$type" :date="$date" :period="$period" />
+        <x-widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
         <x-widget-navigation :showNext="true" />
         
         <div class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
@@ -131,7 +131,6 @@
                         $previousData = empty($chartData[$dataKey . '_previous_year']) ?? [];
                         $hasPreviousYearData = true;
                         $currentDate = Carbon::parse($date);
-                        $unit = $type === 'electricity' ? 'kWh' : 'm³';
                     @endphp
 
                     @foreach($currentData as $index => $value)
@@ -220,7 +219,7 @@
             backButton.addEventListener('click', function() {
                 const header = document.getElementById('{{ $type }}TableHeader');
                 if (header) {
-                    header.setAttribute('tabindex', '-1'); // Make sure it can be focused
+                    header.setAttribute('tabindex', '-1');
                     header.focus();
                 }
             });
@@ -351,7 +350,7 @@
                     // Use the previous year data if available
                     const previousYearKey = `${dataKey}_previous_year`;
                     chart.data.datasets.push({
-                        label: '{{ $type === "electricity" ? "kWh" : "m³" }} Verbruik Vorig Jaar',
+                        label: '{{$unit}} Verbruik Vorig Jaar',
                         data: chartData[previousYearKey] || [],
                         backgroundColor: '{{ $type === "electricity" ? "rgba(34, 197, 94, 0.6)" : "rgba(234, 88, 12, 0.6)" }}',
                         borderColor: '{{ $type === "electricity" ? "rgb(22, 163, 74)" : "rgb(234, 88, 12)" }}',

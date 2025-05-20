@@ -5,12 +5,14 @@ use Illuminate\View\Component;
 
 class WidgetHeading extends Component
 {
-    public string $type;
+    public string $title;
+    public ?string $type;
     public ?string $date;
     public ?string $period;
 
-    public function __construct(string $type, ?string $date = null, ?string $period = null)
+    public function __construct(string $title, ?string $type = null, ?string $date = null, ?string $period = null)
     {
+        $this->title = $title;
         $this->type = $type;
         $this->date = $date;
         $this->period = $period;

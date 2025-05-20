@@ -7,8 +7,8 @@ use Illuminate\View\View;
 
 class EnergyStatus extends Component
 {
-    public $type;
     public $title;
+    public $type;
     public $usage;
     public $target;
     public $cost;
