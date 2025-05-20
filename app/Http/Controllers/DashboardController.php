@@ -4,15 +4,14 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\EnergyVisualizationController;
 use App\Models\SmartMeter;
 use App\Models\UserGridLayout;
-use App\Services\EnergyConversionService;
-use App\Services\EnergyPredictionService;
-use App\Services\InfluxDBService; // Add this import
-use Carbon\Carbon;
-use App\Services\EnergyNotificationService;
 use App\Services\DashboardPredictionService;
+use App\Services\EnergyConversionService;
+use App\Services\EnergyNotificationService; // Add this import
+use App\Services\EnergyPredictionService;
+use App\Services\InfluxDBService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -21,31 +20,30 @@ class DashboardController extends Controller
     private $influxService; // Add this property
 
     public function __construct(
-        EnergyConversionService $conversionService, 
-        EnergyPredictionService $predictionService, 
-        EnergyNotificationService $notificationService, 
+        EnergyConversionService $conversionService,
+        EnergyPredictionService $predictionService,
+        EnergyNotificationService $notificationService,
         DashboardPredictionService $dashboardPredictionService,
         InfluxDBService $influxService // Inject InfluxDB service
     ) {
-        $this->energyVisController = new EnergyVisualizationController($conversionService, $predictionService);
-        $this->notificationService = $notificationService;
-        $this->predictionService = $predictionService;
+        $this->energyVisController        = new EnergyVisualizationController($conversionService, $predictionService);
+        $this->notificationService        = $notificationService;
+        $this->predictionService          = $predictionService;
         $this->dashboardPredictionService = $dashboardPredictionService;
-        $this->conversionService = $conversionService;
-        $this->influxService = $influxService; // Set the property
+        $this->conversionService          = $conversionService;
+        $this->influxService              = $influxService; // Set the property
     }
 
     public function index(Request $request)
     {
         $user = Auth::user();
 
-        $defaultPeriod = 'day';
-        $defaultDate = Carbon::today()->format('Y-m-d');
-        $defaultMeterId = optional(SmartMeter::getAllSmartMetersForCurrentUser()->first())->meter_id
-                        ?? '2019-ETI-EMON-V01-105C4E-16405E';
+        $defaultPeriod  = 'day';
+        $defaultDate    = Carbon::today()->format('Y-m-d');
+        $defaultMeterId = optional(SmartMeter::getAllSmartMetersForCurrentUser()->first())->meter_id ?? '2019-ETI-EMON-V01-105C4E-16405E';
 
-        $period = session('dashboard_period', $defaultPeriod);
-        $date = session('dashboard_date', $defaultDate);
+        $period          = session('dashboard_period', $defaultPeriod);
+        $date            = session('dashboard_date', $defaultDate);
         $selectedMeterId = session('selected_meter_id', $defaultMeterId);
 
         if ($request->has('selectedMeterId')) {
@@ -55,24 +53,24 @@ class DashboardController extends Controller
 
         if ($request->has('period') && $request->has('date')) {
             $period = $request->input('period');
-            $date = $request->input('date');
+            $date   = $request->input('date');
             session([
                 'dashboard_period' => $period,
-                'dashboard_date' => $date,
+                'dashboard_date'   => $date,
             ]);
         }
 
-        if ($period === 'year' && !preg_match('/^\d{4}$/', $date)) {
+        if ($period === 'year' && ! preg_match('/^\d{4}$/', $date)) {
             $date = Carbon::today()->format('Y');
-        } elseif ($period === 'month' && preg_match('/^\d{4}$/', $date)) { 
+        } elseif ($period === 'month' && preg_match('/^\d{4}$/', $date)) {
             $date .= '-01';
-        } elseif ($period === 'day' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        } elseif ($period === 'day' && ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             $date = $defaultDate;
         }
 
         session([
-            'dashboard_period' => $period,
-            'dashboard_date' => $date,
+            'dashboard_period'  => $period,
+            'dashboard_date'    => $date,
             'selected_meter_id' => $selectedMeterId,
         ]);
 
@@ -82,7 +80,7 @@ class DashboardController extends Controller
         // Get energy data from visualization controller
         $energydashboard_data = $this->energyVisController->dashboard($request);
 
-        if (!isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
+        if (! isset($energydashboard_data['budget']) || $energydashboard_data['budget'] === null) {
             return redirect()->route('budget.form');
         }
 
@@ -95,9 +93,9 @@ class DashboardController extends Controller
 
         // Add metadata
         $energydashboard_data['lastRefresh'] = Carbon::now()->format('d-m-Y H:i:s');
-        $energydashboard_data['user'] = $user;
-        $energydashboard_data['period'] = $period;
-        $energydashboard_data['date'] = $date;
+        $energydashboard_data['user']        = $user;
+        $energydashboard_data['period']      = $period;
+        $energydashboard_data['date']        = $date;
 
         // Get InfluxDB meter data for the period
         $energydashboard_data['meterDataForPeriod'] = $this->getEnergyData($selectedMeterId, $period, $date);
@@ -106,121 +104,137 @@ class DashboardController extends Controller
         $liveInfluxData = $this->getLiveInfluxData($selectedMeterId, $period, $date);
 
         // Add energy prediction data for both electricity and gas
-        $predictionData = [];
-        $budgetData = [];
-        $predictionPercentage = [];
-        $predictionConfidence = [];
+        $predictionData          = [];
+        $budgetData              = [];
+        $predictionPercentage    = [];
+        $predictionConfidence    = [];
         $yearlyConsumptionToDate = [];
         $dailyAverageConsumption = [];
-        
+
         // Get electricity prediction data
-        $electricityPredictionResult = $this->dashboardPredictionService->getDashboardPredictionData('electricity', $period, $date);
-        $predictionData['electricity'] = $electricityPredictionResult['predictionData'];
-        $budgetData['electricity'] = $electricityPredictionResult['budgetData'];
+        $electricityPredictionResult         = $this->dashboardPredictionService->getDashboardPredictionData('electricity', $period, $date);
+        $predictionData['electricity']       = $electricityPredictionResult['predictionData'];
+        $budgetData['electricity']           = $electricityPredictionResult['budgetData'];
         $predictionConfidence['electricity'] = $electricityPredictionResult['confidence'];
-        
+
         // Calculate electricity percentage and get live data
         $actualElectricity = $liveInfluxData['total']['electricity_usage'] ?? 0;
-        
-        $dateObj = Carbon::parse($date);
-        $targetField = 'electricity_target_kwh';
+
+        $dateObj       = Carbon::parse($date);
+        $targetField   = 'electricity_target_kwh';
         $monthlyTarget = $budgetData['electricity']['monthly_target'] ?? 0;
-        
+
         if ($period === 'month') {
             $predictionPercentage['electricity'] = $monthlyTarget > 0 ? ($actualElectricity / $monthlyTarget) * 100 : 0;
         } else if ($period === 'day') {
-            $dailyTarget = $monthlyTarget / $dateObj->daysInMonth;
+            $dailyTarget                         = $monthlyTarget / $dateObj->daysInMonth;
             $predictionPercentage['electricity'] = $dailyTarget > 0 ? ($actualElectricity / $dailyTarget) * 100 : 0;
         } else {
-            $yearlyTarget = $budgetData['electricity']['target'] ?? 0;
-            $currentDayOfYear = $dateObj->dayOfYear;
-            $daysInYear = $dateObj->isLeapYear() ? 366 : 365;
-            $proRatedBudget = $yearlyTarget * ($currentDayOfYear / $daysInYear);
+            $yearlyTarget                        = $budgetData['electricity']['target'] ?? 0;
+            $currentDayOfYear                    = $dateObj->dayOfYear;
+            $daysInYear                          = $dateObj->isLeapYear() ? 366 : 365;
+            $proRatedBudget                      = $yearlyTarget * ($currentDayOfYear / $daysInYear);
             $predictionPercentage['electricity'] = $proRatedBudget > 0 ? ($actualElectricity / $proRatedBudget) * 100 : 0;
         }
-        
+
         // Yearly consumption to date and daily average for electricity
         $yearlyConsumptionToDate['electricity'] = $this->getYearlyConsumptionToDate('electricity');
-        $daysPassedThisYear = max(1, Carbon::now()->dayOfYear);
+        $daysPassedThisYear                     = max(1, Carbon::now()->dayOfYear);
         $dailyAverageConsumption['electricity'] = $yearlyConsumptionToDate['electricity'] / $daysPassedThisYear;
-        
+
         // Get gas prediction data
-        $gasPredictionResult = $this->dashboardPredictionService->getDashboardPredictionData('gas', $period, $date);
-        $predictionData['gas'] = $gasPredictionResult['predictionData'];
-        $budgetData['gas'] = $gasPredictionResult['budgetData'];
+        $gasPredictionResult         = $this->dashboardPredictionService->getDashboardPredictionData('gas', $period, $date);
+        $predictionData['gas']       = $gasPredictionResult['predictionData'];
+        $budgetData['gas']           = $gasPredictionResult['budgetData'];
         $predictionConfidence['gas'] = $gasPredictionResult['confidence'];
-        
+
         // Calculate gas percentage and get live data
         $actualGas = $liveInfluxData['total']['gas_usage'] ?? 0;
-        
-        $targetField = 'gas_target_m3';
+
+        $targetField   = 'gas_target_m3';
         $monthlyTarget = $budgetData['gas']['monthly_target'] ?? 0;
-        
+
         if ($period === 'month') {
             $predictionPercentage['gas'] = $monthlyTarget > 0 ? ($actualGas / $monthlyTarget) * 100 : 0;
         } else if ($period === 'day') {
-            $dailyTarget = $monthlyTarget / $dateObj->daysInMonth;
+            $dailyTarget                 = $monthlyTarget / $dateObj->daysInMonth;
             $predictionPercentage['gas'] = $dailyTarget > 0 ? ($actualGas / $dailyTarget) * 100 : 0;
         } else {
-            $yearlyTarget = $budgetData['gas']['target'] ?? 0;
-            $currentDayOfYear = $dateObj->dayOfYear;
-            $daysInYear = $dateObj->isLeapYear() ? 366 : 365;
-            $proRatedBudget = $yearlyTarget * ($currentDayOfYear / $daysInYear);
+            $yearlyTarget                = $budgetData['gas']['target'] ?? 0;
+            $currentDayOfYear            = $dateObj->dayOfYear;
+            $daysInYear                  = $dateObj->isLeapYear() ? 366 : 365;
+            $proRatedBudget              = $yearlyTarget * ($currentDayOfYear / $daysInYear);
             $predictionPercentage['gas'] = $proRatedBudget > 0 ? ($actualGas / $proRatedBudget) * 100 : 0;
         }
-        
+
         // Yearly consumption to date and daily average for gas
         $yearlyConsumptionToDate['gas'] = $this->getYearlyConsumptionToDate('gas');
         $dailyAverageConsumption['gas'] = $yearlyConsumptionToDate['gas'] / $daysPassedThisYear;
-        
+
         // Calculate targets for the selected period
         $electricityTarget = $this->calculateTargetForPeriod('electricity', $period, $date, $budgetData['electricity']);
-        $gasTarget = $this->calculateTargetForPeriod('gas', $period, $date, $budgetData['gas']);
-        
+        $gasTarget         = $this->calculateTargetForPeriod('gas', $period, $date, $budgetData['gas']);
+
         // Calculate costs using the conversion service
         $electricityCost = $this->conversionService->kwhToEuro($actualElectricity);
-        $gasCost = $this->conversionService->m3ToEuro($actualGas);
-        
+        $gasCost         = $this->conversionService->m3ToEuro($actualGas);
+
         // Determine status based on percentage
         $electricityStatus = $this->determineStatus($predictionPercentage['electricity']);
-        $gasStatus = $this->determineStatus($predictionPercentage['gas']);
-        
+        $gasStatus         = $this->determineStatus($predictionPercentage['gas']);
+
         // Create live data structure for energy status widgets
         $energydashboard_data['liveData'] = [
             'electricity' => [
-                'usage' => $actualElectricity,
-                'target' => $electricityTarget,
-                'cost' => $electricityCost,
-                'percentage' => $predictionPercentage['electricity'],
-                'status' => $electricityStatus,
+                'usage'         => $actualElectricity,
+                'target'        => $electricityTarget,
+                'cost'          => $this->conversionService->kwhToEuro($actualElectricity),
+                'percentage'    => $electricityTarget > 0 ? ($actualElectricity / $electricityTarget) * 100 : 0,
+                'status'        => $this->determineStatus($electricityTarget > 0 ? ($actualElectricity / $electricityTarget) * 100 : 0),
+                'previous_year' => [
+                    'usage'             => $liveInfluxData['historical_data']['energy_consumed'] ?? [],
+                    'reduction_percent' => $this->calculateReductionPercentage(
+                        $actualElectricity,
+                        isset($liveInfluxData['historical_data']['energy_consumed']) ?
+                        array_sum(array_filter($liveInfluxData['historical_data']['energy_consumed'], 'is_numeric')) : 0
+                    ),
+                ],
             ],
-            'gas' => [
-                'usage' => $actualGas,
-                'target' => $gasTarget,
-                'cost' => $gasCost,
-                'percentage' => $predictionPercentage['gas'],
-                'status' => $gasStatus,
-            ]
+            'gas'         => [
+                'usage'         => $actualGas,
+                'target'        => $gasTarget,
+                'cost'          => $this->conversionService->m3ToEuro($actualGas),
+                'percentage'    => $gasTarget > 0 ? ($actualGas / $gasTarget) * 100 : 0,
+                'status'        => $this->determineStatus($gasTarget > 0 ? ($actualGas / $gasTarget) * 100 : 0),
+                'previous_year' => [
+                    'usage'             => $liveInfluxData['historical_data']['gas_delivered'] ?? [],
+                    'reduction_percent' => $this->calculateReductionPercentage(
+                        $actualGas,
+                        isset($liveInfluxData['historical_data']['gas_delivered']) ?
+                        array_sum(array_filter($liveInfluxData['historical_data']['gas_delivered'], 'is_numeric')) : 0
+                    ),
+                ],
+            ],
         ];
-        
+
         // Update totals with live data for backward compatibility
-        $energydashboard_data['totals']['electricity_kwh'] = $actualElectricity;
-        $energydashboard_data['totals']['electricity_target'] = $electricityTarget;
-        $energydashboard_data['totals']['electricity_euro'] = $electricityCost;
+        $energydashboard_data['totals']['electricity_kwh']        = $actualElectricity;
+        $energydashboard_data['totals']['electricity_target']     = $electricityTarget;
+        $energydashboard_data['totals']['electricity_euro']       = $electricityCost;
         $energydashboard_data['totals']['electricity_percentage'] = $predictionPercentage['electricity'];
-        $energydashboard_data['totals']['electricity_status'] = $electricityStatus;
-        
-        $energydashboard_data['totals']['gas_m3'] = $actualGas;
-        $energydashboard_data['totals']['gas_target'] = $gasTarget;
-        $energydashboard_data['totals']['gas_euro'] = $gasCost;
+        $energydashboard_data['totals']['electricity_status']     = $electricityStatus;
+
+        $energydashboard_data['totals']['gas_m3']         = $actualGas;
+        $energydashboard_data['totals']['gas_target']     = $gasTarget;
+        $energydashboard_data['totals']['gas_euro']       = $gasCost;
         $energydashboard_data['totals']['gas_percentage'] = $predictionPercentage['gas'];
-        $energydashboard_data['totals']['gas_status'] = $gasStatus;
-        
+        $energydashboard_data['totals']['gas_status']     = $gasStatus;
+
         // Add prediction data to the view
-        $energydashboard_data['predictionData'] = $predictionData;
-        $energydashboard_data['budgetData'] = $budgetData;
-        $energydashboard_data['predictionPercentage'] = $predictionPercentage;
-        $energydashboard_data['predictionConfidence'] = $predictionConfidence;
+        $energydashboard_data['predictionData']          = $predictionData;
+        $energydashboard_data['budgetData']              = $budgetData;
+        $energydashboard_data['predictionPercentage']    = $predictionPercentage;
+        $energydashboard_data['predictionConfidence']    = $predictionConfidence;
         $energydashboard_data['yearlyConsumptionToDate'] = $yearlyConsumptionToDate;
         $energydashboard_data['dailyAverageConsumption'] = $dailyAverageConsumption;
 
@@ -238,25 +252,79 @@ class DashboardController extends Controller
     }
 
     /**
+     * Calculate reduction percentage between current and previous year
+     */
+    private function calculateReductionPercentage(float $currentValue, float $previousValue): float
+    {
+        if ($previousValue <= 0) {
+            return 0;
+        }
+
+        // Calculate how much less (positive) or more (negative) we're using compared to last year
+        return round((($previousValue - $currentValue) / $previousValue) * 100, 1);
+    }
+
+    /**
      * Get live InfluxDB data for the selected meter and period
      */
     private function getLiveInfluxData(string $meterId, string $period, string $date): array
     {
         try {
             // Get real-time meter data from InfluxDB
-            return $this->influxService->getEnergyDashboardData($meterId, $period, $date);
+            $influxData = $this->influxService->getEnergyDashboardData($meterId, $period, $date);
+
+            // Calculate totals for the given period
+            $electricityUsage = 0;
+            $gasUsage         = 0;
+
+            // Sum up the values based on period
+            if (isset($influxData['current_data'])) {
+                // For electricity
+                if (isset($influxData['current_data']['energy_consumed'])) {
+                    $electricityUsage = array_sum(array_filter($influxData['current_data']['energy_consumed'], function ($value) {
+                        return is_numeric($value);
+                    }));
+                }
+
+                // For gas
+                if (isset($influxData['current_data']['gas_delivered'])) {
+                    $gasUsage = array_sum(array_filter($influxData['current_data']['gas_delivered'], function ($value) {
+                        return is_numeric($value);
+                    }));
+                }
+            }
+
+            // If we don't have data from the current period, use the total data
+            if ($electricityUsage == 0 && isset($influxData['total']['month']['electricity_usage'])) {
+                $electricityUsage = $influxData['total']['month']['electricity_usage'];
+            }
+
+            if ($gasUsage == 0 && isset($influxData['total']['month']['gas_usage'])) {
+                $gasUsage = $influxData['total']['month']['gas_usage'];
+            }
+
+            // Return structured data for both charts and status components
+            return [
+                'current_data'    => $influxData['current_data'],
+                'historical_data' => $influxData['historical_data'],
+                'total'           => [
+                    'electricity_usage'      => $electricityUsage,
+                    'gas_usage'              => $gasUsage,
+                    'electricity_generation' => $influxData['total']['month']['electricity_generation'] ?? 0,
+                ],
+            ];
         } catch (\Exception $e) {
-            Log::error('Error fetching live InfluxDB data: ' . $e->getMessage());
-            
+            \Log::error('Error fetching live InfluxDB data: ' . $e->getMessage());
+
             // Return fallback data structure if InfluxDB is unavailable
             return [
-                'current_data' => [],
+                'current_data'    => [],
                 'historical_data' => [],
-                'total' => [
-                    'electricity_usage' => 0,
-                    'gas_usage' => 0,
+                'total'           => [
+                    'electricity_usage'      => 0,
+                    'gas_usage'              => 0,
                     'electricity_generation' => 0,
-                ]
+                ],
             ];
         }
     }
@@ -266,20 +334,32 @@ class DashboardController extends Controller
      */
     private function calculateTargetForPeriod(string $type, string $period, string $date, array $budgetData): float
     {
-        $yearlyTarget = $budgetData['target'] ?? 0;
+        $yearlyTarget  = $budgetData['target'] ?? 0;
         $monthlyTarget = $budgetData['monthly_target'] ?? ($yearlyTarget / 12);
-        $dateObj = Carbon::parse($date);
-        
+        $dateObj       = Carbon::parse($date);
+
         switch ($period) {
             case 'day':
-                return $monthlyTarget / $dateObj->daysInMonth;
+                // Daily target - adjusted for days in month
+                $daysInMonth = $dateObj->daysInMonth;
+                return $monthlyTarget / $daysInMonth;
+
             case 'month':
+                // Monthly target - already calculated
                 return $monthlyTarget;
+
             case 'year':
-                // For year view, calculate pro-rated target based on current day of year
-                $currentDayOfYear = $dateObj->dayOfYear;
-                $daysInYear = $dateObj->isLeapYear() ? 366 : 365;
-                return $yearlyTarget * ($currentDayOfYear / $daysInYear);
+                // For yearly view:
+                // If we're viewing current year to date, prorate the target
+                $currentYear = Carbon::now()->year;
+                if ($dateObj->year == $currentYear) {
+                    $dayOfYear  = Carbon::now()->dayOfYear;
+                    $daysInYear = Carbon::now()->isLeapYear() ? 366 : 365;
+                    return $yearlyTarget * ($dayOfYear / $daysInYear);
+                }
+                // Otherwise, show full yearly target
+                return $yearlyTarget;
+
             default:
                 return $monthlyTarget;
         }
@@ -300,7 +380,7 @@ class DashboardController extends Controller
 
     /**
      * Get yearly consumption to date (simulated)
-     * 
+     *
      * @param string $type Energy type (electricity or gas)
      * @return float Yearly consumption to date
      */
@@ -308,23 +388,23 @@ class DashboardController extends Controller
     {
         // Simulated data - in a real implementation this would come from the database
         $currentDayOfYear = Carbon::now()->dayOfYear;
-        $daysInYear = Carbon::now()->isLeapYear() ? 366 : 365;
-        
+        $daysInYear       = Carbon::now()->isLeapYear() ? 366 : 365;
+
         // Typical yearly consumption values
         $yearlyTotal = $type === 'electricity' ? 3200 : 1400;
-        
+
         // Simulate realistic progress through the year
         $progressFactor = $currentDayOfYear / $daysInYear;
-        
+
         // Seasonal adjustment
-        $month = (int)date('n');
+        $month          = (int) date('n');
         $seasonalFactor = 1.0;
-        
+
         if ($type === 'gas') {
             // Gas has stronger seasonal pattern
             $winterMonths = [1, 2, 3, 11, 12];
             $summerMonths = [6, 7, 8];
-            
+
             if (in_array($month, $winterMonths)) {
                 $seasonalFactor = 1.25;
             } elseif (in_array($month, $summerMonths)) {
@@ -334,10 +414,10 @@ class DashboardController extends Controller
             // Electricity has milder seasonal pattern
             $seasonalFactor = 1.0 + (cos(($month - 1) * 2 * M_PI / 12) * 0.1);
         }
-        
+
         // Add slight random variation
         $randomFactor = 0.97 + (mt_rand(0, 6) / 100);
-        
+
         // Calculate estimated consumption with some rounding
         $consumption = $yearlyTotal * $progressFactor * $seasonalFactor * $randomFactor;
         return round($consumption * 100) / 100;
@@ -354,7 +434,7 @@ class DashboardController extends Controller
 
         $period      = $request->input('period');
         $housingType = $request->input('housing_type');
-        $inputDate = $request->input('date');
+        $inputDate   = $request->input('date');
 
         // Format the date based on the period type
         $formattedDate = $this->formatDateByPeriod($period, $inputDate);
@@ -376,14 +456,14 @@ class DashboardController extends Controller
                 return $inputDate;
 
             case 'month':
-                // For month period, ensure we have YYYY-MM-DD with first day of month
+                                                // For month period, ensure we have YYYY-MM-DD with first day of month
                 if (strlen($inputDate) === 7) { // YYYY-MM format
                     return $inputDate;
                 }
                 return $inputDate;
 
             case 'year':
-                // For year period, ensure we have YYYY-MM-DD with first day of year
+                                                // For year period, ensure we have YYYY-MM-DD with first day of year
                 if (strlen($inputDate) === 4) { // YYYY format
                     return $inputDate;
                 }
@@ -459,14 +539,14 @@ class DashboardController extends Controller
             'trend-analysis', // Behouden van dev branch
             'energy-suggestions',
             'energy-prediction-chart-electricity', // Behouden van SCRUM-53
-            'energy-prediction-chart-gas'          // Behouden van SCRUM-53
+            'energy-prediction-chart-gas',         // Behouden van SCRUM-53
         ];
     }
 
     public function saveSelectedMeter(Request $request)
     {
         $meterDatabaseId = $request->meter;
-        $layout  = UserGridLayout::where('user_id', auth()->id())->first();
+        $layout          = UserGridLayout::where('user_id', auth()->id())->first();
 
         if ($layout) {
             $layout->selected_smartmeter = $meterDatabaseId;
@@ -478,7 +558,7 @@ class DashboardController extends Controller
         $smartMeterId = SmartMeter::getMeterIdByDatabaseId($meterDatabaseId);
 
         return redirect()->route('dashboard', ['selectedMeterId' => $smartMeterId])
-                         ->with('status', 'Meterkeuze doorgevoerd - het dashboard is nu up-to-date!');
+            ->with('status', 'Meterkeuze doorgevoerd - het dashboard is nu up-to-date!');
     }
 
     private function getEnergyData(string $meterId, string $period, string $date)

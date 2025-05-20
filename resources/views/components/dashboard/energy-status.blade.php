@@ -1,11 +1,21 @@
-@props(['type', 'usage', 'target', 'percentage', 'status', 'unit', 'date' => null, 'period' => null, 'liveData' => null])
+@props([
+    'type',
+    'usage',
+    'target',
+    'percentage',
+    'status',
+    'unit',
+    'date' => null,
+    'period' => null,
+    'liveData' => null,
+])
 
 @php
     // Use live data if available, otherwise fall back to provided data
-    $actualUsage = $liveData['usage'] ?? $usage ?? 0;
-    $actualTarget = $liveData['target'] ?? $target ?? 0;
-    $actualPercentage = $liveData['percentage'] ?? $percentage ?? 0;
-    $actualStatus = $liveData['status'] ?? $status ?? 'goed';
+    $actualUsage = $liveData['usage'] ?? ($usage ?? 0);
+    $actualTarget = $liveData['target'] ?? ($target ?? 0);
+    $actualPercentage = $liveData['percentage'] ?? ($percentage ?? 0);
+    $actualStatus = $liveData['status'] ?? ($status ?? 'goed');
     $actualCost = $liveData['cost'] ?? 0;
 
     // Enhanced status calculation with better thresholds
@@ -203,12 +213,15 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center">
                 @php
-                    // Calculate comparison with previous year based on actual InfluxDB data
-                    // This would ideally come from the InfluxDB service
-                    $reductionPercent = rand(-15, 25); // Simulated for now - should come from actual data
+                    // Use real data from InfluxDB instead of random values
+                    $reductionPercent = $liveData['previous_year']['reduction_percent'] ?? 0;
                     $icon = $reductionPercent > 0 ? 'trending-down' : 'trending-up';
-                    $color = $reductionPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-                    $previousYearValue = $actualUsage * (1 + $reductionPercent/100);
+                    $color =
+                        $reductionPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+                    $previousYearValue = $liveData['previous_year']['usage'] ?? 0;
+                    if (is_array($previousYearValue)) {
+                        $previousYearValue = array_sum(array_filter($previousYearValue, 'is_numeric'));
+                    }
                 @endphp
                 
                 <!-- Ninth tab stop: Comparison text -->
