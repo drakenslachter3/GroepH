@@ -139,10 +139,10 @@
                 </thead>
                 <tbody>
                     @php
-                        $totalCurrent = 0.1;
-                        $totalPrevious = 0.1;
+                        $totalCurrent = 0;
+                        $totalPrevious = 0;
                         $currentData = $chartData[$dataKey] ?? [];
-                        $previousData = 0.1 ?? [];
+                        $previousData = empty($chartData[$dataKey . '_previous_year']) ?? [];
                         $hasPreviousYearData = true;
                         $currentDate = Carbon::parse($date);
                         $unit = $type === 'electricity' ? 'kWh' : 'm³';
@@ -151,28 +151,26 @@
                     @foreach($currentData as $index => $value)
                         @php
                             $totalCurrent += $value;
-                            $prevValue = 0.1;
+                            $prevValue = $previousData[$index] ?? null;
                             if ($prevValue !== null) {
                                 $totalPrevious += $prevValue;
                             }
                             $diff = $prevValue !== null ? $value - $prevValue : null;
                             $percentChange = $prevValue && $prevValue != 0 ? (($value - $prevValue) / $prevValue) * 100 : null;
                             
-                            // Format descriptive label based on period
                             switch($period) {
                                 case 'day':
-                                    $startHour = str_pad($index, 2, '0');
-                                    $endHour = str_pad(($index + 1) % 24, 2, '0');
-                                    $dateFormat = "Tussen {$startHour}:00 en {$endHour}:00 was je verbruik";
+                                    $hour = str_pad($index, 2);
+                                    $nextHour = str_pad($index + 1, 2);
+                                    $dateFormat = "Tussen {$hour} uur en {$nextHour} uur was je verbruik";
                                     break;
 
                                 case 'month':
                                     $dayDate = $currentDate->copy()->setDay($index + 1);
-                                    $dayName = $dayDate->translatedFormat('l');
                                     $dayNumber = $index + 1;
-                                    $ordinal = "{$dayNumber}e";
+                                    $dayFormat = "{$dayNumber}e";
 
-                                    $dateFormat = "Op {$dayName} de {$ordinal} was je verbruik";
+                                    $dateFormat = "Op {$dayFormat} was je verbruik";
                                     break;
 
                                 case 'year':
@@ -191,12 +189,12 @@
                         @endphp
                         <tr>
                             <td scope="row" class="border dark:border-gray-700" tabindex="0">
-                                {{ $dateFormat }} {{ number_format($value, 2, ',', '.') }} {{ $unit }}
+                                {{ $dateFormat }} {{ number_format($value, 2, ',', '.') }} {{ $unit }}.
                                 @if($hasPreviousYearData && $prevValue !== null)
-                                    . Vorig jaar: {{ number_format($prevValue, 2, ',', '.') }} {{ $unit }}
+                                    Vorig jaar verbruikte je {{ number_format($prevValue, 2, ',', '.') }} {{ $unit }}.
                                     @if($diff !== null)
-                                        . Verschil: {{ $diff < 0 ? 'Je bespaarde ' : 'Je verbruikte ' }}{{ number_format(abs($diff), 2, ',', '.') }} {{ $unit }} 
-                                        ({{ $percentChange < 0 ? '-' : '+' }}{{ number_format(abs($percentChange), 1, ',', '.') }}%)
+                                        {{ $diff < 0 ? 'Je bespaarde ' : 'Je verbruikte ' }}{{ number_format(abs($diff), 2, ',', '.') }} {{ $unit }} meer dan vorig jaar.
+                                        {{-- ({{ $percentChange < 0 ? '-' : '+' }}{{ number_format(abs($percentChange), 1, ',', '.') }}%) --}}
                                     @endif
                                 @endif
                             </td>
@@ -206,15 +204,15 @@
                 <tfoot>
                     <tr>
                         <td scope="row" class="border font-bold dark:border-gray-700" tabindex="0">
-                            Totaal verbruik: {{ number_format($totalCurrent, 2, ',', '.') }} {{ $unit }}
-                            @if($hasPreviousYearData)
+                            In totaal verbruikte je {{ number_format($totalCurrent, 2, ',', '.') }} {{ $unit }}.
+                            @if($hasPreviousYearData && $prevValue !== null)
                                 @php
                                     $totalDiff = $totalCurrent - $totalPrevious;
                                     $totalPercentChange = $totalPrevious != 0 ? (($totalCurrent - $totalPrevious) / $totalPrevious) * 100 : null;
                                 @endphp
-                                . Vorig jaar totaal: {{ number_format($totalPrevious, 2, ',', '.') }} {{ $unit }}
-                                . Verschil: {{ $totalDiff < 0 ? 'Je bespaarde ' : 'Je verbruikte ' }}{{ number_format(abs($totalDiff), 2, ',', '.') }} {{ $unit }}
-                                ({{ $totalPercentChange < 0 ? '-' : '+' }}{{ number_format(abs($totalPercentChange), 1, ',', '.') }}%)
+                                Vorig jaar verbruikte je {{ number_format($totalPrevious, 2, ',', '.') }} {{ $unit }}.
+                                {{ $totalDiff < 0 ? 'Je bespaarde' : 'Je verbruikte' }} {{ number_format(abs($totalDiff), 2, ',', '.') }} {{ $unit }} meer dan vorig jaar.
+                                {{-- ({{ $totalPercentChange < 0 ? '-' : '+' }}{{ number_format(abs($totalPercentChange), 1, ',', '.') }}%) --}}
                             @endif
                         </td>
                     </tr>
@@ -258,37 +256,24 @@
         switch("{{ $period }}") {
             case 'day':
                 // For day view - 24 hours (0-23)
-                labels.push("00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
-                            "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
-                            "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00");
+                for (let i = 0; i < 24; i++) {
+                    const hour = i.toString().padStart(2, '0');
+                    labels.push(`${hour}:00`);
+                }
                 periodTranslated = 'Uren';
                 break;
-                
             case 'month':
                 const daysInMonth = {{ $daysInMonth }};
-                const year = {{ $currentDate->year }};
-                const month = {{ $currentDate->month }} - 1;
                 for (let i = 1; i <= daysInMonth; i++) {
-                    const dayDate = new Date(year, month, i);
-                    const dayName = dayDate.toLocaleDateString('nl-NL', { weekday: 'long' });
-                    const ordinal = i + 'e';
-                    labels.push(`${dayName} ${ordinal}`);
+                    labels.push(i.toString());
                 }
                 periodTranslated = 'Dagen';
                 break;
-
-                
-
-                $dateFormat = "Op {$dayName} de {$ordinal} was je verbruik";
-                break;
-                
             case 'year':
-                // For year view - 12 months
                 labels.push("Januari", "Februari", "Maart", "April", "Mei", "Juni", 
                            "Juli", "Augustus", "September", "Oktober", "November", "December");
                 periodTranslated = 'Maanden';
                 break;
-                
             default:
                 console.error("Unknown period:", "{{ $period }}");
         }
@@ -341,13 +326,13 @@
                         },
                         ticks: {
                             color: titleColor,
-                            // autoSkip: false,
+                            autoSkip: false,
                             maxRotation: 45,
                             minRotation: 45,
                         },
                         grid: {
                             color: axisColor,
-                            lineWidth: 1
+                            lineWidth: 1,
                         }
                     },
                     y: {
