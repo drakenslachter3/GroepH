@@ -114,7 +114,16 @@
     {{-- Accessible data table for the chart to support screen readers --}}
     <div class="focus:not-sr-only focus:absolute focus:z-10 focus:bg-white focus:dark:bg-gray-800 focus:p-4 focus:border focus:border-gray-300 focus:dark:border-gray-600 focus:shadow-lg focus:rounded-md focus:w-full focus:max-w-3xl">
         <div id="{{ $type }}TableCaption" class="text-lg font-semibold mb-2 dark:text-white" tabindex="0">
-            {{ $title }} - Overzicht verbruik
+            @php
+                $formattedPeriodDate = match($period) {
+                    'day' => Carbon::parse($date)->translatedFormat('l j F Y'),
+                    'month' => Carbon::parse($date)->translatedFormat('F Y'),
+                    'year' => Carbon::parse($date)->translatedFormat('Y'),
+                    default => ''
+                };
+            @endphp
+
+            {{ $title }} - Overzicht verbruik voor {{ $formattedPeriodDate }}
         </div>
         <div class="overflow-x-auto">
             <table class="w-full border-collapse table-auto">
@@ -130,11 +139,11 @@
                 </thead>
                 <tbody>
                     @php
-                        $totalCurrent = 0;
-                        $totalPrevious = 0;
+                        $totalCurrent = 0.1;
+                        $totalPrevious = 0.1;
                         $currentData = $chartData[$dataKey] ?? [];
-                        $previousData = $chartData[$previousYearKey] ?? [];
-                        $hasPreviousYearData = !empty($previousData);
+                        $previousData = 0.1 ?? [];
+                        $hasPreviousYearData = true;
                         $currentDate = Carbon::parse($date);
                         $unit = $type === 'electricity' ? 'kWh' : 'm³';
                     @endphp
@@ -142,7 +151,7 @@
                     @foreach($currentData as $index => $value)
                         @php
                             $totalCurrent += $value;
-                            $prevValue = $previousData[$index] ?? null;
+                            $prevValue = 0.1;
                             if ($prevValue !== null) {
                                 $totalPrevious += $prevValue;
                             }
@@ -152,25 +161,32 @@
                             // Format descriptive label based on period
                             switch($period) {
                                 case 'day':
-                                    $startHour = str_pad($index, 2, '0', STR_PAD_LEFT);
-                                    $endHour = str_pad(($index + 1) % 24, 2, '0', STR_PAD_LEFT);
-                                    $dayName = $currentDate->translatedFormat('l j F Y');
-                                    $dateFormat = "Op {$dayName} van {$startHour}:00 tot {$endHour}:00 was je verbruik";
+                                    $startHour = str_pad($index, 2, '0');
+                                    $endHour = str_pad(($index + 1) % 24, 2, '0');
+                                    $dateFormat = "Tussen {$startHour}:00 en {$endHour}:00 was je verbruik";
                                     break;
+
                                 case 'month':
                                     $dayDate = $currentDate->copy()->setDay($index + 1);
-                                    $dayName = $dayDate->translatedFormat('l j F Y');
-                                    $dateFormat = "Op {$dayName} was je verbruik";
+                                    $dayName = $dayDate->translatedFormat('l');
+                                    $dayNumber = $index + 1;
+                                    $ordinal = "{$dayNumber}e";
+
+                                    $dateFormat = "Op {$dayName} de {$ordinal} was je verbruik";
                                     break;
+
                                 case 'year':
-                                    $months = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", 
-                                            "Juli", "Augustus", "September", "Oktober", "November", "December"];
-                                    $monthName = $months[$index] ?? ($index + 1);
-                                    $yearNumber = $currentDate->format('Y');
-                                    $dateFormat = "In {$monthName} {$yearNumber} was je verbruik";
+                                    $months = [
+                                        "Januari", "Februari", "Maart", "April", "Mei", "Juni", 
+                                        "Juli", "Augustus", "September", "Oktober", "November", "December"
+                                    ];
+                                    $monthName = $months[$index] ?? "Maand " . ($index + 1);
+                                    $dateFormat = "In {$monthName} was je verbruik";
                                     break;
+
                                 default:
                                     $dateFormat = "Verbruik voor interval {$index}";
+                                    break;
                             }
                         @endphp
                         <tr>
@@ -250,12 +266,21 @@
                 break;
                 
             case 'month':
-                // For month view - days in selected month
                 const daysInMonth = {{ $daysInMonth }};
+                const year = {{ $currentDate->year }};
+                const month = {{ $currentDate->month }} - 1;
                 for (let i = 1; i <= daysInMonth; i++) {
-                    labels.push(i.toString());
+                    const dayDate = new Date(year, month, i);
+                    const dayName = dayDate.toLocaleDateString('nl-NL', { weekday: 'long' });
+                    const ordinal = i + 'e';
+                    labels.push(`${dayName} ${ordinal}`);
                 }
                 periodTranslated = 'Dagen';
+                break;
+
+                
+
+                $dateFormat = "Op {$dayName} de {$ordinal} was je verbruik";
                 break;
                 
             case 'year':
@@ -281,7 +306,8 @@
         const usageData = chartData[dataKey] || [];
         const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
-        const axisColor = isDarkMode ? '#D1D5DB' : '#4B5563';
+        // Use a more subtle axis color with opacity for better blending
+        const axisColor = isDarkMode ? 'rgba(209, 213, 219, 0.3)' : 'rgba(75, 85, 99, 0.15)';
         const titleColor = isDarkMode ? '#F9FAFB' : '#000000';
         
         // Create chart instance as a variable to access it later for toggles
@@ -303,7 +329,7 @@
                 plugins: {
                     legend: {
                         labels: {
-                            color: axisColor
+                            color: titleColor,
                         }
                     }
                 },
@@ -315,7 +341,14 @@
                             color: titleColor
                         },
                         ticks: {
-                            color: axisColor
+                            color: titleColor,
+                            // autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 45,
+                        },
+                        grid: {
+                            color: axisColor,
+                            lineWidth: 1
                         }
                     },
                     y: {
@@ -326,7 +359,11 @@
                             color: titleColor
                         },
                         ticks: {
-                            color: axisColor
+                            color: titleColor
+                        },
+                        grid: {
+                            color: axisColor,
+                            lineWidth: 1
                         }
                     }
                 }

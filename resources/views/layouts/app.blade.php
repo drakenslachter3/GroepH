@@ -33,7 +33,7 @@
             @endisset
 
             <!-- Page Content -->
-            <main>
+            <main tabindex="0" id="main-content">
                 @yield('content')
                 {{ $slot ?? '' }}   
             </main>
