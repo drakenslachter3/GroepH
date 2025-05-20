@@ -41,10 +41,13 @@
                         <div class="flex items-center gap-3 dark:text-white">
                             <p class="text-sm text-gray-600 dark:text-white">Laatste update: <span
                                     id="last-updated">{{ $lastRefresh ?? 'Niet beschikbaar' }}</span></p>
-                            <button onclick="window.location.reload()"
-                                class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition duration-200 text-sm">
-                                Verversen
-                            </button>
+                            <form action="{{ route('dashboard.refresh') }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit"
+                                    class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition duration-200 text-sm">
+                                    Verversen
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
