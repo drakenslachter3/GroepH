@@ -2,6 +2,7 @@
 
 <section class="w-full p-2" aria-labelledby="switch-widget-title">
     <div class="flex flex-col">
+        <x-widget-navigation :showPrevious="true" />
         <div class="flex flex-row justify-between items-center w-full">
             <h3 tabindex="0" id="switch-widget-title" class="text-lg font-semibold dark:text-white">Selecteer een meter</h3>
             <div class="tooltip relative">
@@ -13,6 +14,7 @@
                 </span>
             </div>
         </div>
+        <x-widget-navigation :showNext="true" />
 
         <div class="mt-5">
             <form action="{{ route('dashboard.saveSelectedMeter') }}" method="POST">

@@ -340,6 +340,7 @@
 
     <!-- Add this at the bottom before closing the layout -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ asset('js/widget-navigation.js') }}" defer></script>
     <script>
         // Define default values for period labels
         const periodLabels = {

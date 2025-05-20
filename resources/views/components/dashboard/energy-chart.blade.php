@@ -37,8 +37,9 @@
 
 <section class="p-6" aria-labelledby="chart-widget-title">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <x-widget-navigation :showPrevious="true" />
         <div class="flex flex-col mb-2 sm:mb-0">
-            <h3 tabindex="0" id="chart-widget-title" class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
+            <h3 tabindex="0" id="chart-widget-title-{{ $type }}" class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
             
             <div class="mt-1 text-sm text-sky-600 dark:text-sky-300 font-medium">
                 @switch($period)
@@ -54,6 +55,7 @@
                 @endswitch
             </div>
         </div>
+        <x-widget-navigation :showNext="true" />
         
         <div class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
             @foreach (['day' => 'Dag', 'month' => 'Maand', 'year' => 'Jaar'] as $key => $label)

@@ -26,18 +26,10 @@
 
 <section class="p-2" aria-labelledby="usage-widget-title">
     <div class="flex justify-between items-start mb-4">
-        <div class="mt-6">
-            <button id="skip-button-prev" 
-                    tabindex="0" 
-                    class=" focus:not-sr-only focus:p-2 focus:border focus:border-blue-500 focus:rounded-md focus:block"
-                    onclick="skipToPreviousWidget()"
-                    onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); skipToPreviousWidget(); }">
-                Ga naar vorige widget
-            </button>
-        </div>
+        <x-widget-navigation :showPrevious="true" />
         <div>
             <!-- First tab stop: Title and date -->
-            <h3 id="usage-widget-title" class="text-lg font-semibold dark:text-white" tabindex="0">{{ $type }} Status</h3>
+            <h3 id="usage-widget-title-{{ $type }}" class="text-lg font-semibold dark:text-white" tabindex="0">{{ $type }} Status</h3>
             
             <!-- Datum weergave -->
             @if(isset($date) && isset($period))
@@ -55,19 +47,7 @@
                 </div>
             @endif
         </div>
-
-        <!-- Add a button to skip to the next or previous widget for blind users -->
-        
-        <div class="mt-6">
-            <button id="skip-button-next" 
-                    tabindex="0" 
-                    class=" focus:not-sr-only focus:p-2 focus:border focus:border-blue-500 focus:rounded-md focus:block"
-                    onclick="skipToNextWidget()"
-                    onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); skipToNextWidget(); }">
-                Ga naar volgende widget
-            </button>
-        </div>
-        
+        <x-widget-navigation :showNext="true" />
         
         <!-- Info tooltip -->
         <div class="tooltip relative">
@@ -284,46 +264,6 @@ function toggleTooltip() {
             button.setAttribute('aria-expanded', 'false');
         }
     }, { once: true });
-}
-
-function skipToNextWidget() {
-    const widgets = document.querySelectorAll('section[aria-labelledby]');
-    let currentWidgetIndex = -1;
-
-    widgets.forEach((widget, index) => {
-        if (widget.contains(document.activeElement)) {
-            currentWidgetIndex = index;
-        }
-    });
-
-    if (currentWidgetIndex >= 0 && currentWidgetIndex < widgets.length - 1) {
-        const nextWidget = widgets[currentWidgetIndex + 1];
-        const labelledbyId = nextWidget.getAttribute('aria-labelledby');
-        const nextHeading = labelledbyId ? nextWidget.querySelector(`#${labelledbyId}`) : null;
-        if (nextHeading) {
-            nextHeading.focus();
-        }
-    }
-}
-
-function skipToPreviousWidget() {
-    const widgets = document.querySelectorAll('section[aria-labelledby]');
-    let currentWidgetIndex = -1;
-
-    widgets.forEach((widget, index) => {
-        if (widget.contains(document.activeElement)) {
-            currentWidgetIndex = index;
-        }
-    });
-
-    if (currentWidgetIndex > 0) {
-        const previousWidget = widgets[currentWidgetIndex - 1];
-        const labelledbyId = previousWidget.getAttribute('aria-labelledby');
-        const previousHeading = labelledbyId ? previousWidget.querySelector(`#${labelledbyId}`) : null;
-        if (previousHeading) {
-            previousHeading.focus();
-        }
-    }
 }
 
 document.addEventListener('keydown', (e) => {
