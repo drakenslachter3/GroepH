@@ -18,18 +18,17 @@
             <form action="{{ route('dashboard.saveSelectedMeter') }}" method="POST">
                 @csrf 
                 <label id="listbox-label" class="block text-sm font-medium text-gray-900 dark:text-white">Meterlijst</label>
-                <select class="rounded px-2 py-1 w-full mb-2 dark:bg-gray-700" name="meter">
+                <select class="rounded px-2 py-1 w-full mb-2 dark:bg-gray-700" name="meter" id="meter-selector">
                     @if($meters->isEmpty())
                         <option value="">Nog geen meters gekoppeld</option>
                     @else
                         @foreach ($meters as $meter)
                             <option value="{{ $meter->id }}" {{ $meter->id == $selectedMeterId ? 'selected' : '' }}>
-                                {{ $meter->meter_id }}
+                                {{ $meter->name }}
                             </option>
                         @endforeach
                     @endif
                 </select>
-                <button type="submit" class="flex-1 w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition duration-200">Toepassen</button>
             </form>
         </div>
     </div>
