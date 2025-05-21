@@ -23,7 +23,13 @@ class User extends Authenticatable
         'phone',
         'description',
         'role',
-        'active'
+        'active',
+        'notification_frequency',
+        'electricity_threshold',
+        'gas_threshold',
+        'include_suggestions',
+        'include_comparison',
+        'include_forecast',
     ];
 
     /**
@@ -59,6 +65,28 @@ class User extends Authenticatable
     }
 
     /**
+     * Get de notificaties voor deze gebruiker.
+     */
+    public function energyNotifications(): HasMany
+    {
+        return $this->hasMany(EnergyNotification::class);
+    }
+
+    /**
+     * Get de ongelezen notificaties voor deze gebruiker.
+     */
+    public function unreadEnergyNotifications()
+    {
+        return $this->energyNotifications()
+            ->where('status', 'unread')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
      * Bepaal of gebruiker de opgegeven rol heeft
      */
     public function hasRole($role)
@@ -66,10 +94,10 @@ class User extends Authenticatable
         if (is_array($role)) {
             return in_array($this->role, $role);
         }
-        
+
         return $this->role === $role;
     }
-    
+
     /**
      * Bepaal of een gebruiker de eigenaar is
      */
@@ -77,7 +105,7 @@ class User extends Authenticatable
     {
         return $this->role === 'owner';
     }
-    
+
     /**
      * Bepaal of een gebruiker een beheerder is
      */
@@ -85,7 +113,7 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
-    
+
     /**
      * Bepaal of een gebruiker een standaard gebruiker is
      */
@@ -93,7 +121,7 @@ class User extends Authenticatable
     {
         return $this->role === 'user';
     }
-    
+
     /**
      * Geef een leesbare representatie van de rol
      */
@@ -109,9 +137,17 @@ class User extends Authenticatable
                 return 'Gebruiker';
         }
     }
-  
-   public function energyBudgets(): HasMany
-   {
-       return $this->hasMany(EnergyBudget::class);
-   }
+
+    public function energyBudgets(): HasMany
+    {
+        return $this->hasMany(EnergyBudget::class);
+    }
+
+    /**
+     * Get de notificatie frequentie van de gebruiker.
+     */
+    public function getNotificationFrequency(): string
+    {
+        return $this->notification_frequency ?? 'weekly';
+    }
 }

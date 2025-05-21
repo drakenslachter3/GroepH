@@ -1,63 +1,65 @@
 <x-guest-layout>
+    <h1 tabindex="0" class="text-2xl font-bold mb-6 dark:text-white">
+        {{ __('Wachtwoord reset aanvragen') }}
+    </h1>
 
-    <!-- Skiplink -->
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white text-blue-600 px-4 py-2 z-50">
-        Ga naar hoofdinhoud
-    </a>
+    <p tabindex="0" class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        {{ __('Vraag een resetverzoek aan. Je verzoek moet worden geaccepteerd door een beheerder.') }}
+    </p>
 
-    <main id="main-content">
+    <!-- Session Status -->
+    <x-etc.auth-session-status class="mb-4" :status="session('status')" />
 
-        <h1 class="text-2xl font-bold mb-6">
-            {{ __('Wachtwoord reset aanvragen') }}
-        </h1>
+    <!-- Error Message (custom error) -->
+    @if(session('error'))
+        <div class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+            {{ session('error') }}
+        </div>
+    @endif
 
-        <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Vraag een resetverzoek aan. Je verzoek moet worden geaccepteerd door een beheerder.') }}
-        </p>
+    <form method="POST" action="{{ route('password.email.request') }}" novalidate>
+        @csrf
 
-        <!-- Session Status -->
-        <x-etc.auth-session-status class="mb-4" :status="session('status')" />
+        <!-- E-mailadres -->
+        <div>
+            <x-etc.input-label for="email" :value="__('E-mailadres')" />
 
-        <!-- Error Message (custom error) -->
-        @if(session('error'))
-            <div class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
-                {{ session('error') }}
-            </div>
-        @endif
+            <x-etc.text-input
+                id="email"
+                name="email"
+                type="email"
+                class="block mt-1 w-full"
+                :value="old('email')"
+                required
+                autofocus
+                autocomplete="email"
+                aria-describedby="{{ $errors->has('email') ? 'email-error' : '' }}"
+            />
 
-        <form method="POST" action="{{ route('password.email.request') }}" novalidate>
-            @csrf
+            @if ($errors->has('email'))
+                <div id="email-error" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+                    {{ $errors->first('email') }}
+                </div>
+            @endif
+        </div>
 
-            <!-- E-mailadres -->
+        <!-- Flex container for link and button -->
+        <div class="flex flex-row justify-between items-center flex-wrap gap-4 mt-4">
+            
+            <!-- Back to loginscreen -->
             <div>
-                <x-etc.input-label for="email" :value="__('E-mailadres')" />
-
-                <x-etc.text-input
-                    id="email"
-                    name="email"
-                    type="email"
-                    class="block mt-1 w-full"
-                    :value="old('email')"
-                    required
-                    autofocus
-                    autocomplete="email"
-                    aria-describedby="{{ $errors->has('email') ? 'email-error' : '' }}"
-                />
-
-                @if ($errors->has('email'))
-                    <div id="email-error" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
-                        {{ $errors->first('email') }}
-                    </div>
-                @endif
+                <a href="{{ route('login') }}" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md">
+                    {{ __('Terug naar inloggen') }}
+                </a>   
             </div>
 
             <!-- Aanvraagknop -->
-            <div class="flex items-center justify-end mt-4">
+            <div>
                 <x-primary-button type="submit">
                     {{ __('Vraag aan') }}
                 </x-primary-button>
             </div>
-        </form>
 
-    </main>
+        </div>
+    </form>
 </x-guest-layout>

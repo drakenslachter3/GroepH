@@ -1,152 +1,210 @@
 @props(['type', 'title', 'buttonLabel', 'buttonColor', 'chartData', 'period', 'date' => null])
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
-    <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
-        <!-- Verbeterde header sectie met datum weergave en tijdsinterval visualisatie -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-            <div class="flex flex-col mb-2 sm:mb-0">
-                <h3 class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
-                
-                <!-- Datum weergave -->
-                <div class="mt-1 text-sm text-sky-600 dark:text-sky-300 font-medium">
-                    @switch($period)
-                        @case('day')
-                            {{ \Carbon\Carbon::parse($date)->format('d F Y') }}
-                            @break
-                        @case('month')
-                            {{ \Carbon\Carbon::parse($date)->format('F Y') }}
-                            @break
-                        @case('year')
-                            {{ \Carbon\Carbon::parse($date)->format('Y') }}
-                            @break
-                    @endswitch
-                </div>
+@php
+    use Carbon\Carbon;
+    
+    // Handle date formatting properly based on period
+    $formattedDate = $date;
+    if ($period == 'month' && $date) {
+        // For month view, ensure we have the correct format for calculating days in month
+        $dateObj = Carbon::parse($date);
+        $formattedDate = $dateObj->format('Y-m');
+        $daysInMonth = Carbon::createFromFormat('Y-m', $formattedDate)->daysInMonth;
+    } else {
+        $daysInMonth = 30; // Default fallback
+    }
+    
+    // Define the data key mapping based on the type
+    $dataKey = $type === 'electricity' ? 'energy_consumed' : 'gas_delivered';
+    $unitLabel = $type === 'electricity' ? 'kWh' : 'm³';
+    $backgroundColor = $type === 'electricity' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)';
+    $borderColor = $type === 'electricity' ? 'rgb(37, 99, 235)' : 'rgb(217, 119, 6)';
+    
+    // Parse the current date for navigation
+    $currentDate = Carbon::parse($date);
+    
+    $previousDate = match($period) {
+        'day' => $currentDate->copy()->subDay(),
+        'month' => $currentDate->copy()->subMonthNoOverflow(),
+        'year' => $currentDate->copy()->subYear(),
+        default => $currentDate
+    };
+
+    $nextDate = match($period) {
+        'day' => $currentDate->copy()->addDay(),
+        'month' => $currentDate->copy()->addMonthNoOverflow(),
+        'year' => $currentDate->copy()->addYear(),
+        default => $currentDate
+    };
+@endphp
+
+<div class="p-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <div class="flex flex-col mb-2 sm:mb-0">
+            <h3 class="text-lg font-semibold dark:text-white">{{ $title }}</h3>
+            
+            <div class="mt-1 text-sm text-sky-600 dark:text-sky-300 font-medium">
+                @switch($period)
+                    @case('day')
+                        {{ Carbon::parse($date)->format('d F Y') }}
+                        @break
+                    @case('month')
+                        {{ Carbon::parse($date)->format('F Y') }}
+                        @break
+                    @case('year')
+                        {{ Carbon::parse($date)->format('Y') }}
+                        @break
+                @endswitch
             </div>
-            
-            <!-- Periode keuze tabs -->
-            <div class="flex w-full sm:w-auto mt-2 sm:mt-0 dark:border dark:border-gray-700">
-                <a href="{{ route('dashboard', ['period' => 'day', 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
-                   class="px-3 py-1 text-sm rounded-l-md {{ $period === 'day' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
-                    Dag
-                </a>
-                <a href="{{ route('dashboard', ['period' => 'month', 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
-                   class="px-3 py-1 text-sm {{ $period === 'month' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
-                    Maand
-                </a>
-                <a href="{{ route('dashboard', ['period' => 'year', 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}" 
-                   class="px-3 py-1 text-sm rounded-r-md {{ $period === 'year' ? 'bg-' . $buttonColor . '-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
-                    Jaar
-                </a>
-            </div>
         </div>
         
-        <!-- Navigatie knoppen voor datum -->
-        <div class="flex justify-between items-center mb-4">
-            <a href="{{ route('dashboard', [
-                'period' => $period, 
-                'date' => \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d'),
-                'housing_type' => request('housing_type', 'tussenwoning')
-            ]) }}" 
-               class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-            </a>
-            
-            <!-- Verbruik label -->
-            <span class="px-3 py-1 text-sm bg-{{ $buttonColor }}-500 text-white dark:bg-{{ $buttonColor }}-600 dark:text-white rounded-md">
-                {{ $type === "electricity" ? "kWh" : "m³" }} Verbruik
-            </span>
-            
-            <a href="{{ route('dashboard', [
-                'period' => $period, 
-                'date' => \Carbon\Carbon::parse($date)->add(1, $period)->format('Y-m-d'),
-                'housing_type' => request('housing_type', 'tussenwoning')
-            ]) }}" 
-               class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
-            </a>
+        <div class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
+            @foreach (['day' => 'Dag', 'month' => 'Maand', 'year' => 'Jaar'] as $key => $label)
+                <a href="{{ route('dashboard', ['period' => $key, 'date' => $date, 'housing_type' => request('housing_type', 'tussenwoning')]) }}"
+                class="px-3 py-1 text-sm transition-colors
+                    {{ $loop->first ? 'rounded-l-md' : '' }}
+                    {{ $loop->last ? 'rounded-r-md' : '' }}
+                    {{ $period === $key 
+                        ? 'bg-' . $buttonColor . '-500 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}">
+                    {{ $label }}
+                </a>
+            @endforeach
         </div>
-        
-        <div class="relative" style="height: 300px;">
-            <canvas id="{{ $type }}Chart{{ $loop->index ?? 0 }}"></canvas>
-        </div>
-        
-        <div class="mt-4 flex justify-end">
-            <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
-                {{ $buttonLabel }}
-            </button>
-        </div>
+    </div>
+
+    <div class="flex justify-between items-center mb-4">
+        {{-- Previous Button --}}
+        <a href="{{ route('dashboard', [
+            'period' => $period, 
+            'date' => $previousDate->format('Y-m-d'),
+            'housing_type' => request('housing_type', 'tussenwoning')
+        ]) }}" 
+        class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+        </a>
+
+        {{-- Label --}}
+        <span class="px-3 py-1 text-sm bg-{{ $buttonColor }}-500 text-white dark:bg-{{ $buttonColor }}-600 dark:text-white rounded-md">
+            {{ $unitLabel }} Verbruik
+        </span>
+
+        {{-- Next Button --}}
+        <a href="{{ route('dashboard', [
+            'period' => $period, 
+            'date' => $nextDate->format('Y-m-d'),
+            'housing_type' => request('housing_type', 'tussenwoning')
+        ]) }}" 
+        class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+        </a>
+    </div>
+    
+    <div class="relative" style="height: 300px;">
+        <canvas id="{{ $type }}Chart"></canvas>
+    </div>
+    
+    <div class="mt-4 flex justify-end">
+        <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
+            {{ $buttonLabel }}
+        </button>
     </div>
 </div>
 
 @push('chart-scripts')
 <script>
-    // Debug info to console
-    console.log('Chart Component Loaded: {{ $type }}');
-    console.log('Chart Data:', @json($chartData ?? []));
-    
-    // Ensure chartData exists with proper structure
-    const chartData{{ ucfirst($type) }} = @json($chartData ?? [
-        'labels' => [],
-        $type => ['data' => [], 'target' => []]
-    ]);
-    
-    // Deze script zal worden uitgevoerd nadat de chart.js library is geladen
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof Chart === 'undefined') {
             console.error('Chart.js is not loaded!');
             return;
         }
+
+        const chartData = @json($chartData);
+
+        let periodTranslated;
+        const labels = [];
         
-        // Check if dark mode is active
-        const isDarkMode = document.documentElement.classList.contains('dark') || 
-                          document.querySelector('html').classList.contains('dark') ||
-                          window.matchMedia('(prefers-color-scheme: dark)').matches;
+        // Generate labels based on period
+        switch("{{ $period }}") {
+            case 'day':
+                // For day view - 24 hours (0-23)
+                labels.push("00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
+                            "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
+                            "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00");
+                periodTranslated = 'Uren';
+                break;
+                
+            case 'month':
+                // For month view - days in selected month
+                const daysInMonth = {{ $daysInMonth }};
+                for (let i = 1; i <= daysInMonth; i++) {
+                    labels.push(i.toString());
+                }
+                periodTranslated = 'Dagen';
+                break;
+                
+            case 'year':
+                // For year view - 12 months
+                labels.push("Januari", "Februari", "Maart", "April", "Mei", "Juni", 
+                           "Juli", "Augustus", "September", "Oktober", "November", "December");
+                periodTranslated = 'Maanden';
+                break;
+                
+            default:
+                console.error("Unknown period:", "{{ $period }}");
+        }
         
-        // Set the text color based on dark mode
-        const textColor = isDarkMode ? '#FFFFFF' : '#000000';
-        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const chartCanvas = document.getElementById('{{ $type }}Chart');
         
-        console.log('Initializing {{ $type }} chart');
-        const {{ $type }}Ctx = document.getElementById('{{ $type }}Chart{{ $loop->index ?? 0 }}');
-        
-        if (!{{ $type }}Ctx) {
-            console.error('Canvas element not found: {{ $type }}Chart{{ $loop->index ?? 0 }}');
+        if (!chartCanvas) {
+            console.error('Canvas element not found: {{ $type }}Chart');
             return;
         }
         
-        const {{ $type }}Chart = new Chart({{ $type }}Ctx.getContext('2d'), {
+        // Get the correct data key based on the type
+        const dataKey = "{{ $dataKey }}";
+        const usageData = chartData[dataKey] || [];
+        const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        const axisColor = isDarkMode ? '#D1D5DB' : '#4B5563';
+        const titleColor = isDarkMode ? '#F9FAFB' : '#000000';
+        
+        // Create chart instance as a variable to access it later for toggles
+        const chart = new Chart(chartCanvas, {
             type: 'bar',
             data: {
-                labels: chartData{{ ucfirst($type) }}.labels || [],
-                datasets: [
-                    {
-                        label: '{{ $type === "electricity" ? "kWh" : "m³" }} Verbruik',
-                        data: (chartData{{ ucfirst($type) }}.{{ $type }} && chartData{{ ucfirst($type) }}.{{ $type }}.data) || [],
-                        backgroundColor: '{{ $type === "electricity" ? "rgba(59, 130, 246, 0.6)" : "rgba(245, 158, 11, 0.6)" }}',
-                        borderColor: '{{ $type === "electricity" ? "rgb(37, 99, 235)" : "rgb(217, 119, 6)" }}',
-                        borderWidth: 1
-                    }
-                ]
+                labels: labels,
+                datasets: [{
+                    label: '{{ $unitLabel }} Verbruik',
+                    data: usageData,
+                    backgroundColor: '{{ $backgroundColor }}',
+                    borderColor: '{{ $borderColor }}',
+                    borderWidth: 1
+                }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: axisColor
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         title: {
                             display: true,
-                            text: periodLabels['{{ $period }}'] || '{{ $period }}',
-                            color: textColor
+                            text: periodTranslated,
+                            color: titleColor
                         },
                         ticks: {
-                            color: isDarkMode ? '#9CA3AF' : '#4B5563' // Lichtere tekst in donkere modus
-                        },
-                        grid: {
-                            color: gridColor
+                            color: axisColor
                         }
                     },
                     y: {
@@ -154,116 +212,37 @@
                         title: {
                             display: true,
                             text: '{{ $type === "electricity" ? "Elektriciteit (kWh)" : "Gas (m³)" }}',
-                            color: textColor
+                            color: titleColor
                         },
                         ticks: {
-                            color: isDarkMode ? '#9CA3AF' : '#4B5563' // Lichtere tekst in donkere modus
-                        },
-                        grid: {
-                            color: gridColor
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    tooltip: {
-                        backgroundColor: isDarkMode ? 'rgba(17, 24, 39, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-                        titleColor: isDarkMode ? '#E5E7EB' : '#1F2937',
-                        bodyColor: isDarkMode ? '#9CA3AF' : '#4B5563',
-                        borderColor: isDarkMode ? '#374151' : '#E5E7EB',
-                        borderWidth: 1,
-                        padding: 10,
-                        displayColors: false,
-                        callbacks: {
-                            afterBody: function(context) {
-                                const dataIndex = context[0].dataIndex;
-                                const value = chartData{{ ucfirst($type) }}.{{ $type }}.data[dataIndex] || 0;
-                                return ``;
-                            }
-                        }
-                    },
-                    legend: {
-                        labels: {
-                            color: textColor,
-                            font: {
-                                size: 12
-                            }
+                            color: axisColor
                         }
                     }
                 }
             }
         });
-        
-        // Toggle vergelijking met vorig jaar
+
+        // Toggle comparison with last year
         const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}');
         if (toggleButton) {
             toggleButton.addEventListener('click', function() {
-                const button = this;
-                const dataset = {{ $type }}Chart.data.datasets.find(ds => ds.label === 'Vorig Jaar');
-                
-                if (dataset) {
-                    // Verwijder de dataset als deze al bestaat
-                    {{ $type }}Chart.data.datasets = {{ $type }}Chart.data.datasets.filter(ds => ds.label !== 'Vorig Jaar');
-                    button.textContent = '{{ $buttonLabel }}';
-                    button.classList.remove('bg-{{ $buttonColor }}-200', 'dark:bg-{{ $buttonColor }}-700');
-                    button.classList.add('bg-{{ $buttonColor }}-100', 'dark:bg-{{ $buttonColor }}-800');
+                const isVisible = chart.data.datasets.length > 1;
+                if (isVisible) {
+                    chart.data.datasets.pop();  // Remove the second dataset
                 } else {
-                    // Check if lastYearData exists
-                    if (!window.lastYearData || !window.lastYearData.{{ $type }}) {
-                        console.error('Last year data is not defined');
-                        return;
-                    }
-                    
-                    // Voeg de dataset toe
-                    {{ $type }}Chart.data.datasets.push({
-                        label: 'Vorig Jaar',
-                        data: window.lastYearData.{{ $type }},
-                        backgroundColor: isDarkMode ? 'rgba(156, 163, 175, 0.5)' : 'rgba(107, 114, 128, 0.5)',
-                        borderColor: isDarkMode ? 'rgb(156, 163, 175)' : 'rgb(107, 114, 128)',
+                    // Use the previous year data if available
+                    const previousYearKey = `${dataKey}_previous_year`;
+                    chart.data.datasets.push({
+                        label: '{{ $type === "electricity" ? "kWh" : "m³" }} Verbruik Vorig Jaar',
+                        data: chartData[previousYearKey] || [],
+                        backgroundColor: '{{ $type === "electricity" ? "rgba(34, 197, 94, 0.6)" : "rgba(234, 88, 12, 0.6)" }}',
+                        borderColor: '{{ $type === "electricity" ? "rgb(22, 163, 74)" : "rgb(234, 88, 12)" }}',
                         borderWidth: 1
                     });
-                    button.textContent = 'Verberg Vorig Jaar';
-                    button.classList.remove('bg-{{ $buttonColor }}-100', 'dark:bg-{{ $buttonColor }}-800');
-                    button.classList.add('bg-{{ $buttonColor }}-200', 'dark:bg-{{ $buttonColor }}-700');
                 }
-                
-                {{ $type }}Chart.update();
+                chart.update();
             });
-        } else {
-            console.error('Toggle button not found');
         }
-        
-        // Add listener for dark mode changes (if using a theme toggle)
-        const darkModeObserver = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.attributeName === 'class') {
-                    const isDarkNow = document.documentElement.classList.contains('dark') || 
-                                    document.querySelector('html').classList.contains('dark');
-                    if (isDarkNow !== isDarkMode) {
-                        // Update chart colors
-                        const newTextColor = isDarkNow ? '#FFFFFF' : '#000000';
-                        const newGridColor = isDarkNow ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                        const newTickColor = isDarkNow ? '#9CA3AF' : '#4B5563';
-                        
-                        {{ $type }}Chart.options.scales.x.title.color = newTextColor;
-                        {{ $type }}Chart.options.scales.x.ticks.color = newTickColor;
-                        {{ $type }}Chart.options.scales.x.grid.color = newGridColor;
-                        {{ $type }}Chart.options.scales.y.title.color = newTextColor;
-                        {{ $type }}Chart.options.scales.y.ticks.color = newTickColor;
-                        {{ $type }}Chart.options.scales.y.grid.color = newGridColor;
-                        {{ $type }}Chart.options.plugins.legend.labels.color = newTextColor;
-                        
-                        {{ $type }}Chart.update();
-                    }
-                }
-            });
-        });
-        
-        // Start observing html or document element for dark mode changes
-        darkModeObserver.observe(document.documentElement, { attributes: true });
     });
 </script>
 @endpush

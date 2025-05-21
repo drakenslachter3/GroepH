@@ -1,12 +1,5 @@
 <x-guest-layout>
-
-    <!-- Skiplink -->
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white text-blue-600 px-4 py-2 z-50">
-        Ga naar hoofdinhoud
-    </a>
-
-    <main id="main-content">
-        <h1 class="text-2xl font-bold mb-6">
+        <h1 tabindex="0" class="text-2xl font-bold mb-6 dark:text-white">
             {{ __('Nieuw wachtwoord instellen') }}
         </h1>
 
@@ -49,10 +42,22 @@
                     class="block mt-1 w-full"
                     required
                     autocomplete="new-password"
-                    aria-describedby="{{ $errors->has('password') ? 'password-error' : '' }}"
+                    aria-describedby="password-requirements {{ $errors->has('password') ? 'password-error' : '' }}"
                 />
+
+                <!-- Password Requirements (linked via aria-describedby) -->
+                <ul id="password-requirements" class="mt-2 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
+                    <li>Minstens 8 karakters lang</li>
+                    <li>Bevat minstens één hoofdletter</li>
+                    <li>Bevat minstens één kleine letter</li>
+                    <li>Bevat minstens één nummer</li>
+                    <li>Bevat minstens één speciaal karakter</li>
+                </ul>
+
+                <!-- <x-etc.input-error :messages="$errors->get('password')" id="password-error" class="mt-2" role="alert"/> -->
+
                 @if ($errors->has('password'))
-                    <div id="password-error" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+                    <div  class="mt-2 text-sm text-red-600 dark:text-red-400" >
                         {{ $errors->first('password') }}
                     </div>
                 @endif

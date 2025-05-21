@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'influxdb' => [
+    'url' => env('INFLUXDB_URL'),
+    'token' => env('INFLUXDB_TOKEN'),
+    'org' => env('INFLUXDB_ORG'),
+    'bucket' => env('INFLUXDB_BUCKET'),
+],
+
 ];

@@ -14,6 +14,9 @@ use App\View\Components\TrendAnalysis;
 use App\View\Components\BudgetAlert;
 use App\View\Components\EnergySuggestions;
 use App\View\Components\AdminNotificationInbox;
+use App\View\Components\dashboard\EnergyPredictionChart;
+use App\View\Components\EnergyNotificationInbox;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -21,7 +24,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(EnergyConversionService::class, function ($app) {
+            return new EnergyConversionService();
+        });
+        
+        // Registreer de Energy Prediction Service
+        $this->app->singleton(EnergyPredictionService::class, function ($app) {
+            return new EnergyPredictionService();
+        });
+        
+        // Registreer de Dashboard Prediction Service
+        $this->app->singleton(DashboardPredictionService::class, function ($app) {
+            return new DashboardPredictionService(
+                $app->make(EnergyPredictionService::class),
+                $app->make(EnergyConversionService::class)
+            );
+        });
     }
 
     /**
@@ -42,5 +60,7 @@ class AppServiceProvider extends ServiceProvider
         Blade::component('budget-alert', BudgetAlert::class);
         Blade::component('energy-suggestions', EnergySuggestions::class);
         Blade::component('admin-notification-inbox', AdminNotificationInbox::class);
+        Blade::component('energy-notification-inbox', EnergyNotificationInbox::class);
+        Blade::component('energy-prediction-chart', EnergyPredictionChart::class);
     }
 }
