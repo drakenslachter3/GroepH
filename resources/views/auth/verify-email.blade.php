@@ -1,31 +1,36 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
+        <h1 tabindex="0" class="text-2xl font-bold mb-6 dark:text-white">
+            {{ __('E-mailadres verifiëren') }}
+        </h1>
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
+        <div tabindex="0" class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            {{ __('Bedankt voor je registratie! Klik op de link in de e-mail die we je hebben gestuurd om je e-mailadres te verifiëren. Heb je geen e-mail ontvangen? We sturen er graag nog een.') }}
         </div>
-    @endif
 
-    <div class="mt-4 flex items-center justify-between">
-        <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
-
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
+        @if (session('status') === 'verification-link-sent')
+            <div tabindex="0" class="mb-4 font-medium text-sm text-green-600 dark:text-green-400" role="status">
+                {{ __('Er is een nieuwe verificatielink verzonden naar het e-mailadres dat je bij registratie hebt opgegeven.') }}
             </div>
-        </form>
+        @endif
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
+        <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <!-- Resend Verification -->
+            <form method="POST" action="{{ route('verification.send') }}">
+                @csrf
+                <x-primary-button>
+                    {{ __('Verificatie e-mail opnieuw verzenden') }}
+                </x-primary-button>
+            </form>
 
-            <button type="submit" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
-                {{ __('Log Out') }}
-            </button>
-        </form>
-    </div>
+            <!-- Logout -->
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit"
+                    class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md">
+                    {{ __('Uitloggen') }}
+                </button>
+            </form>
+        </div>
+    </>
+
 </x-guest-layout>
