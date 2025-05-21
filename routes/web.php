@@ -4,13 +4,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnergyBudgetController;
 use App\Http\Controllers\EnergyPredictionController;
 use App\Http\Controllers\EnergyVisualizationController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\SmartMeterController;
 use App\Http\Controllers\InfluxController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InfluxDataController;
-
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SmartMeterController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -48,6 +47,7 @@ Route::middleware('auth')->group(function () {
 
     // Opslaan geselecteerde meter dashboard route
     Route::post('/dashboard', [DashboardController::class, 'saveSelectedMeter'])->name('dashboard.saveSelectedMeter');
+    Route::post('/dashboard/refresh', [DashboardController::class, 'refreshData'])->name('dashboard.refresh');
 
     Route::post('/energy/store-data', [InfluxDataController::class, 'storeEnergyData'])
         ->name('energy.store-data');
@@ -57,7 +57,7 @@ Route::middleware('auth')->group(function () {
     // Gebruikersbeheer routes
     Route::resource('users', UserController::class);
     Route::post('/delete-user/{user}', [UserController::class, 'destroy'])->name('users.delete');
-    
+
     // Slimme meter beheer routes
     Route::resource('smartmeters', SmartMeterController::class);
     Route::get('/users/{user}/meters', [SmartMeterController::class, 'userMeters'])->name('smartmeters.userMeters');
@@ -90,7 +90,6 @@ Route::middleware('auth')->prefix('testing')->group(function () {
     Route::get('/generate-notification', [App\Http\Controllers\TestNotificationController::class, 'generateTestNotification'])
         ->name('testing.notification');
 });
-
 
 require __DIR__ . '/auth.php';
 

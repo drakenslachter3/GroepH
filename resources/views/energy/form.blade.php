@@ -1,231 +1,223 @@
 <x-app-layout>
-    <div class="skip-links sr-only focus:not-sr-only">
-        <a href="#main-content" class="absolute z-50 px-4 py-2 text-sm bg-blue-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-600">
-            Spring naar hoofdinhoud
-        </a>
-    </div>
-
     <x-slot name="header">
-        <h1 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h1 tabindex="0" class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Stel je jaarlijkse energiebudget in') }}
         </h1>
     </x-slot>
 
-    <main id="main-content" class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @if (session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded" role="alert" aria-live="polite">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert" aria-live="assertive">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            <!-- Introduction text for screen readers -->
-            <div class="mb-6">
-                <p class="text-gray-700 dark:text-gray-300">
-                    Op deze pagina kunt u uw jaarlijkse energiebudget instellen en de verdeling over de maanden aanpassen. 
-                    Gebruik het formulier om uw elektriciteits- en gasverbruik in te stellen.
-                </p>
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        @if (session('success'))
+            <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded" role="alert" aria-live="polite">
+                {{ session('success') }}
             </div>
+        @endif
 
-            <div class="grid md:grid-cols-3 gap-6">
-                <section class="md:col-span-1 space-y-6" aria-labelledby="yearly-budget-heading">
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 border-b border-gray-200 dark:border-gray-700 relative">
-                            <h2 id="yearly-budget-heading" class="font-semibold text-lg mb-4 dark:text-gray-200">
-                                {{ __('Jaarbudget') }}
-                            </h2>
+        @if (session('error'))
+            <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert" aria-live="assertive">
+                {{ session('error') }}
+            </div>
+        @endif
 
-                            <!-- Yearly Budget Form with proper accessibility attributes -->
-                            <form id="yearlyBudgetForm" method="POST" action="{{ route('budget.store') }}" novalidate>
-                                @csrf
-                                <div class="mb-6">
-                                    <label for="electricity_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Elektriciteit
-                                        <span class="sr-only">(in kilowatt-uur)</span>
-                                    </label>
-                                    <div class="flex">
-                                        <input 
-                                            type="number" 
-                                            step="0.01" 
-                                            name="electricity_value" 
-                                            id="electricity_input" 
-                                            aria-describedby="electricity_help"
-                                            class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-300"
-                                            value="{{ $yearlyBudget->electricity_target_kwh ?? 3500 }}"
-                                        >
-                                        <span 
-                                            id="electricity_unit"
-                                            class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-600 dark:text-gray-300 w-1/3 flex items-center justify-center"
-                                        >
-                                            kWh
-                                        </span>
-                                    </div>
-                                    <p id="electricity_help" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        Voer uw jaarlijkse elektriciteitsverbruik in kilowattuur in.
-                                    </p>
+        <!-- Introduction text for screen readers -->
+        <div class="mb-6">
+            <p tabindex="0" class="text-gray-700 dark:text-gray-300">
+                Op deze pagina kunt u uw jaarlijkse energiebudget instellen en de verdeling over de maanden aanpassen. 
+                Gebruik het formulier om uw elektriciteits- en gasverbruik in te stellen.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <section class="md:col-span-1 space-y-6" aria-labelledby="yearly-budget-heading">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700 relative">
+                        <h2 id="yearly-budget-heading" class="font-semibold text-lg mb-4 dark:text-gray-200">
+                            {{ __('Jaarbudget') }}
+                        </h2>
+
+                        <!-- Yearly Budget Form with proper accessibility attributes -->
+                        <form id="yearlyBudgetForm" method="POST" action="{{ route('budget.store') }}" novalidate>
+                            @csrf
+                            <div class="mb-6">
+                                <label for="electricity_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Elektriciteit
+                                    <span class="sr-only">(in kilowatt-uur)</span>
+                                </label>
+                                <div class="flex">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        name="electricity_value" 
+                                        id="electricity_input" 
+                                        aria-describedby="electricity_help"
+                                        class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-300"
+                                        value="{{ $yearlyBudget->electricity_target_kwh ?? 3500 }}"
+                                    >
+                                    <span 
+                                        id="electricity_unit"
+                                        class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-600 dark:text-gray-300 w-1/3 flex items-center justify-center"
+                                    >
+                                        kWh
+                                    </span>
                                 </div>
+                                <p id="electricity_help" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Voer uw jaarlijkse elektriciteitsverbruik in kilowattuur in.
+                                </p>
+                            </div>
 
-                                <div class="mb-6">
-                                    <label for="gas_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Gas
-                                        <span class="sr-only">(in kubieke meter)</span>
-                                    </label>
-                                    <div class="flex">
-                                        <input 
-                                            type="number" 
-                                            step="0.01" 
-                                            name="gas_value" 
-                                            id="gas_input" 
-                                            aria-describedby="gas_help"
-                                            class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-300"
-                                            value="{{ $yearlyBudget->gas_target_m3 ?? 1200 }}"
-                                        >
-                                        <span 
-                                            id="gas_unit"
-                                            class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-600 dark:text-gray-300 w-1/3 flex items-center justify-center"
-                                        >
-                                            m³
-                                        </span>
-                                    </div>
-                                    <p id="gas_help" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        Voer uw jaarlijkse gasverbruik in kubieke meter in.
-                                    </p>
+                            <div class="mb-6">
+                                <label for="gas_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Gas
+                                    <span class="sr-only">(in kubieke meter)</span>
+                                </label>
+                                <div class="flex">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        name="gas_value" 
+                                        id="gas_input" 
+                                        aria-describedby="gas_help"
+                                        class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-300"
+                                        value="{{ $yearlyBudget->gas_target_m3 ?? 1200 }}"
+                                    >
+                                    <span 
+                                        id="gas_unit"
+                                        class="p-2 border dark:border-gray-600 border-l-0 rounded-r bg-gray-50 dark:bg-gray-600 dark:text-gray-300 w-1/3 flex items-center justify-center"
+                                    >
+                                        m³
+                                    </span>
                                 </div>
+                                <p id="gas_help" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Voer uw jaarlijkse gasverbruik in kubieke meter in.
+                                </p>
+                            </div>
 
-                                <div id="monthly-budget-fields" aria-hidden="true">
-                                </div>
-                            </form>
+                            <div id="monthly-budget-fields" aria-hidden="true">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 relative">
+                        <div class="flex flex-col space-y-4">
+                            <button 
+                                type="button" 
+                                id="resetButton"
+                                class="w-full px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                aria-label="Reset alle instellingen naar de standaardwaarden"
+                            >
+                                Reset
+                            </button>
+
+                            <button 
+                                type="submit" 
+                                form="yearlyBudgetForm"
+                                class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            >
+                                Opslaan
+                            </button>
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 relative">
-                            <div class="flex flex-col space-y-4">
+            <section class="md:col-span-2" aria-labelledby="monthly-budget-heading">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg relative">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <!-- Monthly Budget Header -->
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 id="monthly-budget-heading" class="font-semibold text-lg dark:text-gray-200">
+                                {{ __('Maandelijks budget') }}
+                            </h2>
+                            <div class="relative">
                                 <button 
                                     type="button" 
-                                    id="resetButton"
-                                    class="w-full px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                                    aria-label="Reset alle instellingen naar de standaardwaarden"
+                                    id="utilityToggleButton"
+                                    class="px-4 py-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-md shadow-sm w-40 text-center font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    aria-label="Wissel tussen elektriciteit en gas"
+                                    aria-expanded="false"
+                                    aria-controls="utility-options"
                                 >
-                                    Reset
-                                </button>
-
-                                <button 
-                                    type="submit" 
-                                    form="yearlyBudgetForm"
-                                    class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                                >
-                                    Opslaan
+                                    <span id="activeUtilityText" class="text-sm font-medium dark:text-gray-200">kWh</span>
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </section>
 
-                <section class="md:col-span-2" aria-labelledby="monthly-budget-heading">
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg relative">
-                        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                            <!-- Monthly Budget Header -->
-                            <div class="flex justify-between items-center mb-6">
-                                <h2 id="monthly-budget-heading" class="font-semibold text-lg dark:text-gray-200">
-                                    {{ __('Maandelijks budget') }}
-                                </h2>
-                                <div class="relative">
-                                    <button 
-                                        type="button" 
-                                        id="utilityToggleButton"
-                                        class="px-4 py-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-md shadow-sm w-40 text-center font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                        aria-label="Wissel tussen elektriciteit en gas"
-                                        aria-expanded="false"
-                                        aria-controls="utility-options"
+                        <!-- Slider Range Controls with ARIA -->
+                        <div class="mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                                <div class="mb-2 sm:mb-0">
+                                    <label for="sliderRangeMode" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Sliderweergave:
+                                    </label>
+                                    <select 
+                                        id="sliderRangeMode"
+                                        class="text-sm border border-gray-300 dark:border-gray-600 rounded p-1 dark:bg-gray-700 dark:text-gray-300 ml-2 min-w-[10rem] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        aria-label="Selecteer het bereik van de sliders"
                                     >
-                                        <span id="activeUtilityText" class="text-sm font-medium dark:text-gray-200">kWh</span>
-                                    </button>
+                                        <option value="normal">Automatisch</option>
+                                        <option value="balanced">Gebalanceerd</option>
+                                        <option value="full">Volledig bereik</option>
+                                    </select>
+                                </div>
+
+                                <div class="text-sm">
+                                    <span class="text-blue-600 dark:text-blue-400 font-medium">Huidig bereik: </span>
+                                    <span id="sliderRangeDisplay" class="dark:text-gray-200" aria-live="polite">0 - 500</span>
                                 </div>
                             </div>
-
-                            <!-- Slider Range Controls with ARIA -->
-                            <div class="mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                                    <div class="mb-2 sm:mb-0">
-                                        <label for="sliderRangeMode" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            Sliderweergave:
-                                        </label>
-                                        <select 
-                                            id="sliderRangeMode"
-                                            class="text-sm border border-gray-300 dark:border-gray-600 rounded p-1 dark:bg-gray-700 dark:text-gray-300 ml-2 min-w-[10rem] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            aria-label="Selecteer het bereik van de sliders"
-                                        >
-                                            <option value="normal">Automatisch</option>
-                                            <option value="balanced">Gebalanceerd</option>
-                                            <option value="full">Volledig bereik</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="text-sm">
-                                        <span class="text-blue-600 dark:text-blue-400 font-medium">Huidig bereik: </span>
-                                        <span id="sliderRangeDisplay" class="dark:text-gray-200" aria-live="polite">0 - 500</span>
-                                    </div>
-                                </div>
-                                <div id="slider-range-help" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                    Dit bepaalt de schaal van de maandelijkse verbruikssliders hieronder.
-                                </div>
+                            <div id="slider-range-help" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                Dit bepaalt de schaal van de maandelijkse verbruikssliders hieronder.
                             </div>
-
-                            <!-- Budget Progress and Indicator with ARIA -->
-                            <div class="mb-4" role="status" aria-live="polite">
-                                <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
-                                    <span>Jaarlijks budget: <span id="yearlyTotal">3500</span> <span id="totalUnit">kWh</span></span>
-                                    <span>Gebruikt: <span id="usedTotal">3500</span> <span id="usedUnit">kWh</span> (<span id="usedPercentage">100</span>%)</span>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-                                    <div id="budgetProgressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
-                                </div>
-                                <div id="budgetWarning" class="text-sm text-yellow-500 dark:text-yellow-400 hidden" aria-live="assertive">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    Maandelijkse waardes mogen niet meer dan het jaarbudget zijn.
-                                </div>
-                            </div>
-
-                            <!-- Monthly Budget Sliders Grid with Accessibility -->
-                            <div aria-labelledby="monthly-budget-heading" class="mb-4">
-                                <p id="sliders-explanation" class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                    Pas de sliders aan om uw energiebudget over de maanden te verdelen. U kunt ook de 
-                                    getallen onder elke slider direct invoeren voor precieze waarden.
-                                </p>
-                                <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" id="monthlySliders">
-                                </div>
-                            </div>
-
-                            <!-- Instructions for screen reader users -->
-                            <details class="mt-4">
-                                <summary class="text-sm text-blue-600 dark:text-blue-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded">
-                                    Hulp bij het instellen van uw maandelijks budget
-                                </summary>
-                                <div class="mt-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
-                                    <h3 class="font-medium mb-2 text-gray-700 dark:text-gray-300">Toetsenbordinstructies:</h3>
-                                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                        <li>Gebruik de Tab-toets om tussen elementen te navigeren</li>
-                                        <li>Bij een geselecteerde slider kunt u de pijltjestoetsen (omhoog/omlaag) gebruiken om waarden aan te passen</li>
-                                        <li>Voor directe invoer kunt u de numerieke velden onder elke maand gebruiken</li>
-                                        <li>Druk op Enter bij het formulier om uw budget op te slaan</li>
-                                    </ul>
-                                </div>
-                            </details>
                         </div>
+
+                        <!-- Budget Progress and Indicator with ARIA -->
+                        <div class="mb-4" role="status" aria-live="polite">
+                            <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
+                                <span>Jaarlijks budget: <span id="yearlyTotal">3500</span> <span id="totalUnit">kWh</span></span>
+                                <span>Gebruikt: <span id="usedTotal">3500</span> <span id="usedUnit">kWh</span> (<span id="usedPercentage">100</span>%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                <div id="budgetProgressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
+                            </div>
+                            <div id="budgetWarning" class="text-sm text-yellow-500 dark:text-yellow-400 hidden" aria-live="assertive">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Maandelijkse waardes mogen niet meer dan het jaarbudget zijn.
+                            </div>
+                        </div>
+
+                        <!-- Monthly Budget Sliders Grid with Accessibility -->
+                        <div aria-labelledby="monthly-budget-heading" class="mb-4">
+                            <p id="sliders-explanation" class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                Pas de sliders aan om uw energiebudget over de maanden te verdelen. U kunt ook de 
+                                getallen onder elke slider direct invoeren voor precieze waarden.
+                            </p>
+                            <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" id="monthlySliders">
+                            </div>
+                        </div>
+
+                        <!-- Instructions for screen reader users -->
+                        <details class="mt-4">
+                            <summary class="text-sm text-blue-600 dark:text-blue-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded">
+                                Hulp bij het instellen van uw maandelijks budget
+                            </summary>
+                            <div class="mt-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                <h3 class="font-medium mb-2 text-gray-700 dark:text-gray-300">Toetsenbordinstructies:</h3>
+                                <ul class="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                    <li>Gebruik de Tab-toets om tussen elementen te navigeren</li>
+                                    <li>Bij een geselecteerde slider kunt u de pijltjestoetsen (omhoog/omlaag) gebruiken om waarden aan te passen</li>
+                                    <li>Voor directe invoer kunt u de numerieke velden onder elke maand gebruiken</li>
+                                    <li>Druk op Enter bij het formulier om uw budget op te slaan</li>
+                                </ul>
+                            </div>
+                        </details>
                     </div>
-                </section>
-            </div>
+                </div>
+            </section>
         </div>
-    </main>
+    </div>
 
     <style>
         .vertical-slider-container {
