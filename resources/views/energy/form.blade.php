@@ -63,10 +63,6 @@
 
                                 <!-- Monthly budget data will be added here via JavaScript -->
                             </form>
-
-                            <div class="absolute bottom-0 right-0 p-1">
-                                <span class="text-xs text-gray-500 dark:text-gray-400">1.</span>
-                            </div>
                         </div>
                     </div>
 
@@ -83,9 +79,6 @@
                                     class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700">
                                     Opslaan
                                 </button>
-                            </div>
-                            <div class="absolute bottom-0 right-0 p-1">
-                                <span class="text-xs text-gray-500 dark:text-gray-400">2.</span>
                             </div>
                         </div>
                     </div>
@@ -104,9 +97,6 @@
                                         <span id="activeUtilityText"
                                             class="text-sm font-medium dark:text-gray-200">kWh</span>
                                     </button>
-                                    <div class="absolute top-0 right-0 mt-1 mr-1">
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">4.</span>
-                                    </div>
                                 </div>
                             </div>
 
@@ -158,10 +148,6 @@
                             <!-- Monthly Budget Sliders Grid with Vertical Sliders -->
                             <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6" id="monthlySliders">
                                 <!-- Sliders will be generated dynamically by JavaScript -->
-                            </div>
-
-                            <div class="absolute bottom-0 right-0 p-1">
-                                <span class="text-xs text-gray-500 dark:text-gray-400">3.</span>
                             </div>
                         </div>
                     </div>
