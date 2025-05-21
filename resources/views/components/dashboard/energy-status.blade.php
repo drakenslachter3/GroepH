@@ -13,7 +13,7 @@
 
 @php
     // Use live data if available, otherwise fall back to provided data
-    $actualUsage = $liveData['usage'] ?? ($usage ?? 0);
+    $actualUsage = $liveData['usage'];
     $actualTarget = $liveData['target'] ?? ($target ?? 0);
     $actualPercentage = $liveData['percentage'] ?? ($percentage ?? 0);
     $actualStatus = $liveData['status'] ?? ($status ?? 'goed');

@@ -110,7 +110,7 @@ class DashboardController extends Controller
         // dd($energydashboard_data['meterDataForPeriod']);
 
         // Get live InfluxDB data for current usage and historical data
-        $liveInfluxData = $this->getLiveInfluxData($selectedMeterId, $period, $date); 
+        $liveInfluxData = $this->getLiveInfluxData($selectedMeterId, $period, $date);
 
         // Get the complete meter data for the period (for charts and predictions)
         $meterDataForPeriod = $this->getEnergyData($selectedMeterId, $period, $date);
@@ -178,6 +178,7 @@ class DashboardController extends Controller
         }
 
         // Calculate electricity percentage and get live data
+        // TODO Error on empty chart
         $actualElectricity = $liveInfluxData['total']['electricity_usage'] ?? 0;
 
         $dateObj       = Carbon::parse($date);
@@ -203,6 +204,7 @@ class DashboardController extends Controller
         $dailyAverageConsumption['electricity'] = $yearlyConsumptionToDate['electricity'] / $daysPassedThisYear;
 
         // Calculate gas percentage and get live data
+        // TODO Error on empty chart
         $actualGas = $liveInfluxData['total']['gas_usage'] ?? 0;
 
         $targetField   = 'gas_target_m3';
@@ -230,6 +232,7 @@ class DashboardController extends Controller
         $gasTarget         = $this->calculateTargetForPeriod('gas', $period, $date, $budgetData['gas']);
 
         // Calculate costs using the conversion service
+        // TODO REMOVE
         $electricityCost = $this->conversionService->kwhToEuro($actualElectricity);
         $gasCost         = $this->conversionService->m3ToEuro($actualGas);
 

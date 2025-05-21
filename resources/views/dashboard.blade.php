@@ -264,18 +264,6 @@
                             continue;
                         }
 
-                        // $widgetSize = match ($item) {
-                        //     'usage-prediction' => 'large',
-                        //     'energy-status-electricity', 'energy-status-gas' => 'small',
-                        //     'historical-comparison' => 'full',
-                        //     'energy-chart-electricity', 'energy-chart-gas' => 'large',
-                        //     'trend-analysis' => 'full',
-                        //     'energy-suggestions' => 'large',
-                        //     'energy-prediction-chart-electricity' => 'full',
-                        //     'energy-prediction-chart-gas' => 'full',
-                        //     'switch-meter' => 'large',
-                        //     default => 'full',
-                        // };
                         $widgetSize = match ($item) {
                             'usage-prediction' => 'large',
                             'energy-status-electricity', 'energy-status-gas' => 'small',
