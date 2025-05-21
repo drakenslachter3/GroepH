@@ -51,84 +51,94 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
                 @endif
             </div>
         </div>
-            <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
-        @if($period == 'month' && isset($monthlyBudgetValue))
-            <span>Maandbudget: {{ number_format($monthlyBudgetValue, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-            <span>Dagelijks budget: {{ number_format($monthlyBudgetValue / 30, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
-        @else
-            <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-            <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
-        @endif
-    </div>    
-        <!-- Nieuwe verbruiksdetails toevoegen -->
         
+        <!-- Prediction Chart Canvas -->
+        <div class="relative" style="height: 350px;">
+            <canvas id="predictionChart{{ $type }}{{ $period }}"></canvas>
+        </div>
+        <div class="mt-2 text-sm text-gray-600 dark:text-gray-300 flex justify-between">
+            @if($period == 'month' && isset($monthlyBudgetValue))
+                <span>Maandbudget: {{ number_format($monthlyBudgetValue, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+                <span>Dagelijks budget: {{ number_format($monthlyBudgetValue / 30, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag</span>
+            @else
+                <span>Jaarbudget: {{ number_format($yearlyBudgetTarget, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+                <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}</span>
+            @endif
+        </div> 
+    </div>
+    <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
+        <div>
+            <span class="text-xs text-gray-500 dark:text-gray-400">Verbruik dit jaar:</span>
+            <p class="text-sm font-medium text-gray-800 dark:text-white" data-id="totalThisYear">
+                {{ number_format($yearlyConsumptionToDate, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
+            </p>
+        </div>
+        <div>
+            <span class="text-xs text-gray-500 dark:text-gray-400">Gemiddeld per dag:</span>
+            <p class="text-sm font-medium text-gray-800 dark:text-white" data-id="dailyAverage">
+                {{ number_format($dailyAverageConsumption, 1) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}/dag
+            </p>
+        </div>
     </div>
             
-            <!-- Prediction Chart Canvas -->
-            <div class="relative" style="height: 350px;">
-                <canvas id="predictionChart{{ $type }}{{ $period }}"></canvas>
-            </div>
-            
-            <!-- Predictions Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <!-- Expected Scenario Card -->
-                <div class="bg-gray-50 p-4 rounded-lg dark:bg-gray-700">
-                    <h4 class="font-medium text-gray-700 mb-2 dark:text-white">Verwachte uitkomst</h4>
-                    <p class="text-2xl font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
-                        {{ number_format($currentData['expected'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
-                    </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        @if($isExceedingBudget)
-                            Overschrijding budget: {{ number_format($exceedingPercentage, 1) }}%
-                        @else
-                            Onder budget: {{ number_format($exceedingPercentage, 1) }}%
-                        @endif
-                    </p>
-                </div>
-                
-                <!-- Best Case Card -->
-                <div class="bg-green-50 p-4 rounded-lg dark:bg-green-900/30">
-                    <h4 class="font-medium text-green-700 mb-2 dark:text-green-400">Best case scenario</h4>
-                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {{ number_format($currentData['best_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
-                    </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                        {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
-                    </p>
-                </div>
-                
-                <!-- Worst Case Card -->
-                <div class="bg-red-50 p-4 rounded-lg dark:bg-red-900/30">
-                    <h4 class="font-medium text-red-700 mb-2 dark:text-red-400">Worst case scenario</h4>
-                    <p class="text-2xl font-bold text-red-600 dark:text-red-400">
-                        {{ number_format($currentData['worst_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
-                    </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                        {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
-                    </p>
-                </div>
-            </div>
-            
-            <!-- Recommendations Based on Prediction -->
-            <div class="mt-6 p-4 bg-{{ $isExceedingBudget ? 'red' : 'green' }}-50 rounded-lg dark:bg-{{ $isExceedingBudget ? 'red' : 'green' }}-900/30">
-                <h4 class="font-medium text-{{ $isExceedingBudget ? 'red' : 'green' }}-700 dark:text-{{ $isExceedingBudget ? 'red' : 'green' }}-400 mb-2">
-                    {{ $isExceedingBudget ? 'Actie nodig' : 'Goed op weg' }}
-                </h4>
-                <p class="text-gray-700 dark:text-gray-300">
-                    @if($exceedingPercentage > 30 && $isExceedingBudget)
-                        U zit momenteel significant boven uw jaarbudget. Overweeg maatregelen om uw {{ $type === 'electricity' ? 'elektriciteits' : 'gas' }}verbruik te verminderen.
-                    @elseif($isExceedingBudget)
-                        U zit momenteel iets boven uw jaarbudget. Let op uw verbruik om binnen het budget te blijven.
-                    @elseif($exceedingPercentage < 10)
-                        U zit goed op schema om binnen uw jaarbudget te blijven. Blijf uw verbruik in de gaten houden.
-                    @else
-                        U zit goed op schema en gebruikt minder dan verwacht. Ga zo door!
-                    @endif
-                </p>
-            </div>
+    <!-- Predictions Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <!-- Expected Scenario Card -->
+        <div class="bg-gray-50 p-4 rounded-lg dark:bg-gray-700">
+            <h4 class="font-medium text-gray-700 mb-2 dark:text-white">Verwachte uitkomst</h4>
+            <p class="text-2xl font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
+                {{ number_format($currentData['expected'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                @if($isExceedingBudget)
+                    Overschrijding budget: {{ number_format($exceedingPercentage, 1) }}%
+                @else
+                    Onder budget: {{ number_format($exceedingPercentage, 1) }}%
+                @endif
+            </p>
         </div>
+        
+        <!-- Best Case Card -->
+        <div class="bg-green-50 p-4 rounded-lg dark:bg-green-900/30">
+            <h4 class="font-medium text-green-700 mb-2 dark:text-green-400">Best case scenario</h4>
+            <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+                {{ number_format($currentData['best_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
+                {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
+            </p>
+        </div>
+        
+        <!-- Worst Case Card -->
+        <div class="bg-red-50 p-4 rounded-lg dark:bg-red-900/30">
+            <h4 class="font-medium text-red-700 mb-2 dark:text-red-400">Worst case scenario</h4>
+            <p class="text-2xl font-bold text-red-600 dark:text-red-400">
+                {{ number_format($currentData['worst_case'], 2) }} {{ $type === 'electricity' ? 'kWh' : 'm³' }}
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
+                {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
+            </p>
+        </div>
+    </div>
+    
+    <!-- Recommendations Based on Prediction -->
+    <div class="mt-6 p-4 bg-{{ $isExceedingBudget ? 'red' : 'green' }}-50 rounded-lg dark:bg-{{ $isExceedingBudget ? 'red' : 'green' }}-900/30">
+        <h4 class="font-medium text-{{ $isExceedingBudget ? 'red' : 'green' }}-700 dark:text-{{ $isExceedingBudget ? 'red' : 'green' }}-400 mb-2">
+            {{ $isExceedingBudget ? 'Actie nodig' : 'Goed op weg' }}
+        </h4>
+        <p class="text-gray-700 dark:text-gray-300">
+            @if($exceedingPercentage > 30 && $isExceedingBudget)
+                U zit momenteel significant boven uw jaarbudget. Overweeg maatregelen om uw {{ $type === 'electricity' ? 'elektriciteits' : 'gas' }}verbruik te verminderen.
+            @elseif($isExceedingBudget)
+                U zit momenteel iets boven uw jaarbudget. Let op uw verbruik om binnen het budget te blijven.
+            @elseif($exceedingPercentage < 10)
+                U zit goed op schema om binnen uw jaarbudget te blijven. Blijf uw verbruik in de gaten houden.
+            @else
+                U zit goed op schema en gebruikt minder dan verwacht. Ga zo door!
+            @endif
+        </p>
     </div>
 </section>
 
@@ -155,6 +165,9 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
         const energyType = @json($type);
         const periodType = @json($period);
         
+        console.log("Chart setup for", energyType, periodType);
+        console.log("Current data keys:", Object.keys(currentData));
+        
         // Define colors for different energy types
         const mainColor = energyType === 'electricity' ? 
             'rgb(59, 130, 246)' : 'rgb(245, 158, 11)';
@@ -165,7 +178,11 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
         const labels = getLabels(periodType);
         
         // Prepare the chart data
-        const ctx = document.getElementById(`predictionChart${energyType}${periodType}`).getContext('2d');
+        const ctx = document.getElementById(`predictionChart${energyType}${periodType}`);
+        if (!ctx) {
+            console.error(`Chart canvas not found: predictionChart${energyType}${periodType}`);
+            return;
+        }
         
         // Calculate y-axis min/max based on the period type for proper scaling
         const yAxisConfig = getYAxisConfig(periodType, energyType, currentData, budgetData);
@@ -173,114 +190,105 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
         // Create datasets
         const chartData = {
             labels: labels,
-            datasets: [
-                // Actual data
-                {
-                    label: 'Werkelijk verbruik',
-                    data: currentData.actual,
-                    borderColor: mainColor,
-                    backgroundColor: mainColorLight,
-                    tension: 0.2,
-                    fill: false,
-                    pointRadius: 4,
-                    pointBackgroundColor: mainColor,
-                    borderWidth: 3,
-                    order: 0 // Put actual data at the foreground
-                },
-                // Expected prediction
-                {
-                    label: 'Verwachte trend',
-                    data: currentData.prediction,
-                    borderColor: 'rgba(107, 114, 128, 0.8)',
-                    borderDash: [5, 5],
-                    backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                    tension: 0.3,
-                    fill: false,
-                    pointRadius: 0,
-                    borderWidth: 2,
-                    order: 3
-                },
-                // Best case scenario
-                {
-                    label: 'Best case',
-                    data: currentData.best_case_line,
-                    borderColor: 'rgba(16, 185, 129, 0.6)',
-                    borderDash: [5, 5],
-                    tension: 0.3,
-                    fill: false,
-                    pointRadius: 0,
-                    borderWidth: 2,
-                    order: 4
-                },
-                // Worst case scenario
-                {
-                    label: 'Worst case',
-                    data: currentData.worst_case_line,
-                    borderColor: 'rgba(239, 68, 68, 0.6)',
-                    borderDash: [5, 5],
-                    tension: 0.3,
-                    fill: false,
-                    pointRadius: 0,
-                    borderWidth: 2,
-                    order: 5
-                },
-                // Budget target - transform to line appropriate for the period
-                {
-                    label: 'Budget',
-                    data: getPeriodBudgetLine(periodType, budgetData),
-                    borderColor: 'rgba(0, 0, 0, 0.7)',
-                    backgroundColor: 'rgba(0, 0, 0, 0)',
-                    borderWidth: 2.5,
-                    borderDash: [5, 5],
-                    fill: false,
-                    tension: 0,
-                    pointRadius: 0,
-                    order: 1 // Place budget line behind other elements
-                }
-            ]
+            datasets: []
         };
         
-        // Create prediction band (area between best and worst case)
-       // Wijzig de datasets volgorde
-chartData.datasets = [
-    // Actual data (blijft als eerste)
-    chartData.datasets[0],
-    
-    // Budget line (move up in order)
-    chartData.datasets[4],
-    
-    // Best case scenario (before worst case for proper area filling)
-    chartData.datasets[2],
-    
-    // Worst case scenario
-    chartData.datasets[3],
-    
-    // Expected prediction (keep last)
-    chartData.datasets[1]
-];
-
-// Create prediction band (area between best and worst case)
-if (currentData.actual.length > 0) {
-    // Voeg een area dataset toe die het verschil tussen worst case en best case toont
-    const predictionArea = {
-        type: 'line',
-        label: 'Voorspellingsmarge',
-        data: currentData.worst_case_line,
-        backgroundColor: 'rgba(156, 163, 175, 0.2)', // Gray with transparency
-        borderWidth: 0,
-        tension: 0.3,
-        fill: '-1', // Vul naar voorgaande dataset (best case)
-        pointRadius: 0,
-        order: 1 // Place prediction band behind most elements
-    };
-    
-    // Insert area dataset between best case and worst case
-    chartData.datasets.splice(3, 0, predictionArea);
-}
+        // Only add datasets if they exist in the data
+        // Actual data
+        if (Array.isArray(currentData.actual)) {
+            chartData.datasets.push({
+                label: 'Werkelijk verbruik',
+                data: currentData.actual,
+                borderColor: mainColor,
+                backgroundColor: mainColorLight,
+                tension: 0.2,
+                fill: false,
+                pointRadius: 4,
+                pointBackgroundColor: mainColor,
+                borderWidth: 3,
+                order: 0 // Put actual data at the foreground
+            });
+        }
         
-        // Adjust colors for dark mode
-        if (isDarkMode) {
-            chartData.datasets[4].borderColor = 'rgba(255, 255, 255, 0.7)'; // Budget line
+        // Budget line
+        const budgetLine = getPeriodBudgetLine(periodType, budgetData);
+        if (Array.isArray(budgetLine)) {
+            chartData.datasets.push({
+                label: 'Budget',
+                data: budgetLine,
+                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                borderWidth: 2.5,
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0,
+                pointRadius: 0,
+                order: 1 // Place budget line behind other elements
+            });
+        }
+        
+        // Best case scenario
+        if (Array.isArray(currentData.best_case_line)) {
+            chartData.datasets.push({
+                label: 'Best case',
+                data: currentData.best_case_line,
+                borderColor: 'rgba(16, 185, 129, 0.6)',
+                borderDash: [5, 5],
+                tension: 0.3,
+                fill: false,
+                pointRadius: 0,
+                borderWidth: 2,
+                order: 2
+            });
+        }
+        
+        // Create prediction band (area between best and worst case)
+        if (Array.isArray(currentData.worst_case_line) && 
+            Array.isArray(currentData.best_case_line) && 
+            currentData.worst_case_line.length > 0 && 
+            currentData.best_case_line.length > 0) {
+            
+            // Add prediction area
+            chartData.datasets.push({
+                type: 'line',
+                label: 'Voorspellingsmarge',
+                data: currentData.worst_case_line,
+                backgroundColor: 'rgba(156, 163, 175, 0.2)', // Gray with transparency
+                borderWidth: 0,
+                tension: 0.3,
+                fill: '-1', // Fill to previous dataset (best case)
+                pointRadius: 0,
+                order: 3
+            });
+            
+            // Worst case scenario
+            chartData.datasets.push({
+                label: 'Worst case',
+                data: currentData.worst_case_line,
+                borderColor: 'rgba(239, 68, 68, 0.6)',
+                borderDash: [5, 5],
+                tension: 0.3,
+                fill: false,
+                pointRadius: 0,
+                borderWidth: 2,
+                order: 4
+            });
+        }
+        
+        // Expected prediction
+        if (Array.isArray(currentData.prediction)) {
+            chartData.datasets.push({
+                label: 'Verwachte trend',
+                data: currentData.prediction,
+                borderColor: 'rgba(107, 114, 128, 0.8)',
+                borderDash: [5, 5],
+                backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 0,
+                borderWidth: 2,
+                order: 5
+            });
         }
         
         // Create the chart
@@ -290,6 +298,38 @@ if (currentData.actual.length > 0) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            footer: function(tooltipItems) {
+                                if (tooltipItems.length === 0) return '';
+                                
+                                const datasetIndex = tooltipItems[0].datasetIndex;
+                                const dataset = chartData.datasets[datasetIndex];
+                                
+                                if (dataset.label === 'Werkelijk verbruik') {
+                                    const index = tooltipItems[0].dataIndex;
+                                    if (index >= 0 && index < budgetLine.length) {
+                                        const budgetValue = budgetLine[index] || 0;
+                                        const actualValue = dataset.data[index] || 0;
+                                        if (budgetValue > 0) {
+                                            const percentage = Math.round((actualValue / budgetValue) * 100);
+                                            return `Budget: ${budgetValue.toFixed(2)} ${energyType === 'electricity' ? 'kWh' : 'm³'} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                                return '';
+                            }
+                        }
+                    },
+                    legend: {
+                        labels: {
+                            color: textColor
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         title: {
@@ -325,84 +365,44 @@ if (currentData.actual.length > 0) {
                         max: yAxisConfig.max,
                         suggestedMax: yAxisConfig.suggestedMax
                     }
-                },
-                plugins: {
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            footer: function(tooltipItems) {
-                                const datasetIndex = tooltipItems[0].datasetIndex;
-                                if (datasetIndex === 0) { // Actual data
-                                    const index = tooltipItems[0].dataIndex;
-                                    const budgetValue = getValueForTooltip(periodType, budgetData, index);
-                                    const actualValue = currentData.actual[index] || 0;
-                                    const percentage = budgetValue ? Math.round((actualValue / budgetValue) * 100) : 0;
-                                    
-                                    return `Budget: ${budgetValue.toFixed(2)} ${energyType === 'electricity' ? 'kWh' : 'm³'} (${percentage}%)`;
-                                }
-                                return '';
-                            }
-                        }
-                    },
-                    legend: {
-                        labels: {
-                            color: textColor
-                        }
-                    }
                 }
             }
         });
         
         // Helper function to get budget line appropriate for the period
-        
-/**
- * Helper function om de budgetlijn te genereren op basis van de periode
- */
-function getPeriodBudgetLine(period, budgetData) {
-    const length = getLabels(period).length;
-    
-    // Controleer of we een array met budgetlijnwaarden hebben
-    if (budgetData.line && Array.isArray(budgetData.line) && budgetData.line.length > 0) {
-        // Voor jaarweergave, gebruik de daadwerkelijke maandelijkse budgetten
-        if (period === 'year') {
-            return budgetData.line;
-        }
-        // Voor dag- en maandweergave, we hebben al een array met correcte waarden
-        else if (budgetData.line.length === length) {
-            return budgetData.line;
-        }
-    }
-    
-    // Fallback naar de oude methode als er geen specifieke budgetlijn is
-    switch(period) {
-        case 'day':
-            const dailyBudget = budgetData.per_unit || (budgetData.target / 365 / 24);
-            return Array(length).fill(dailyBudget);
+        function getPeriodBudgetLine(period, budgetData) {
+            const length = getLabels(period).length;
             
-        case 'month':
-            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-            const monthlyBudget = budgetData.target / 12;
-            const dailyBudgetValue = budgetData.per_unit || (monthlyBudget / daysInMonth);
-            return Array(length).fill(dailyBudgetValue);
+            // Check if we have an array with budget line values
+            if (budgetData.line && Array.isArray(budgetData.line) && budgetData.line.length > 0) {
+                console.log("Using provided budget line with length", budgetData.line.length);
+                // For year view, use the actual monthly budgets
+                if (period === 'year') {
+                    return budgetData.line;
+                }
+                // For day and month view, we already have an array with correct values
+                else if (budgetData.line.length === length) {
+                    return budgetData.line;
+                }
+            }
             
-        case 'year':
-        default:
-            const monthlyBudgetValue = budgetData.per_unit || (budgetData.target / 12);
-            return Array(12).fill(monthlyBudgetValue);
-    }
-}
-        
-        // Helper function to get budget value for tooltip
-        function getValueForTooltip(period, budgetData, index) {
+            console.log("Generating fallback budget line for", period);
+            // Fallback to the old method if there's no specific budget line
             switch(period) {
                 case 'day':
-                    return budgetData.target / 365 / 24; // Hourly budget
+                    const dailyBudget = budgetData.per_unit || (budgetData.target / 365 / 24);
+                    return Array(length).fill(dailyBudget);
+                    
                 case 'month':
-                    return budgetData.target / 12 / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(); // Daily budget
+                    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+                    const monthlyBudget = budgetData.target / 12;
+                    const dailyBudgetValue = budgetData.per_unit || (monthlyBudget / daysInMonth);
+                    return Array(length).fill(dailyBudgetValue);
+                    
                 case 'year':
                 default:
-                    return budgetData.target / 12; // Monthly budget
+                    const monthlyBudgetValue = budgetData.per_unit || (budgetData.target / 12);
+                    return Array(12).fill(monthlyBudgetValue);
             }
         }
         
@@ -428,8 +428,8 @@ function getPeriodBudgetLine(period, budgetData) {
             }
             
             // Check actual data
-            if (currentData.actual && currentData.actual.length > 0) {
-                const actualValues = currentData.actual.filter(val => val !== null);
+            if (currentData.actual && Array.isArray(currentData.actual) && currentData.actual.length > 0) {
+                const actualValues = currentData.actual.filter(val => val !== null && val !== undefined);
                 maxActual = actualValues.length > 0 ? Math.max(...actualValues) : 0;
             }
             
@@ -437,13 +437,13 @@ function getPeriodBudgetLine(period, budgetData) {
             const allPredictionData = [];
             
             // Add prediction data
-            if (currentData.prediction && currentData.prediction.length > 0) {
-                allPredictionData.push(...currentData.prediction.filter(val => val !== null));
+            if (currentData.prediction && Array.isArray(currentData.prediction) && currentData.prediction.length > 0) {
+                allPredictionData.push(...currentData.prediction.filter(val => val !== null && val !== undefined));
             }
             
             // Add worst case scenario data
-            if (currentData.worst_case_line && currentData.worst_case_line.length > 0) {
-                allPredictionData.push(...currentData.worst_case_line.filter(val => val !== null));
+            if (currentData.worst_case_line && Array.isArray(currentData.worst_case_line) && currentData.worst_case_line.length > 0) {
+                allPredictionData.push(...currentData.worst_case_line.filter(val => val !== null && val !== undefined));
             }
             
             maxPrediction = allPredictionData.length > 0 ? Math.max(...allPredictionData) : 0;
@@ -494,69 +494,6 @@ function getPeriodBudgetLine(period, budgetData) {
             }
         }
         
-        // Helper function to get scaled maximum value for better readability
-        function getScaledMaximum(maxValue, period, energyType) {
-            // Set realistic maximums based on period and energy type
-            const maxLimits = {
-                'electricity': {
-                    'day': 2,      // Most households won't exceed 2 kWh per hour
-                    'month': 30,   // Daily electricity typically under 30 kWh
-                    'year': 500    // Monthly electricity typically under 500 kWh
-                },
-                'gas': {
-                    'day': 1,      // Most households won't exceed 1 m³ per hour
-                    'month': 15,   // Daily gas typically under 15 m³
-                    'year': 250    // Monthly gas typically under 250 m³
-                }
-            };
-            
-            // Add padding (50% to ensure enough room)
-            let paddedMax = maxValue * 1.5;
-            
-            // Don't exceed reasonable max values
-            paddedMax = Math.min(paddedMax, maxLimits[energyType][period] || 500);
-            
-            // If the max is too small, use sensible minimums
-            if (paddedMax < 0.1) {
-                switch(period) {
-                    case 'day':
-                        paddedMax = energyType === 'electricity' ? 0.5 : 0.2;
-                        break;
-                    case 'month':
-                        paddedMax = energyType === 'electricity' ? 15 : 8;
-                        break;
-                    case 'year':
-                        paddedMax = energyType === 'electricity' ? 400 : 200;
-                        break;
-                }
-            }
-            
-            // Round to a nice number based on scale
-            let roundedMax;
-            
-            if (paddedMax < 1) {
-                // For small values, round to nearest 0.1 or 0.5
-                roundedMax = Math.ceil(paddedMax * 10) / 10;
-            } else if (paddedMax < 10) {
-                // For values under 10, round to nearest 1
-                roundedMax = Math.ceil(paddedMax);
-            } else if (paddedMax < 100) {
-                // For values under 100, round to nearest 10
-                roundedMax = Math.ceil(paddedMax / 10) * 10;
-            } else if (paddedMax < 1000) {
-                // For values under 1000, round to nearest 50
-                roundedMax = Math.ceil(paddedMax / 50) * 50;
-            } else {
-                // For large values, round to nearest 500
-                roundedMax = Math.ceil(paddedMax / 500) * 500;
-            }
-            
-            return {
-                max: roundedMax,
-                suggestedMax: roundedMax
-            };
-        }
-        
         // Helper functions for chart labels
         function getLabels(period) {
             switch(period) {
@@ -605,7 +542,12 @@ function getPeriodBudgetLine(period, budgetData) {
             const newGridColor = isDarkNow ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
             
             // Update budget line color for dark/light mode
-            predictionChart.data.datasets[4].borderColor = isDarkNow ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+            // Find the budget dataset
+            const budgetDatasetIndex = chartData.datasets.findIndex(ds => ds.label === 'Budget');
+            if (budgetDatasetIndex !== -1) {
+                predictionChart.data.datasets[budgetDatasetIndex].borderColor = 
+                    isDarkNow ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+            }
             
             // Update scales colors
             predictionChart.options.scales.x.title.color = newTextColor;
@@ -621,49 +563,30 @@ function getPeriodBudgetLine(period, budgetData) {
             // Update the chart
             predictionChart.update();
         }
-      // Voeg dit toe aan het einde van je bestaande script
-document.addEventListener('DOMContentLoaded', function() {
-    // Roep updateEnergyStatistics aan nadat de DOM volledig is geladen
-    setTimeout(updateEnergyStatistics, 500); // Kleine vertraging om ervoor te zorgen dat alles geladen is
-});
-
-function updateEnergyStatistics() {
-    // Controleer of we in een elektriciteitspaneel zitten of een gaspaneel
-    const energyType = document.querySelector('#predictionChartelectricityday, #predictionChartelectricitymonth, #predictionChartelectricityyear') ? 'electricity' : 'gas';
-    const unit = energyType === 'electricity' ? 'kWh' : 'm³';
-    
-    // Haal huidige datum op om te berekenen hoeveel dagen er verstreken zijn
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const daysPassed = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
-    
-    // Bereken realistische waarden afhankelijk van het energietype
-    const yearlyEstimate = energyType === 'electricity' ? 3200 : 1400;
-    let yearToDateUsage = (yearlyEstimate / 365) * daysPassed;
-    let dailyAverage = yearToDateUsage / daysPassed;
-    
-    // Kleine willekeurige variatie toevoegen voor meer realisme
-    yearToDateUsage *= (0.95 + (Math.random() * 0.1));
-    dailyAverage *= (0.95 + (Math.random() * 0.1));
-    
-    // Rond af op 2 decimalen
-    const formattedYearToDate = yearToDateUsage.toFixed(2);
-    const formattedDailyAverage = dailyAverage.toFixed(2);
-    
-    // Zoek de elementen en update ze als ze bestaan
-    const yearToDateElement = document.querySelector('[data-id="totalThisYear"]');
-    const dailyAverageElement = document.querySelector('[data-id="dailyAverage"]');
-    
-    if (yearToDateElement) {
-        yearToDateElement.textContent = `${formattedYearToDate} ${unit}`;
-    }
-    
-    if (dailyAverageElement) {
-        dailyAverageElement.textContent = `${formattedDailyAverage} ${unit}/dag`;
-    }
-}
-
-
+        
+        // Update energy statistics display with real data
+        function updateEnergyStatistics() {
+            // Use actual values from PHP props instead of generating random values
+            const yearToDateValue = @json($yearlyConsumptionToDate);
+            const dailyAverageValue = @json($dailyAverageConsumption);
+            const unit = energyType === 'electricity' ? 'kWh' : 'm³';
+            
+            // Find and update the elements
+            const yearToDateElement = document.querySelector('[data-id="totalThisYear"]');
+            const dailyAverageElement = document.querySelector('[data-id="dailyAverage"]');
+            
+            if (yearToDateElement) {
+                yearToDateElement.textContent = `${Number(yearToDateValue).toFixed(1)} ${unit}`;
+            }
+            
+            if (dailyAverageElement) {
+                dailyAverageElement.textContent = `${Number(dailyAverageValue).toFixed(1)} ${unit}/dag`;
+            }
+        }
+        
+        // Call updateEnergyStatistics after chart is loaded
+        setTimeout(updateEnergyStatistics, 500);
+        
         // Initialize theme watcher
         themeWatcher();
     });

@@ -120,16 +120,32 @@ class DashboardPredictionService
     ): array {
         // Extract the correct field from InfluxDB data based on type
         $actualDataKey = $type === 'electricity' ? 'energy_consumed' : 'gas_delivered';
-        $actualData    = $influxData['current_data'][$actualDataKey] ?? [];
+
+        // Log what data we're working with
+        \Log::debug("getDashboardPredictionDataWithRealData: Processing {$type} data, using {$actualDataKey} from InfluxDB");
+
+        // Check if the data exists and is valid
+        $actualData = null;
+        if (isset($influxData['current_data'][$actualDataKey]) && is_array($influxData['current_data'][$actualDataKey])) {
+            // Use the actual data from InfluxDB
+            $actualData = $influxData['current_data'][$actualDataKey];
+            \Log::debug("Found valid {$actualDataKey} data with " . count($actualData) . " points");
+        } else {
+            // Log the issue and fallback to simulated data
+            \Log::warning("No valid {$actualDataKey} data found in InfluxDB response - using simulated data");
+            \Log::debug("Available keys in influxData['current_data']: " . json_encode(isset($influxData['current_data']) ? array_keys($influxData['current_data']) : []));
+
+            // Use simulated data instead
+            return $this->getDashboardPredictionData($type, $period, $date);
+        }
 
         $dateObj = Carbon::parse($date);
         $userId  = Auth::id();
 
-        // Get the budget data - this code is the same as the original method
+        // Get the energy budget
         $currentYear  = $dateObj->format('Y');
         $currentMonth = $dateObj->month;
 
-        // Get the energy budget
         $energyBudget = EnergyBudget::where('year', $currentYear)
             ->where('user_id', $userId)
             ->latest()
@@ -160,8 +176,7 @@ class DashboardPredictionService
             250; // Default fallback value if no budget exists
         }
 
-        // Generate prediction data using the predictionService
-        // This is where we use the real data from InfluxDB
+        // Generate prediction with the real data
         $predictionData = $type === 'electricity'
         ? $this->predictionService->predictElectricityUsage($actualData, $period)
         : $this->predictionService->predictGasUsage($actualData, $period);
@@ -173,15 +188,23 @@ class DashboardPredictionService
 
         $periodLength = $this->getPeriodLength($period, $dateObj);
 
-        // Get budget lines with proper monthly values
-        // Convert Collection to array to avoid type mismatch
+        // Get monthly budgets for budget line generation
         $monthlyBudgets = MonthlyEnergyBudget::where('user_id', $userId)
             ->where('energy_budget_id', $energyBudget->id)
             ->orderBy('month')
             ->get()
             ->toArray();
 
-        $budgetLine = $this->generateBudgetLine($period, $dateObj, $type, $budgetTarget, $monthlyBudget, $monthlyBudgets, $periodLength);
+        // Generate budget line with proper monthly values
+        $budgetLine = $this->generateBudgetLine(
+            $period,
+            $dateObj,
+            $type,
+            $budgetTarget,
+            $monthlyBudget,
+            $monthlyBudgets,
+            $periodLength
+        );
 
         $budgetData = [
             'target'         => $budgetTarget,       // Total yearly budget
@@ -197,7 +220,6 @@ class DashboardPredictionService
             'confidence'     => $predictionData['confidence'] ?? 75,
         ];
     }
-
     /**
      * Genereer fallback voorspellingsdata als er geen budget data beschikbaar is
      */
