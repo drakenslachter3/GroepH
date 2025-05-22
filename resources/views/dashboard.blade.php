@@ -114,7 +114,7 @@
 
                         <!-- Date Selector Section -->
                         <div>
-                            <h2 class="text-xl font-semibold text-gray-800 mb-6">Datum en Periode</h2>
+                            <h2 class="text-xl font-semibold text-gray-800 mb-6 dark:text-white">Datum en Periode</h2>
 
                             <!-- Current date/period display -->
                             <div class="mb-4 pb-4 border-b border-gray-200">
