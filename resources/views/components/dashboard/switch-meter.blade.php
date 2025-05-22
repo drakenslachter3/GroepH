@@ -20,8 +20,7 @@
         <div class="mt-5">
             <form action="{{ route('dashboard.saveSelectedMeter') }}" method="POST">
                 @csrf
-                {{-- <label id="listbox-label" class="block text-sm font-medium text-gray-900">Meterlijst</label> --}}
-                <label for="meter-select" id="listbox-label" class="block text-sm font-medium text-gray-900 dark:text-white">
+                <label for="meter-select" class="block text-sm font-medium text-gray-900 dark:text-white">
                     Meterlijst
                 </label>
         
@@ -36,7 +35,7 @@
                     @else
                         @foreach ($meters as $meter)
                             <option value="{{ $meter->id }}" {{ $meter->id == $selectedMeterId ? 'selected' : '' }}>
-                                {{ $meter->name }}
+                                {{ $meter->name }} - {{ $meter->meter_id }}
                             </option>
                         @endforeach
                     @endif
@@ -48,3 +47,11 @@
         </div>
     </div>
 </section>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+            const select = document.getElementById('meter-selector');
+            select.addEventListener('change', function () {
+                select.form.submit();
+            });
+        });
+</script>
