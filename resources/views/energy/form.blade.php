@@ -111,6 +111,7 @@
 
                             <button 
                                 type="submit" 
+                                dusk="save-button"
                                 form="yearlyBudgetForm"
                                 class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                             >
@@ -713,6 +714,7 @@
                     valueInput.value = monthlyValue;
                     valueInput.className = 'text-sm dark:text-gray-300 mt-1 p-1 border dark:border-gray-600 rounded w-full text-center dark:bg-gray-700';
                     valueInput.disabled = isLocked;
+
                     valueInput.id = `input-${index}`;
                     valueInput.setAttribute('aria-label', `${month} budget in ${unit}`);
                     
@@ -729,12 +731,12 @@
                             slider.setAttribute('aria-valuetext', `${newValue.toFixed(1)} ${unit}`);
                         }
                     });
-                    
+
                     // Add unit label below input
                     const unitLabel = document.createElement('span');
                     unitLabel.className = 'text-sm dark:text-gray-300 mt-1';
                     unitLabel.textContent = unit;
-                    
+
                     valueContainer.appendChild(valueInput);
                     valueContainer.appendChild(unitLabel);
                     monthDiv.appendChild(valueContainer);
@@ -889,7 +891,7 @@
 
                 // Change progress bar color based on percentage
                 budgetProgressBar.classList.remove('bg-red-500', 'bg-yellow-500', 'bg-amber-500', 'bg-blue-600');
-                
+
                 if (percentage > 95) {
                     budgetProgressBar.classList.add('bg-red-500');
                 } else if (percentage > 80) {

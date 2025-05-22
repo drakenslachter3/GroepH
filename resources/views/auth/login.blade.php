@@ -104,7 +104,7 @@
                 <div class="flex flex-row justify-between items-center flex-wrap gap-4 mt-4">
 
                     <!-- Login Button -->
-                    <x-primary-button type="submit">
+                    <x-primary-button dusk="login-button" type="submit">
                         {{ __('Log in') }}
                     </x-primary-button>
 

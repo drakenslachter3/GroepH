@@ -20,14 +20,14 @@
                         {{ __('Budget Instellen') }}
                     </x-etc.nav-link>
 
-          
 
-                    
+
+
                     @if(Auth::user()->hasRole(['admin', 'owner']))
                         <x-etc.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                             {{ __('Gebruikers') }}
                         </x-etc.nav-link>
-                        
+
                         <x-etc.nav-link :href="route('smartmeters.index')" :active="request()->routeIs('smartmeters.*')">
                             {{ __('Slimme Meters') }}
                         </x-etc.nav-link>
@@ -50,7 +50,7 @@
                 <div class="hidden sm:flex sm:items-center sm:ms-6">
                     <x-etc.dropdown align="right" width="48">
                         <x-slot name="trigger">
-                            <button
+                            <button dusk="user-dropdown"
                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                                 <div>{{ Auth::user()->name }}</div>
 
@@ -74,7 +74,7 @@
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
 
-                                <x-etc.dropdown-link :href="route('logout')"
+                                <x-etc.dropdown-link dusk="logout-button" :href="route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
                                     {{ __('Log uit') }}
@@ -106,16 +106,16 @@
             <x-etc.responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-etc.responsive-nav-link>
-            
+
             <x-etc.responsive-nav-link :href="route('budget.form')" :active="request()->routeIs('budget.form')">
                 {{ __('Energiebudget') }}
             </x-etc.responsive-nav-link>
-            
+
             @if(Auth::user()->hasRole(['admin', 'owner']))
                 <x-etc.responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                     {{ __('Gebruikers') }}
                 </x-etc.responsive-nav-link>
-                
+
                 <x-etc.responsive-nav-link :href="route('smartmeters.index')" :active="request()->routeIs('smartmeters.*')">
                     {{ __('Slimme Meters') }}
                 </x-etc.responsive-nav-link>
