@@ -56,6 +56,11 @@ class EnergyPredictionService
      */
     private function predictEnergyUsage(array $historicalData, string $period, string $type): array
     {
+        $cleanedData = [];
+        foreach ($historicalData as $value) {
+            $cleanedData[] = ($value === null) ? null : floatval($value);
+        }
+        
         // Calculate basic trend and average
         $recentData = array_slice($historicalData, -3);
         $trend = $this->calculateTrend($recentData);
