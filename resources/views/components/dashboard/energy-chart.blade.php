@@ -129,8 +129,8 @@
         </button>
     </div>
 
-    {{-- Accessible data table for the chart to support screen readers --}}
-    <div class="focus:not-sr-only focus:absolute focus:z-10 focus:bg-white focus:dark:bg-gray-800 focus:p-4 focus:border focus:border-gray-300 focus:dark:border-gray-600 focus:shadow-lg focus:rounded-md focus:w-full focus:max-w-3xl">
+    {{-- table for screen reader --}}
+    <div class="sr-only focus-within:not-sr-only focus:not-sr-only">
         <div class="text-lg font-semibold mb-2 dark:text-white">
             @php
                 $formattedPeriodDate = match($period) {
@@ -140,8 +140,6 @@
                     default => ''
                 };
             @endphp
-
-            
         </div>
         <div class="overflow-x-auto">
             <table class="w-full border-collapse table-auto">
@@ -174,8 +172,8 @@
                             
                             switch($period) {
                                 case 'day':
-                                    $hour = str_pad($index, 2);
-                                    $nextHour = str_pad($index + 1, 2);
+                                    $hour = str_pad($index, 2, '0', STR_PAD_LEFT);
+                                    $nextHour = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
                                     $dateFormat = __('energy-chart-widget.between_hours', ['start' => $hour, 'end' => $nextHour]);
                                     break;
 
