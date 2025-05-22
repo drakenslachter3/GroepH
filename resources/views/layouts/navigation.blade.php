@@ -31,6 +31,10 @@
                         <x-etc.nav-link :href="route('smartmeters.index')" :active="request()->routeIs('smartmeters.*')">
                             {{ __('Slimme Meters') }}
                         </x-etc.nav-link>
+
+                        <x-etc.nav-link :href="route('admin.prediction-settings.index')" :active="request()->routeIs('admin.prediction-settings.*')">
+                        {{ __('Voorspellingsinstellingen') }}
+                        </x-etc.nav-link>
                     @endif
                 </div>
             </div>

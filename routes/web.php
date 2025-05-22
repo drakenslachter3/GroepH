@@ -11,6 +11,11 @@ use App\Http\Controllers\SmartMeterController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\InfluxDataController;
+use App\Http\Controllers\PredictionSettingsController;
+
+
+
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
@@ -90,6 +95,16 @@ Route::middleware('auth')->prefix('testing')->group(function () {
     Route::get('/generate-notification', [App\Http\Controllers\TestNotificationController::class, 'generateTestNotification'])
         ->name('testing.notification');
 });
+
+
+// Prediction settings routes - match other admin routes pattern
+Route::middleware('auth')->group(function () {
+    Route::get('/admin/prediction-settings', [PredictionSettingsController::class, 'index'])
+        ->name('admin.prediction-settings.index');
+    Route::post('/admin/prediction-settings', [PredictionSettingsController::class, 'update'])
+        ->name('admin.prediction-settings.update');
+});
+
 
 require __DIR__ . '/auth.php';
 
