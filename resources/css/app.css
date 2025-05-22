@@ -79,20 +79,9 @@
     background-color: white;
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-    outline: 3px solid #2563eb;
+*:focus {
+    outline: 3px solid #4a90e2; /* Blue outline */
     outline-offset: 2px;
-}
-
-:focus-visible {
-    outline: 3px solid #2563eb;
-    outline-offset: 2px;
-}
-
-:focus:not(:focus-visible) {
-    outline: none;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.8); /* Subtle glow */
+    transition: outline 0.2s, box-shadow 0.2s;
 }
