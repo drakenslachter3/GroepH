@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -8,10 +7,7 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Favicon -->
         <link rel="icon" href="{{ asset('images/mnext_logo_light.svg') }}" type="image/svg+xml" media="(prefers-color-scheme: light)">
-
-        <!-- Dark mode favicon -->
         <link rel="icon" href="{{ asset('images/mnext_logo_dark.svg') }}" type="image/svg+xml" media="(prefers-color-scheme: dark)">
 
         <!-- Fonts -->

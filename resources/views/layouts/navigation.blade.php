@@ -8,22 +8,11 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" aria-label="Ga naar de startpagina">
-                        <img src="{{ asset('images/mnext_logo_light.svg') }}"
-                             alt="MNext logo lichtmodus"
-                             class="block h-9 w-auto dark:hidden"
-                             role="img">
-                        <img src="{{ asset('images/mnext_logo_dark.svg') }}"
-                             alt="MNext logo donker modus"
-                             class="hidden h-12 w-auto dark:block"
-                             role="img">
-                    </a>
-                </div>
+                <x-etc.application-logo />
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <a class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2 rounded shadow"
+                    <a class="sr-only focus:not-sr-only"
                        href="#main-content">
                         {{ __('Ga naar de hoofdinhoud') }}
                     </a>
