@@ -61,20 +61,14 @@
         </div>
     </div>
 
-    <!-- Third tab stop: Complete summary that can be focused - IMPROVED READABLE FORMAT -->
-    <div id="usage-summary" tabindex="0" class="sr-only focus:not-sr-only focus:p-2 focus:border focus:border-blue-500 focus:rounded-md">
-        U heeft {{ number_format($actualUsage, 2) }} {{ $unit }} verbruikt, met een target van {{ number_format($actualTarget, 2) }} {{ $unit }}. 
-        Dat is {{ $differenceText }} ({{ number_format($actualPercentage, 1) }}% van uw target).
-    </div>
-
     <!-- Individual metrics, each can be focused with IMPROVED READABILITY -->
     <div class="space-y-2">
         <!-- Usage value -->
         <div class="flex justify-between items-center">
             <span class="text-gray-700 dark:text-gray-300">Verbruik:</span>
             <span tabindex="0"
-                aria-label="Uw verbruik op {{ \Carbon\Carbon::parse($date)->translatedFormat('d F') }} was {{ number_format($actualUsage, 2) }} {{ $unit }}. 
-                U zit {{ $differenceText }} ({{ number_format($actualPercentage, 1) }}% van uw target)."
+                aria-label="Op {{ \Carbon\Carbon::parse($date)->translatedFormat('d F') }} heeft u {{ number_format($actualUsage, 2) }} {{ $unit }} verbruikt. 
+                Dit is {{ $differenceText }} en komt neer op {{ number_format($actualPercentage, 1) }}% van uw doelstelling."
                 class="font-bold dark:text-white">
                 {{ number_format($actualUsage, 2) }} {{ $unit }}
             </span>
@@ -82,9 +76,9 @@
         
         <!-- Target value -->
         <div class="flex justify-between items-center">
-            <span class="text-gray-700 dark:text-gray-300">Target:</span>
+            <span class="text-gray-700 dark:text-gray-300">Doelstelling:</span>
             <span tabindex="0"
-                aria-label="Uw target op {{ \Carbon\Carbon::parse($date)->translatedFormat('d F') }} was {{ number_format($actualTarget, 2) }} {{ $unit }}"
+                aria-label="Uw doelstelling op {{ \Carbon\Carbon::parse($date)->translatedFormat('d F') }} was {{ number_format($actualTarget, 2) }} {{ $unit }}"
                 class="font-bold dark:text-white">
                 {{ number_format($actualTarget, 2) }} {{ $unit }}
             </span>
