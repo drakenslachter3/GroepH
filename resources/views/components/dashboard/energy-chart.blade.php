@@ -36,14 +36,14 @@
 @endphp
 
 <section class="p-2" aria-labelledby="chart-widget-title">
-    <div aria-label="{{ __('chart-widget.navigation_label') }}" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <x-dashboard.widget-navigation :showPrevious="true" aria-label="{{ __('chart-widget.previous_widget') }}" />
+    <div aria-label="{{ __('energy-chart-widget.navigation_label') }}" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <x-dashboard.widget-navigation :showPrevious="true" aria-label="{{ __('energy-chart-widget.previous_widget') }}" />
         <x-dashboard.widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
-        <span tabindex="0" class="sr-only">{{ __('chart-widget.table_view_sr') }}</span>
-        <x-dashboard.widget-navigation :showNext="true" aria-label="{{ __('chart-widget.next_widget') }}" />
+        <span tabindex="0" class="sr-only">{{ __('energy-chart-widget.table_view_sr') }}</span>
+        <x-dashboard.widget-navigation :showNext="true" aria-label="{{ __('energy-chart-widget.next_widget') }}" />
         
-        <div role="group" aria-label="{{ __('chart-widget.period_selection') }}" class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
-            @foreach (['day' => __('chart-widget.day'), 'month' => __('chart-widget.month'), 'year' => __('chart-widget.year')] as $key => $label)
+        <div role="group" aria-label="{{ __('energy-chart-widget.period_selection') }}" class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
+            @foreach (['day' => __('energy-chart-widget.day'), 'month' => __('energy-chart-widget.month'), 'year' => __('energy-chart-widget.year')] as $key => $label)
                 <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
                     <input type="hidden" name="period" value="{{ $key }}">
                     <input type="hidden" name="date" value="{{ $date }}">
@@ -58,7 +58,7 @@
                                 ? 'bg-' . $buttonColor . '-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}"
                         aria-pressed="{{ $period === $key ? 'true' : 'false' }}"
-                        aria-label="{{ __('chart-widget.show_data_per', ['period' => strtolower($label), 'current' => $period === $key ? __('chart-widget.current_setting') : '']) }}"
+                        aria-label="{{ __('energy-chart-widget.show_data_per', ['period' => strtolower($label), 'current' => $period === $key ? __('energy-chart-widget.current_setting') : '']) }}"
                         >
                         {{ $label }}
                     </button>
@@ -67,13 +67,13 @@
         </div>
     </div>
     
-    <div role="region" aria-label="{{ __('chart-widget.date_navigation') }}" class="flex justify-between items-center mb-4">
+    <div role="region" aria-label="{{ __('energy-chart-widget.date_navigation') }}" class="flex justify-between items-center mb-4">
         {{-- Previous Button --}}
-        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0" aria-label="{{ __('chart-widget.previous_period') }}">
+        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0" aria-label="{{ __('energy-chart-widget.previous_period') }}">
             <input type="hidden" name="period" value="{{ $period }}">
             <input type="hidden" name="date" value="{{ $previousDate->format('Y-m-d') }}">
             <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
-            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="{{ __('chart-widget.go_to_previous', ['period' => $period]) }}">
+            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="{{ __('energy-chart-widget.go_to_previous', ['period' => $period]) }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
                     <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
@@ -82,15 +82,15 @@
     
         {{-- Label --}}
         <span class="px-3 py-1 text-sm bg-{{ $buttonColor }}-500 text-white dark:bg-{{ $buttonColor }}-600 dark:text-white rounded-md" aria-live="polite" aria-atomic="true">
-            {{ $unitLabel }} {{ __('chart-widget.consumption') }}
+            {{ $unitLabel }} {{ __('energy-chart-widget.consumption') }}
         </span>
     
         {{-- Next Button --}}
-        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0" aria-label="{{ __('chart-widget.next_period') }}">
+        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0" aria-label="{{ __('energy-chart-widget.next_period') }}">
             <input type="hidden" name="period" value="{{ $period }}">
             <input type="hidden" name="date" value="{{ $nextDate->format('Y-m-d') }}">
             <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
-            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="{{ __('chart-widget.go_to_next', ['period' => $period]) }}">
+            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="{{ __('energy-chart-widget.go_to_next', ['period' => $period]) }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>
@@ -113,11 +113,11 @@
     
     <div class="mt-4 flex flex-col gap-2 text-sm text-gray-800 dark:text-gray-100">
         <div class="flex items-center justify-between">
-            <span class="font-medium">{{ __('chart-widget.current_year_total') }}:</span>
+            <span class="font-medium">{{ __('energy-chart-widget.current_year_total') }}:</span>
             <span>{{ number_format($currentTotal, 2, ',', '.') }} {{ $unit }}</span>
         </div>
         <div id="previous-year-total-{{$type}}" class="flex items-center justify-between transition-all duration-300 opacity-0 h-6 pointer-events-none">
-            <span class="font-medium">{{ __('chart-widget.previous_year_total') }}:</span>
+            <span class="font-medium">{{ __('energy-chart-widget.previous_year_total') }}:</span>
             <span>{{ number_format($previousTotal, 2, ',', '.') }} {{ $unit }}</span>
         </div>
     </div>
@@ -148,7 +148,7 @@
                 <thead>
                     <tr>
                         <th tabindex="0" id="{{ $type }}TableCaption" >
-                            {{ $title }} - {{ __('chart-widget.consumption_overview', ['period' => $formattedPeriodDate]) }}
+                            {{ $title }} - {{ __('energy-chart-widget.consumption_overview', ['period' => $formattedPeriodDate]) }}
                         </th>
                     </tr>
                 </thead>
@@ -176,29 +176,29 @@
                                 case 'day':
                                     $hour = str_pad($index, 2);
                                     $nextHour = str_pad($index + 1, 2);
-                                    $dateFormat = __('chart-widget.between_hours', ['start' => $hour, 'end' => $nextHour]);
+                                    $dateFormat = __('energy-chart-widget.between_hours', ['start' => $hour, 'end' => $nextHour]);
                                     break;
 
                                 case 'month':
                                     $dayDate = $currentDate->copy()->setDay($index + 1);
                                     $dayNumber = $index + 1;
                                     $dayFormat = "{$dayNumber}e";
-                                    $dateFormat = __('chart-widget.on_day', ['day' => $dayFormat]);
+                                    $dateFormat = __('energy-chart-widget.on_day', ['day' => $dayFormat]);
                                     break;
 
                                 case 'year':
                                     $months = [
-                                        __('chart-widget.months.january'), __('chart-widget.months.february'), __('chart-widget.months.march'), 
-                                        __('chart-widget.months.april'), __('chart-widget.months.may'), __('chart-widget.months.june'), 
-                                        __('chart-widget.months.july'), __('chart-widget.months.august'), __('chart-widget.months.september'), 
-                                        __('chart-widget.months.october'), __('chart-widget.months.november'), __('chart-widget.months.december')
+                                        __('energy-chart-widget.months.january'), __('energy-chart-widget.months.february'), __('energy-chart-widget.months.march'), 
+                                        __('energy-chart-widget.months.april'), __('energy-chart-widget.months.may'), __('energy-chart-widget.months.june'), 
+                                        __('energy-chart-widget.months.july'), __('energy-chart-widget.months.august'), __('energy-chart-widget.months.september'), 
+                                        __('energy-chart-widget.months.october'), __('energy-chart-widget.months.november'), __('energy-chart-widget.months.december')
                                     ];
-                                    $monthName = $months[$index] ?? __('chart-widget.month_number', ['number' => $index + 1]);
-                                    $dateFormat = __('chart-widget.in_month', ['month' => $monthName]);
+                                    $monthName = $months[$index] ?? __('energy-chart-widget.month_number', ['number' => $index + 1]);
+                                    $dateFormat = __('energy-chart-widget.in_month', ['month' => $monthName]);
                                     break;
 
                                 default:
-                                    $dateFormat = __('chart-widget.consumption_for_interval', ['index' => $index]);
+                                    $dateFormat = __('energy-chart-widget.consumption_for_interval', ['index' => $index]);
                                     break;
                             }
                         @endphp
@@ -207,9 +207,9 @@
                                 {{ $dateFormat }} {{ number_format($value, 2, ',', '.') }} {{ $unit }}.
                                 <span class="previous-year-comparison-{{$type}}" style="display: none;">
                                     @if($hasPreviousYearData && $prevValue !== null)
-                                        {{ __('chart-widget.last_year_consumed', ['amount' => number_format($prevValue, 2, ',', '.'), 'unit' => $unit]) }}
+                                        {{ __('energy-chart-widget.last_year_consumed', ['amount' => number_format($prevValue, 2, ',', '.'), 'unit' => $unit]) }}
                                         @if($diff !== null)
-                                            {{ $diff < 0 ? __('chart-widget.you_saved') : __('chart-widget.you_consumed') }} {{ number_format(abs($diff), 2, ',', '.') }} {{ $unit }} {{ __('chart-widget.more_than_last_year') }}
+                                            {{ $diff < 0 ? __('energy-chart-widget.you_saved') : __('energy-chart-widget.you_consumed') }} {{ number_format(abs($diff), 2, ',', '.') }} {{ $unit }} {{ __('energy-chart-widget.more_than_last_year') }}
                                         @endif
                                     @endif
                                 </span>
@@ -220,15 +220,15 @@
                 <tfoot>
                     <tr>
                         <td scope="row" class="border font-bold dark:border-gray-700" tabindex="0">
-                            {{ __('chart-widget.total_consumed', ['amount' => number_format($totalCurrent, 2, ',', '.'), 'unit' => $unit]) }}
+                            {{ __('energy-chart-widget.total_consumed', ['amount' => number_format($totalCurrent, 2, ',', '.'), 'unit' => $unit]) }}
                             <span class="previous-year-comparison-{{$type}}" style="display: none;">
                                 @if($hasPreviousYearData && $prevValue !== null)
                                     @php
                                         $totalDiff = $totalCurrent - $totalPrevious;
                                         $totalPercentChange = $totalPrevious != 0 ? (($totalCurrent - $totalPrevious) / $totalPrevious) * 100 : null;
                                     @endphp
-                                    {{ __('chart-widget.last_year_total_consumed', ['amount' => number_format($totalPrevious, 2, ',', '.'), 'unit' => $unit]) }}
-                                    {{ $totalDiff < 0 ? __('chart-widget.you_saved') : __('chart-widget.you_consumed') }} {{ number_format(abs($totalDiff), 2, ',', '.') }} {{ $unit }} {{ __('chart-widget.more_than_last_year') }}
+                                    {{ __('energy-chart-widget.last_year_total_consumed', ['amount' => number_format($totalPrevious, 2, ',', '.'), 'unit' => $unit]) }}
+                                    {{ $totalDiff < 0 ? __('energy-chart-widget.you_saved') : __('energy-chart-widget.you_consumed') }} {{ number_format(abs($totalDiff), 2, ',', '.') }} {{ $unit }} {{ __('energy-chart-widget.more_than_last_year') }}
                                 @endif
                             </span>
                         </td>
@@ -237,7 +237,7 @@
             </table>
         </div>
         <button onclick="document.getElementById('{{ $type }}TableCaption')?.focus();">
-            {{ __('chart-widget.go_to_table_top', ['title' => $title]) }}
+            {{ __('energy-chart-widget.go_to_table_top', ['title' => $title]) }}
         </button>
     </div>
 </section>
@@ -277,21 +277,21 @@
                     const hour = i.toString().padStart(2, '0');
                     labels.push(`${hour}:00`);
                 }
-                periodTranslated = '{{ __("chart-widget.hours") }}';
+                periodTranslated = '{{ __("energy-chart-widget.hours") }}';
                 break;
             case 'month':
                 const daysInMonth = {{ $daysInMonth }};
                 for (let i = 1; i <= daysInMonth; i++) {
                     labels.push(i.toString());
                 }
-                periodTranslated = '{{ __("chart-widget.days") }}';
+                periodTranslated = '{{ __("energy-chart-widget.days") }}';
                 break;
             case 'year':
-                labels.push("{{ __('chart-widget.months.january') }}", "{{ __('chart-widget.months.february') }}", "{{ __('chart-widget.months.march') }}", 
-                           "{{ __('chart-widget.months.april') }}", "{{ __('chart-widget.months.may') }}", "{{ __('chart-widget.months.june') }}", 
-                           "{{ __('chart-widget.months.july') }}", "{{ __('chart-widget.months.august') }}", "{{ __('chart-widget.months.september') }}", 
-                           "{{ __('chart-widget.months.october') }}", "{{ __('chart-widget.months.november') }}", "{{ __('chart-widget.months.december') }}");
-                periodTranslated = '{{ __("chart-widget.months_label") }}';
+                labels.push("{{ __('energy-chart-widget.months.january') }}", "{{ __('energy-chart-widget.months.february') }}", "{{ __('energy-chart-widget.months.march') }}", 
+                           "{{ __('energy-chart-widget.months.april') }}", "{{ __('energy-chart-widget.months.may') }}", "{{ __('energy-chart-widget.months.june') }}", 
+                           "{{ __('energy-chart-widget.months.july') }}", "{{ __('energy-chart-widget.months.august') }}", "{{ __('energy-chart-widget.months.september') }}", 
+                           "{{ __('energy-chart-widget.months.october') }}", "{{ __('energy-chart-widget.months.november') }}", "{{ __('energy-chart-widget.months.december') }}");
+                periodTranslated = '{{ __("energy-chart-widget.months_label") }}';
                 break;
             default:
                 console.error("Unknown period:", "{{ $period }}");
@@ -319,7 +319,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '{{ $unitLabel }} {{ __("chart-widget.consumption") }}',
+                    label: '{{ $unitLabel }} {{ __("energy-chart-widget.consumption") }}',
                     data: usageData,
                     backgroundColor: '{{ $backgroundColor }}',
                     borderColor: '{{ $borderColor }}',
@@ -358,7 +358,7 @@
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: '{{ $type === "electricity" ? __("chart-widget.electricity_kwh") : __("chart-widget.gas_m3") }}',
+                            text: '{{ $type === "electricity" ? __("energy-chart-widget.electricity_kwh") : __("energy-chart-widget.gas_m3") }}',
                             color: titleColor
                         },
                         ticks: {
@@ -395,7 +395,7 @@
                 } else {
                     // Show comparison
                     chart.data.datasets.push({
-                        label: '{{$unit}} {{ __("chart-widget.consumption_last_year") }}',
+                        label: '{{$unit}} {{ __("energy-chart-widget.consumption_last_year") }}',
                         data: @json($previousData),
                         backgroundColor: '{{ $type === "electricity" ? "rgba(139, 92, 246, 0.6)" : "rgba(251, 191, 36, 0.6)" }}',
                         borderColor: '{{ $type === "electricity" ? "rgb(124, 58, 237)" : "rgb(202, 138, 4)" }}',

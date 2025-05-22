@@ -6,6 +6,7 @@
     $actualTarget = $liveData['target'] ?? ($target ?? 0);
     $actualPercentage = $liveData['percentage'] ?? ($percentage ?? 0);
     $actualStatus = $liveData['status'] ?? ($status ?? 'goed');
+    // TODO Remove
     $actualCost = $liveData['cost'] ?? 0;
 
     // Status calculation
@@ -19,10 +20,10 @@
     
     $difference = $actualUsage - $actualTarget;
     $differenceText = $difference > 0 
-        ? __('energy-status.above_target', ['amount' => number_format($difference, 2, ',', '.'), 'unit' => $unit])
+        ? __('energy-chart-widget.above_target', ['amount' => number_format($difference, 2, ',', '.'), 'unit' => $unit])
         : ($difference < 0 
-            ? __('energy-status.below_target', ['amount' => number_format(abs($difference), 2, ',', '.'), 'unit' => $unit])
-            : __('energy-status.on_target'));
+            ? __('energy-chart-widget.below_target', ['amount' => number_format(abs($difference), 2, ',', '.'), 'unit' => $unit])
+            : __('energy-chart-widget.on_target'));
 @endphp
 
 <section class="p-2" aria-labelledby="usage-widget-title">
@@ -35,7 +36,7 @@
         <div class="tooltip relative">
             <button id="info-tooltip-button" 
                     tabindex="0" 
-                    aria-label="{{ __('energy-status.more_info', ['type' => strtolower($type)]) }}" 
+                    aria-label="{{ __('energy-chart-widget.more_info', ['type' => strtolower($type)]) }}" 
                     aria-expanded="false"
                     aria-controls="tooltip-content"
                     aria-describedby="screen-reader-announcement"
@@ -47,7 +48,7 @@
                 </svg>
             </button>
             <div id="tooltip-content" role="tooltip" class="tooltiptext invisible absolute z-10 px-3 py-2 text-sm bg-gray-800 text-white rounded shadow-lg -right-4 -bottom-20 w-48" aria-hidden="true">
-                {{ __('energy-status.tooltip_text', ['type' => strtolower($type)]) }}
+                {{ __('energy-chart-widget.tooltip_text', ['type' => strtolower($type)]) }}
             </div>
             <!-- Screen reader live region for announcements -->
             <div id="screen-reader-announcement" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
@@ -58,9 +59,9 @@
     <div class="space-y-2">
         <!-- Usage value -->
         <div class="flex justify-between items-center">
-            <span class="text-gray-700 dark:text-gray-300">{{ __('energy-status.usage') }}:</span>
+            <span class="text-gray-700 dark:text-gray-300">{{ __('energy-chart-widget.usage') }}:</span>
             <span tabindex="0"
-                aria-label="{{ __('energy-status.usage_aria', [
+                aria-label="{{ __('energy-chart-widget.usage_aria', [
                     'date' => \Carbon\Carbon::parse($date)->translatedFormat('d F'),
                     'usage' => number_format($actualUsage, 2, ',', '.'),
                     'unit' => $unit,
@@ -74,9 +75,9 @@
         
         <!-- Target value -->
         <div class="flex justify-between items-center">
-            <span class="text-gray-700 dark:text-gray-300">{{ __('energy-status.target') }}:</span>
+            <span class="text-gray-700 dark:text-gray-300">{{ __('energy-chart-widget.target') }}:</span>
             <span tabindex="0"
-                aria-label="{{ __('energy-status.target_aria', [
+                aria-label="{{ __('energy-chart-widget.target_aria', [
                     'date' => \Carbon\Carbon::parse($date)->translatedFormat('d F'),
                     'target' => number_format($actualTarget, 2, ',', '.'),
                     'unit' => $unit
@@ -109,11 +110,11 @@
         @endphp
 
         <div
-             aria-label="{{ __('energy-status.progress_aria', ['type' => strtolower($type)]) }}"
+             aria-label="{{ __('energy-chart-widget.progress_aria', ['type' => strtolower($type)]) }}"
              aria-valuemin="0" 
              aria-valuemax="100" 
              aria-valuenow="{{ min($actualPercentage, 100) }}"
-             aria-valuetext="@if($actualPercentage <= 100) {{ __('energy-status.progress_under', ['percentage' => number_format($actualPercentage, 1, ',', '.'), 'remaining' => number_format(100 - $actualPercentage, 1, ',', '.')]) }} @else {{ __('energy-status.progress_over', ['percentage' => number_format($actualPercentage, 1, ',', '.'), 'excess' => number_format($actualPercentage - 100, 1, ',', '.')]) }} @endif"
+             aria-valuetext="@if($actualPercentage <= 100) {{ __('energy-chart-widget.progress_under', ['percentage' => number_format($actualPercentage, 1, ',', '.'), 'remaining' => number_format(100 - $actualPercentage, 1, ',', '.')]) }} @else {{ __('energy-chart-widget.progress_over', ['percentage' => number_format($actualPercentage, 1, ',', '.'), 'excess' => number_format($actualPercentage - 100, 1, ',', '.')]) }} @endif"
              class="relative mt-6">
             
             <div class="flex justify-between mt-1 relative" aria-hidden="true">
@@ -179,15 +180,15 @@
         <!-- Status message -->
         <div tabindex="0" class="mt-4 text-xs">
             @if($actualPercentage < 80)
-                <span class="text-green-600 dark:text-green-400">{{ __('energy-status.excellent', ['percentage' => number_format(100 - $actualPercentage, 1, ',', '.')]) }}</span>
+                <span class="text-green-600 dark:text-green-400">{{ __('energy-chart-widget.excellent', ['percentage' => number_format(100 - $actualPercentage, 1, ',', '.')]) }}</span>
             @elseif($actualPercentage < 95)
-                <span class="text-green-600 dark:text-green-400">{{ __('energy-status.good', ['percentage' => number_format(100 - $actualPercentage, 1, ',', '.')]) }}</span>
+                <span class="text-green-600 dark:text-green-400">{{ __('energy-chart-widget.good', ['percentage' => number_format(100 - $actualPercentage, 1, ',', '.')]) }}</span>
             @elseif($actualPercentage < 100)
-                <span class="text-yellow-600 dark:text-yellow-400">{{ __('energy-status.warning', ['percentage' => number_format(100 - $actualPercentage, 1, ',', '.')]) }}</span>
+                <span class="text-yellow-600 dark:text-yellow-400">{{ __('energy-chart-widget.warning', ['percentage' => number_format(100 - $actualPercentage, 1, ',', '.')]) }}</span>
             @elseif($actualPercentage < 150)
-                <span class="text-orange-600 dark:text-orange-400">{{ __('energy-status.alert', ['percentage' => number_format($actualPercentage - 100, 1, ',', '.')]) }}</span>
+                <span class="text-orange-600 dark:text-orange-400">{{ __('energy-chart-widget.alert', ['percentage' => number_format($actualPercentage - 100, 1, ',', '.')]) }}</span>
             @else
-                <span class="text-red-600 dark:text-red-400">{{ __('energy-status.alert_significant', ['percentage' => number_format($actualPercentage - 100, 1, ',', '.')]) }}</span>
+                <span class="text-red-600 dark:text-red-400">{{ __('energy-chart-widget.alert_significant', ['percentage' => number_format($actualPercentage - 100, 1, ',', '.')]) }}</span>
             @endif
         </div>
     </div>
@@ -195,7 +196,7 @@
     <!-- Historical comparison --> 
     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <h4 id="comparison-heading" class="font-medium text-gray-700 mb-2 dark:text-gray-300" tabindex="0">
-            {{ __('energy-status.comparison_title') }}
+            {{ __('energy-chart-widget.comparison_title') }}
         </h4>
 
         <div class="flex items-center justify-between" aria-labelledby="comparison-heading">
@@ -207,12 +208,12 @@
                 if (is_array($previousYearValue)) {
                     $previousYearValue = array_sum(array_filter($previousYearValue, 'is_numeric'));
                 }
-                $differenceType = $reductionPercent > 0 ? __('energy-status.reduction') : __('energy-status.increase');
+                $differenceType = $reductionPercent > 0 ? __('energy-chart-widget.reduction') : __('energy-chart-widget.increase');
             @endphp
             
             <!-- Comparison block -->
             <div class="flex items-center text-xs" tabindex="0" 
-                aria-label="{{ __('energy-status.comparison_aria', [
+                aria-label="{{ __('energy-chart-widget.comparison_aria', [
                     'percentage' => number_format(abs($reductionPercent), 1, ',', '.'),
                     'type' => $differenceType,
                     'previous' => number_format($previousYearValue, 2, ',', '.'),
