@@ -1,9 +1,9 @@
 <x-app-layout>
-    {{-- <x-slot name="header">
+    <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">
             {{ __('Energieverbruik Dashboard') }}
         </h2>
-    </x-slot> --}}
+    </x-slot>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
@@ -13,11 +13,6 @@
                     {{ session('status') }}
                 </div>
             @endif
-
-            <!-- Display smart meters for the user -->
-            {{-- @if (Auth::check())
-                @include('components.user-meter-readings', ['user' => Auth::user()])
-            @endif --}}
 
             <div class="bg-white shadow-lg rounded-lg mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->

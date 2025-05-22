@@ -116,7 +116,7 @@
             <span class="font-medium">Huidig Jaar Totaal:</span>
             <span>{{ number_format($currentTotal, 2, ',', '.') }} {{ $unit }}</span>
         </div>
-        <div id="previous-year-total" class="flex items-center justify-between transition-all duration-300 opacity-0 h-6 pointer-events-none">
+        <div id="previous-year-total-{{$type}}" class="flex items-center justify-between transition-all duration-300 opacity-0 h-6 pointer-events-none">
             <span class="font-medium">Vorig Jaar Totaal:</span>
             <span>{{ number_format($previousTotal, 2, ',', '.') }} {{ $unit }}</span>
         </div>
@@ -124,7 +124,7 @@
 
     
     <div class="mt-4 flex justify-end">
-        <button id="toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
+        <button id="toggle{{ ucfirst($type) }}Comparison" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100 dark:hover:bg-{{ $buttonColor }}-700">
             {{ $buttonLabel }}
         </button>
     </div>
@@ -369,14 +369,14 @@
         });
 
         // Toggle comparison with last year
-        const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison{{ $loop->index ?? 0 }}');
+        const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison');
         if (toggleButton) {
             toggleButton.addEventListener('click', function () {
                 const isVisible = chart.data.datasets.length > 1;
-                const previousTotalEl = document.getElementById('previous-year-total');
+                const previousTotalEl = document.getElementById('previous-year-total-{{$type}}');
 
                 if (isVisible) {
-                    chart.data.datasets.pop(); // Remove previous year dataset
+                    chart.data.datasets.pop();
                     if (previousTotalEl) {
                         previousTotalEl.classList.remove('opacity-100');
                         previousTotalEl.classList.add('opacity-0', 'pointer-events-none');
