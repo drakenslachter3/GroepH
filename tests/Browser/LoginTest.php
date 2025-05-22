@@ -13,6 +13,8 @@ class LoginTest extends DuskTestCase
 
     public function test_user_can_login_with_correct_credentials()
     {
+        $this->setTestName('test_user_can_login_with_correct_credentials');
+
         User::factory()->create([
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
@@ -31,6 +33,8 @@ class LoginTest extends DuskTestCase
 
     public function test_user_cannot_login_with_incorrect_credentials()
     {
+        $this->setTestName('test_user_cannot_login_with_incorrect_credentials');
+
         $this->browse(function (Browser $browser) {
             $browser->visit('/login')
                 ->type('email', 'test@example.com')
@@ -45,6 +49,8 @@ class LoginTest extends DuskTestCase
 
     public function test_user_can_logout()
     {
+        $this->setTestName('test_user_can_logout');
+
         $user = User::factory()->create();
 
         $this->browse(function (Browser $browser) use ($user) {
@@ -52,9 +58,9 @@ class LoginTest extends DuskTestCase
                 ->visit('/dashboard')
                 ->assertPathIs('/energy/budget')
                 ->click('@user-dropdown')
-                ->pause(1000)
+                ->pause(5000)
                 ->press('@logout-button')
-                ->pause(1000)
+                ->pause(5000)
                 ->screenshot('after_logout')
                 ->assertPathIs('/login')
                 ->assertGuest();

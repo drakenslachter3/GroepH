@@ -14,6 +14,8 @@ class EnergyBudgetTest extends DuskTestCase
 
     public function test_user_can_set_energy_budget()
     {
+        $this->setTestName('test_user_can_set_energy_budget');
+
         $user = User::factory()->create();
 
         $this->browse(function (Browser $browser) use ($user) {

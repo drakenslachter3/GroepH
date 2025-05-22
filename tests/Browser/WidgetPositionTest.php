@@ -14,6 +14,8 @@ class WidgetPositionTest extends DuskTestCase
 
     public function testEditWidgetPosition()
     {
+        $this->setTestName('test_edit_widget_position');
+
         $this->browse(function (Browser $browser) {
             $user = User::factory()->create();
 

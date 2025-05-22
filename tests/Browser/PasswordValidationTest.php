@@ -37,6 +37,8 @@ class PasswordValidationTest extends DuskTestCase
 
     public function test_password_validation_when_creating_user()
     {
+        $this->setTestName('test_password_validation_when_creating_user');
+
         $this->browse(function (Browser $browser) {
             $invalidPasswords = [
                 'short' => 'Aa1!',
@@ -66,6 +68,8 @@ class PasswordValidationTest extends DuskTestCase
 
     public function test_valid_password_creates_user_successfully()
     {
+        $this->setTestName('test_valid_password_creates_user_successfully');
+
         $this->browse(function (Browser $browser) {
             $this->loginAsAdmin($browser);
 
@@ -90,6 +94,8 @@ class PasswordValidationTest extends DuskTestCase
 
     public function test_password_validation_when_updating_user()
     {
+        $this->setTestName('test_password_validation_when_updating_user');
+
         $this->browse(function (Browser $browser) {
             $user = User::factory()->create([
                 'name' => 'User To Edit',
@@ -113,6 +119,8 @@ class PasswordValidationTest extends DuskTestCase
 
     public function test_empty_password_allowed_when_updating_user()
     {
+        $this->setTestName('test_empty_password_allowed_when_updating_user');
+
         $this->browse(function (Browser $browser) {
             $user = User::factory()->create([
                 'name' => 'User Empty Password',
@@ -137,6 +145,8 @@ class PasswordValidationTest extends DuskTestCase
 
     public function test_password_validation_on_profile_page()
     {
+        $this->setTestName('test_password_validation_on_profile_page');
+
         $this->browse(function (Browser $browser) {
             $this->loginAsAdmin($browser);
 
