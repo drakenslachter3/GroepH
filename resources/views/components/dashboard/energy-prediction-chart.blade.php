@@ -13,19 +13,7 @@ $isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarge
 
 <section aria-labelledby="prediction-chart-title">
     <div>
-        <div class="p-2 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
-            <h3 tabindex="0" id="prediction-chart-title" class="text-lg font-semibold mb-4 dark:text-white">
-                {{ $type === 'electricity' ? 'Elektriciteit' : 'Gas' }} Voorspelling 
-                <span class="text-sm bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-100 text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-800 px-2 py-1 rounded ml-2 dark:bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-900/30 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-300">
-                    {{ ucfirst($period) }}
-                </span>
-                
-                @if(isset($currentMonthName) && $period === 'month')
-                <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded ml-2 dark:bg-gray-700 dark:text-gray-200">
-                    {{ $currentMonthName }}
-                </span>
-                @endif
-            </h3>
+        <div class="p-2">
             <x-dashboard.widget-navigation :showPrevious="true" />
             <x-dashboard.widget-heading :title="$title" :period="$period" :date="$date" />
             <x-dashboard.widget-navigation :showNext="true" />
