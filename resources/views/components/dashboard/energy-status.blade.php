@@ -1,15 +1,4 @@
-@props([
-    'type',
-    'title',
-    'usage',
-    'target',
-    'percentage',
-    'status',
-    'unit',
-    'date' => null,
-    'period' => null,
-    'liveData' => null,
-])
+@props(['type','title','usage','target','percentage','status','unit','date' => null,'period' => null,'liveData' => null])
 
 @php
     // Use live data if available, otherwise fall back to provided data
