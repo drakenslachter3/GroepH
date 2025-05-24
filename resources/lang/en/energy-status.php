@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'above_target' => 'above target by :amount :unit',
+    'below_target' => 'below target by :amount :unit',
+    'on_target' => 'exactly on target',
+    'more_info' => 'More information about :type status',
+    'tooltip_text' => 'This shows your :type consumption compared to your budget. A lower percentage is better for the environment.',
+    'usage' => 'Usage',
+    'target' => 'Target',
+    'usage_aria' => 'On :date you consumed :usage :unit. This is :difference and equals :percentage% of your target.',
+    'target_aria' => 'Your target on :date was :target :unit',
+    'progress_aria' => 'Progress bar for :type consumption',
+    'progress_under' => 'You have used :percentage% of your target. You are :remaining% below your target.',
+    'progress_over' => 'You have used :percentage% of your target. You are :excess% above your target.',
+    'excellent' => 'Excellent! Your consumption is :percentage% below your target.',
+    'good' => 'Good! You remain :percentage% below your target.',
+    'warning' => 'Attention: You are approaching your target. :percentage% remaining.',
+    'alert' => 'Warning: You are exceeding your target by :percentage%.',
+    'alert_significant' => 'Alert: You are significantly exceeding your target by :percentage%!',
+    'comparison_title' => 'Comparison with last year',
+    'reduction' => 'reduction',
+    'increase' => 'increase',
+    'comparison_aria' => ':percentage percent :type compared to last year, which was :previous :unit',
+];
