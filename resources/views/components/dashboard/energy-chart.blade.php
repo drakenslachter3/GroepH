@@ -43,7 +43,7 @@
         <x-dashboard.widget-navigation :showNext="true" aria-label="{{ __('energy-chart-widget.next_widget') }}" />
         
         <div role="group" aria-label="{{ __('energy-chart-widget.period_selection') }}" class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
-            @foreach (['day' => __('energy-chart-widget.day'), 'month' => __('energy-chart-widget.month'), 'year' => __('energy-chart-widget.year')] as $key => $label)
+            @foreach (['day' => __('general.day'), 'month' => __('general.month'), 'year' => __('general.year')] as $key => $label)
                 <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
                     <input type="hidden" name="period" value="{{ $key }}">
                     <input type="hidden" name="date" value="{{ $date }}">

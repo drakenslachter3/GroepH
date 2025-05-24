@@ -58,7 +58,7 @@
                                     <label for="grid-position"
                                         class="block text-sm font-medium text-gray-700 dark:text-white">Positie:</label>
                                     <select name="grid_position" id="grid-position"
-                                        class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700"
+                                        class="w-full p-3 bg-gray-50 rounded-md text-gray-700 dark:bg-gray-700 dark:text-gray-200"
                                         aria-label="Selecteer de positie van de widget"
                                         aria-required="true">
                                         @for ($i = 0; $i < count($gridLayout); $i++)
@@ -72,7 +72,7 @@
                                 <div class="space-y-2">
                                     <label for="widget-type"
                                         class="block text-sm font-medium text-gray-700 dark:text-white">Widget Type:</label>
-                                        <select name="widget_type" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
+                                        <select name="widget_type" class="w-full p-3 bg-gray-50 rounded-md text-gray-700 dark:bg-gray-700 dark:text-gray-200">
                                             <option value="energy-status-electricity" {{ old('widget_type') == 'energy-status-electricity' ? 'selected' : '' }}>
                                                 Electra Status
                                             </option>
@@ -125,127 +125,120 @@
                             </div>
                         </div>
 
-                        <!-- Date Selector Section -->
                         <div>
-                            <h2 class="text-xl font-semibold text-gray-800 mb-6 dark:text-white">Datum en Periode</h2>
+                            <!-- Date Selector Header -->
+                            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mt-6 mb-2">
+                                {{ __('general.period_selection') }}
+                            </h2>
 
-                            <!-- Current date/period display -->
-                            <div class="mb-4 pb-4 border-b border-gray-200">
-                                <h3 class="text-lg font-bold text-gray-800 dark:text-white">
-                                    @switch($period)
-                                        @case('day')
-                                            Energieverbruik op {{ \Carbon\Carbon::parse($date)->format('d F Y') }}
-                                        @break
-
-                                        @case('month')
-                                            Energieverbruik in {{ \Carbon\Carbon::parse($date)->format('F Y') }}
-                                        @break
-
-                                        @case('year')
-                                            Energieverbruik in {{ \Carbon\Carbon::parse($date)->format('Y') }}
-                                        @break
-
-                                        @default
-                                            Energieverbruik
-                                    @endswitch
-                                </h3>
+                            <!-- Date Selector Section -->
+                            <div role="group" aria-label="{{ __('general.period_selection') }}" class="flex justify-center mt-4">
+                                @foreach (['day' => __('general.day'), 'month' => __('general.month'), 'year' => __('general.year')] as $key => $label)
+                                    <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
+                                        <input type="hidden" name="period" value="{{ $key }}">
+                                        <input type="hidden" name="date" value="{{ $date }}">
+                                        <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
+                                        <button 
+                                            type="submit"
+                                            class="flex items-center justify-center px-4 py-2 rounded-md mx-1 transition-colors
+                                                {{ $period === $key 
+                                                    ? 'bg-blue-500 text-white' 
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}"
+                                            aria-pressed="{{ $period === $key ? 'true' : 'false' }}"
+                                            aria-label="{{ __('general.show_data_per', ['period' => strtolower($label), 'current' => $period === $key ? __('general.current_setting') : '']) }}">
+                                            {{ $label }}
+                                        </button>
+                                    </form>
+                                @endforeach
                             </div>
 
-                            <!-- Form for Time Settings -->
-                            <form id="timeSetterForm" action="{{ route('dashboard.setTime') }}" method="POST"
-                                class="space-y-6">
-                                @csrf
-                                <!-- Period selection -->
-                                <div class="mb-4">
-                                    <h3 class="text-lg font-medium mb-2 text-black dark:text-white">Tijdsperiode</h3>
-                                    <div class="flex space-x-4" role="radiogroup" aria-label="Selecteer periode">
-                                        <label class="inline-flex items-center" role="radio" aria-checked="{{ $period === 'day' ? 'true' : 'false' }}" tabindex="0">
-                                            <input type="radio" name="period" value="day" {{ $period === 'day' ? 'checked' : '' }} class="sr-only">
-                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
-                                                Dag
-                                            </span>
-                                        </label>
-                                    
-                                        <label class="inline-flex items-center" role="radio" aria-checked="{{ $period === 'month' ? 'true' : 'false' }}" tabindex="0">
-                                            <input type="radio" name="period" value="month" {{ $period === 'month' ? 'checked' : '' }} class="sr-only">
-                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
-                                                Maand
-                                            </span>
-                                        </label>
-                                    
-                                        <label class="inline-flex items-center" role="radio" aria-checked="{{ $period === 'year' ? 'true' : 'false' }}" tabindex="0">
-                                            <input type="radio" name="period" value="year" {{ $period === 'year' ? 'checked' : '' }} class="sr-only">
-                                            <span class="px-4 py-2 rounded-md cursor-pointer {{ $period === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
-                                                Jaar
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
+                            <!-- Date Picker Header -->
+                            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mt-6 mb-2">
+                                {{ __('general.select_date') }}
+                            </h2>
 
-                                <!-- Date picker -->
-                                <div class="mb-4">
-                                    <h3 class="text-lg font-medium mb-2 dark:text-white">Datumkiezer</h3>
-                                    <div class="flex items-center space-x-2">
-                                        <div class="date-input-container w-full">
-                                            @switch($period)
-                                                @case('day')
-                                                    <input type="date" name="date" id="datePicker"
-                                                        class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md"
-                                                        value="{{ $date }}">
-                                                @break
+                            <!-- Date Picker -->
+                            <div class="date-input-container flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-4">
+                                @php
+                                    $DatePickerClass = "w-full p-3 bg-gray-50 rounded-md dark:bg-gray-700 dark:text-gray-200 dark:[color-scheme:dark]";
+                                @endphp
 
-                                                @case('month')
-                                                    <input type="month" name="date" id="datePicker"
-                                                        class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md"
-                                                        value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">
-                                                @break
+                                @switch($period)
+                                    @case('day')
+                                        <input type="date" 
+                                            id="datePicker" 
+                                            name="date" 
+                                            class="{{ $DatePickerClass }}"
+                                            value="{{ $date }}"
+                                            aria-label="{{ __('general.select_date') }}">
+                                        @break
 
-                                                @case('year')
-                                                    <input type="number" name="date" id="datePicker"
-                                                        class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md"
-                                                        value="{{ \Carbon\Carbon::parse($date)->format('Y') }}"
-                                                        min="2000" max="2050">
-                                                @break
-                                            @endswitch
-                                        </div>
-                                    </div>
+                                    @case('month')
+                                        <input type="month" 
+                                            id="datePicker" 
+                                            name="date" 
+                                            class="{{ $DatePickerClass }}"
+                                            value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}"
+                                            aria-label="{{ __('general.select_month') }}">
+                                        @break
 
-                                    <!-- Navigation arrows for date -->
-                                    <div class="flex justify-center mt-4">
-                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d'), 'housing_type' => $housingType]) }}"
-                                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-l-md">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 19l-7-7 7-7" />
-                                            </svg>
-                                        </a>
-                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::now()->format('Y-m-d'), 'housing_type' => $housingType]) }}"
-                                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 mx-1">
-                                            Vandaag
-                                        </a>
-                                        <a href="{{ route('dashboard', ['period' => $period, 'date' => \Carbon\Carbon::parse($date)->add(1, $period)->format('Y-m-d'), 'housing_type' => $housingType]) }}"
-                                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-r-md">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </div>
+                                    @case('year')
+                                        <input type="number" 
+                                            id="datePicker" 
+                                            name="date" 
+                                            class="{{ $DatePickerClass }}"
+                                            value="{{ \Carbon\Carbon::parse($date)->format('Y') }}"
+                                            min="2000" max="2050"
+                                            aria-label="{{ __('general.select_year') }}">
+                                        @break
+                                @endswitch
+                            </div>
 
-                                <!-- Housing type selection TODO -->
-                                <div class="hidden">
-                                    <h3 class="text-lg font-medium mb-2">Woningtype</h3>
-                                    <select name="housing_type" id="housingType" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-md">
-                                        <option value="appartement" {{ $housingType === 'appartement' ? 'selected' : '' }}>Appartement</option>
-                                        <option value="tussenwoning" {{ $housingType === 'tussenwoning' ? 'selected' : '' }}>Tussenwoning</option>
-                                        <option value="hoekwoning" {{ $housingType === 'hoekwoning' ? 'selected' : '' }}>Hoekwoning</option>
-                                        <option value="twee_onder_een_kap" {{ $housingType === 'twee_onder_een_kap' ? 'selected' : '' }}>2-onder-1-kap</option>
-                                        <option value="vrijstaand" {{ $housingType === 'vrijstaand' ? 'selected' : '' }}>Vrijstaand</option>
-                                    </select>
-                                </div>
-                            </form>
+                            <!-- Date Navigation Header -->
+                            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mt-6 mb-2">
+                                {{ __('general.date_navigation') }}
+                            </h2>
+
+                            <!-- Date Navigation Controls -->
+                            <div role="group" aria-label="{{ __('general.date_navigation') }}" class="flex justify-center mt-4">
+                                <form method="GET" action="{{ route('dashboard') }}" class="flex justify-center mt-4" role="group" aria-label="{{ __('general.date_navigation') }}">
+                                    <input type="hidden" name="period" value="{{ $period }}">
+                                    <input type="hidden" name="housing_type" value="{{ $housingType }}">
+                                    <input type="hidden" id="date-input" name="date" value="">
+
+                                    <!-- Previous Period Button -->
+                                    <button type="submit"
+                                            class="flex items-center justify-center px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md mx-1 transition-colors"
+                                            onclick="document.getElementById('date-input').value = '{{ \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d') }}'"
+                                            aria-label="{{ __('general.previous_period', ['period' => $period]) }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+
+                                    <!-- Today Button -->
+                                    <button type="submit"
+                                            class="flex items-center justify-center px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 transition-colors mx-1 rounded-md"
+                                            onclick="document.getElementById('date-input').value = '{{ \Carbon\Carbon::now()->format('Y-m-d') }}'"
+                                            aria-label="{{ __('general.go_to_today') }}">
+                                        {{ __('general.today') }}
+                                    </button>
+
+                                    <!-- Next Period Button -->
+                                    <button type="submit"
+                                            class="flex items-center justify-center px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md mx-1 transition-colors"
+                                            onclick="document.getElementById('date-input').value = '{{ \Carbon\Carbon::parse($date)->add(1, $period)->format('Y-m-d') }}'"
+                                            aria-label="{{ __('general.next_period', ['period' => $period]) }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
