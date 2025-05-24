@@ -58,7 +58,7 @@
                                 ? 'bg-' . $buttonColor . '-500 text-white' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}"
                         aria-pressed="{{ $period === $key ? 'true' : 'false' }}"
-                        aria-label="{{ __('energy-chart-widget.show_data_per', ['period' => strtolower($label), 'current' => $period === $key ? __('energy-chart-widget.current_setting') : '']) }}"
+                        aria-label="{{ __('general.show_data_per', ['period' => $label, 'current' => $period === $key ? __('general.current_setting') : '']) }}"
                         >
                         {{ $label }}
                     </button>
@@ -67,13 +67,13 @@
         </div>
     </div>
     
-    <div role="region" aria-label="{{ __('energy-chart-widget.date_navigation') }}" class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-4">
         {{-- Previous Button --}}
-        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0" aria-label="{{ __('energy-chart-widget.previous_period') }}">
+        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
             <input type="hidden" name="period" value="{{ $period }}">
             <input type="hidden" name="date" value="{{ $previousDate->format('Y-m-d') }}">
             <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
-            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="{{ __('energy-chart-widget.go_to_previous', ['period' => $period]) }}">
+            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="{{ __('general.go_to_previous', ['period' => __('general.' . $period)]) }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
                     <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
@@ -86,11 +86,11 @@
         </span>
     
         {{-- Next Button --}}
-        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0" aria-label="{{ __('energy-chart-widget.next_period') }}">
+        <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
             <input type="hidden" name="period" value="{{ $period }}">
             <input type="hidden" name="date" value="{{ $nextDate->format('Y-m-d') }}">
             <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
-            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="{{ __('energy-chart-widget.go_to_next', ['period' => $period]) }}">
+            <button type="submit" class="p-1 text-gray-500 hover:text-{{ $buttonColor }}-500 dark:text-gray-400 dark:hover:text-{{ $buttonColor }}-400" aria-label="{{ __('general.go_to_next', ['period' => __('general.' . $period)]) }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>

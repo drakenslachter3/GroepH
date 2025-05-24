@@ -145,7 +145,7 @@
                                                     ? 'bg-blue-500 text-white' 
                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}"
                                             aria-pressed="{{ $period === $key ? 'true' : 'false' }}"
-                                            aria-label="{{ __('general.show_data_per', ['period' => strtolower($label), 'current' => $period === $key ? __('general.current_setting') : '']) }}">
+                                            aria-label="{{ __('general.show_data_per', ['period' => $label, 'current' => $period === $key ? __('general.current_setting') : '']) }}">
                                             {{ $label }}
                                         </button>
                                     </form>
@@ -210,7 +210,7 @@
                                     <button type="submit"
                                             class="flex items-center justify-center px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md mx-1 transition-colors"
                                             onclick="document.getElementById('date-input').value = '{{ \Carbon\Carbon::parse($date)->sub(1, $period)->format('Y-m-d') }}'"
-                                            aria-label="{{ __('general.previous_period', ['period' => $period]) }}">
+                                            aria-label="{{ __('general.go_to_previous', ['period' => __('general.' . $period)]) }}">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -230,7 +230,7 @@
                                     <button type="submit"
                                             class="flex items-center justify-center px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md mx-1 transition-colors"
                                             onclick="document.getElementById('date-input').value = '{{ \Carbon\Carbon::parse($date)->add(1, $period)->format('Y-m-d') }}'"
-                                            aria-label="{{ __('general.next_period', ['period' => $period]) }}">
+                                            aria-label="{{ __('general.go_to_next', ['period' => __('general.' . $period)]) }}">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -354,164 +354,66 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ asset('js/widget-navigation.js') }}" defer></script>
     <script>
-        // Define default values for period labels
-        const periodLabels = {
-            'day': 'Uren',
-            'month': 'Dagen',
-            'year': 'Maanden'
-        };
-
-        // Define default empty data structure if not provided by the backend
-        const lastYearData = {
-            electricity: [],
-            gas: []
-        };
-
-        // Config section toggle and time setter functionality
         document.addEventListener('DOMContentLoaded', function() {
-            // Toggle for the entire configuration section
-            const toggleConfigSection = document.getElementById('toggleConfigSection');
-            const configSectionContent = document.getElementById('configSectionContent');
-            const configSectionIcon = document.getElementById('configSectionIcon');
+            // Configuration section toggle
+            const toggleBtn = document.getElementById('toggleConfigSection');
+            const content = document.getElementById('configSectionContent');
+            const icon = document.getElementById('configSectionIcon');
 
-            if (toggleConfigSection && configSectionContent) {
-                // Check localStorage for saved state
-                const configSectionOpen = localStorage.getItem('configSectionOpen') === 'true';
-
-                // Set initial state based on localStorage or default to open on first visit
-                if (configSectionOpen || localStorage.getItem('configSectionOpen') === null) {
-                    configSectionContent.classList.remove('hidden');
-                    configSectionIcon.classList.add('rotate-180');
+            if (toggleBtn && content && icon) {
+                // Check saved state
+                const isOpen = localStorage.getItem('configSectionOpen') === 'true';
+                
+                if (isOpen) {
+                    content.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
                 }
 
-                toggleConfigSection.addEventListener('click', function() {
-                    configSectionContent.classList.toggle('hidden');
-                    configSectionIcon.classList.toggle('rotate-180');
-
-                    // Save state to localStorage
-                    localStorage.setItem('configSectionOpen', !configSectionContent.classList.contains(
-                        'hidden'));
+                toggleBtn.addEventListener('click', function() {
+                    const isHidden = content.classList.contains('hidden');
+                    
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                    
+                    localStorage.setItem('configSectionOpen', isHidden);
                 });
             }
 
-            // Period selection UI enhancement
-            const periodRadios = document.querySelectorAll('input[name="period"]');
-            periodRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    // Reset all buttons
-                    periodRadios.forEach(r => {
-                        r.nextElementSibling.classList.remove('bg-blue-600', 'text-white');
-                        r.nextElementSibling.classList.add('bg-gray-200', 'text-gray-700');
+            // Auto-hide status message
+            const statusMsg = document.getElementById('status-message');
+            if (statusMsg) {
+                setTimeout(() => {
+                    statusMsg.classList.add('opacity-0');
+                    setTimeout(() => statusMsg.remove(), 1000);
+                }, 5000);
+            }
+
+            // Date picker change handler
+            const datePicker = document.getElementById('datePicker');
+            if (datePicker) {
+                datePicker.addEventListener('change', function() {
+                    const form = document.createElement('form');
+                    form.method = 'GET';
+                    form.action = '{{ route("dashboard") }}';
+                    
+                    const inputs = [
+                        { name: 'period', value: '{{ $period }}' },
+                        { name: 'date', value: this.value },
+                        { name: 'housing_type', value: '{{ request("housing_type", "tussenwoning") }}' }
+                    ];
+                    
+                    inputs.forEach(input => {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = input.name;
+                        hiddenInput.value = input.value;
+                        form.appendChild(hiddenInput);
                     });
-
-                    // Highlight the selected button
-                    this.nextElementSibling.classList.remove('bg-gray-200', 'text-gray-700');
-                    this.nextElementSibling.classList.add('bg-blue-600', 'text-white');
-
-                    // Update date input type based on selected period
-                    updateDatePickerType(this.value);
-
-                    // Submit form after a short delay
-                    setTimeout(function() {
-                        document.getElementById('timeSetterForm').submit();
-                    }, 300);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
                 });
-            });
-
-            // Function to update date picker type based on period
-            function updateDatePickerType(period) {
-                const dateContainer = document.querySelector('.date-input-container');
-                let dateInput;
-
-                if (period === 'day') {
-                    dateInput =
-                        `<input type="date" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m-d') }}">`;
-                } else if (period === 'month') {
-                    dateInput =
-                        `<input type="month" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}">`;
-                } else if (period === 'year') {
-                    dateInput =
-                        `<input type="number" name="date" id="datePicker" class="date-picker w-full p-3 bg-gray-50 border border-gray-300 rounded-md" value="{{ \Carbon\Carbon::parse($date)->format('Y') }}" min="2000" max="2050">`;
-                }
-
-                if (dateContainer) {
-                    dateContainer.innerHTML = dateInput;
-
-                    // Listen for changes on the new datepicker
-                    const newDatePicker = document.getElementById('datePicker');
-                    if (newDatePicker) {
-                        newDatePicker.addEventListener('change', function() {
-                            document.getElementById('timeSetterForm').submit();
-                        });
-
-                        // For month and year inputs that might not trigger change event
-                        if (period === 'month' || period === 'year') {
-                            newDatePicker.addEventListener('input', function() {
-                                // Use a timer to prevent frequent submits
-                                if (this._timer) clearTimeout(this._timer);
-                                this._timer = setTimeout(() => {
-                                    document.getElementById('timeSetterForm').submit();
-                                }, 500);
-                            });
-
-                            // For year input, also listen for Enter key
-                            if (period === 'year') {
-                                newDatePicker.addEventListener('keydown', function(e) {
-                                    if (e.key === 'Enter') {
-                                        document.getElementById('timeSetterForm').submit();
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }
             }
-
-            // Initial setup of the datepicker listener
-            function initDatePickerListener() {
-                const datePicker = document.getElementById('datePicker');
-                if (datePicker) {
-                    datePicker.addEventListener('change', function() {
-                        document.getElementById('timeSetterForm').submit();
-                    });
-
-                    // Voor type="month" en type="number" inputs
-                    if (datePicker.type === 'month' || datePicker.type === 'number') {
-                        datePicker.addEventListener('input', function() {
-                            // Vertraging om te voorkomen dat het formulier te vaak wordt verzonden
-                            if (this._timer) clearTimeout(this._timer);
-                            this._timer = setTimeout(() => {
-                                document.getElementById('timeSetterForm').submit();
-                            }, 500);
-                        });
-
-                        // Voor jaar input, luister naar Enter toets
-                        if (datePicker.type === 'number') {
-                            datePicker.addEventListener('keydown', function(e) {
-                                if (e.key === 'Enter') {
-                                    document.getElementById('timeSetterForm').submit();
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-
-            // Roep de initiële setup aan
-            initDatePickerListener();
-
-            // Status-message verwijderen na 5 seconden
-            setTimeout(() => {
-                const msg = document.getElementById('status-message');
-                if (msg) {
-                    msg.classList.remove('opacity-100');
-                    msg.classList.add('opacity-0');
-
-                    setTimeout(() => {
-                        msg.remove();
-                    }, 1000);
-                }
-            }, 5000);
         });
     </script>
     @stack('chart-scripts')
