@@ -10,7 +10,7 @@
         <!-- Elektriciteit tips -->
         <div role="document" class="bg-blue-50 p-4 rounded-lg">
             <h4 tabindex="0" class="font-medium text-blue-700">Elektriciteit Besparing</h4>
-            <p class="mt-1 text-blue-600">
+            <p tabindex="0" class="mt-1 text-blue-600">
                 @if($usagePattern === 'avond')
                     Uw elektriciteitsverbruik is het hoogst tussen 18:00 en 21:00 uur. Overweeg het gebruik van grote apparaten te verplaatsen naar daluren (21:00-07:00) om ongeveer 14% te besparen op uw elektriciteitskosten.
                 @elseif($usagePattern === 'ochtend')
@@ -24,7 +24,7 @@
         <!-- Gas tips op basis van woningtype -->
         <div role="document" class="bg-yellow-50 p-4 rounded-lg">
             <h4 tabindex="0" class="font-medium text-yellow-700">Gas Besparing voor uw {{ $housingType }}</h4>
-            <p class="mt-1 text-yellow-600">
+            <p tabindex="0" class="mt-1 text-yellow-600">
                 @switch($housingType)
                     @case('appartement')
                         In een appartement kunt u tot 15% op gasverbruik besparen door radiatorfolie te plaatsen achter radiatoren aan de buitenmuur, en tochtstrips rond ramen en deuren aan te brengen.
@@ -50,7 +50,7 @@
         <!-- Seizoensgebonden tips -->
         <div role="document"class="bg-green-50 p-4 rounded-lg">
             <h4 tabindex="0" class="font-medium text-green-700">Tips voor de {{ $season }}</h4>
-            <p class="mt-1 text-green-600">
+            <p tabindex="0" class="mt-1 text-green-600">
                 @switch($season)
                     @case('winter')
                         In de winter bespaart u gas door de thermostaat 's nachts en bij afwezigheid op 15°C te zetten. Elke graad lager kan tot 6% besparing opleveren. Houd radiatoren vrij en sluit gordijnen 's avonds.
