@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -8,8 +7,8 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Favicon -->
-        <link rel="icon" href="{{ asset('images/mnext_logo_light.svg') }}" type="image/svg+xml">
+        <link rel="icon" href="{{ asset('images/mnext_logo_light.svg') }}" type="image/svg+xml" media="(prefers-color-scheme: light)">
+        <link rel="icon" href="{{ asset('images/mnext_logo_dark.svg') }}" type="image/svg+xml" media="(prefers-color-scheme: dark)">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -25,7 +24,7 @@
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
+                <header class="">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
@@ -33,7 +32,7 @@
             @endisset
 
             <!-- Page Content -->
-            <main>
+            <main tabindex="0" id="main-content">
                 @yield('content')
                 {{ $slot ?? '' }}   
             </main>
