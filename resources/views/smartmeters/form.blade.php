@@ -40,7 +40,8 @@
 
                         <div class="mb-4">
                             <label for="name"
-                                   class="block text-sm font-medium text-gray-700 dark:text-gray-300">Naam</label>
+                                   class="block text-sm font-medium text-gray-700 dark:text-gray-300">Naam <span
+                                   class="text-red-600">*</span></label>
                             <input type="text"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                    id="name" name="name"
@@ -85,12 +86,9 @@
                                 </div>
                             </div>
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Selecteer tenminste één meettype</p>
-                            @error('measures_electricity')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            @error('measures_gas')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            @if ($errors->has('error'))
+                                <div class="mt-1 text-sm text-red-600">{{ $errors->first('error') }}</div>
+                            @endif
                         </div>
 
                         <div class="mb-4">
