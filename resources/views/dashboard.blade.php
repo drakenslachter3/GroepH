@@ -288,6 +288,7 @@
                     <div class="p-2 {{ $widthClasses }}">
                         <div class="h-full p-4 bg-white shadow-md rounded-lg dark:bg-gray-800 dark:text-white">
                             @switch($item)
+
                                 @case('usage-prediction')
                                     <x-dashboard.usage-prediction :electricityData="[
                                         'kwh' => $totals['electricity_kwh'],
@@ -348,6 +349,10 @@
 
                                 @case('switch-meter')
                                     <x-dashboard.switch-meter :meters="\App\Models\SmartMeter::getAllSmartMetersForCurrentUser()" :selectedMeterId="\App\Models\UserGridLayout::getSelectedSmartMeterForCurrentUser()" />
+                                @break
+
+                                @case('net-result')
+                                    <x-dashboard.net-result :liveData="$liveData" :totals="$totals" />
                                 @break
 
                                 @default
