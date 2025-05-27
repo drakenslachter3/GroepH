@@ -457,7 +457,7 @@ class DashboardController extends Controller
             'date-selector',
             'historical-comparison',
             'trend-analysis', // Behouden van dev branch
-            'energy-suggestions',
+            'net-result',
             'energy-prediction-chart-electricity', // Behouden van SCRUM-53
             'energy-prediction-chart-gas'          // Behouden van SCRUM-53
         ];

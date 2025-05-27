@@ -78,6 +78,7 @@
                                         <option value="energy-status-electricity">Electra Status</option>
                                         <option value="energy-status-gas">Gas Status</option>
                                         <option value="historical-comparison">Historische Vergelijking</option>
+                                        <option value="net-result">Netto resultante</option>
                                         <option value="energy-chart-electricity">Electra Grafiek</option>
                                         <option value="energy-chart-gas">Gas Grafiek</option>
                                         <option value="trend-analysis">Trend Analyse</option>

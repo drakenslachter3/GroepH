@@ -20,12 +20,13 @@
                 <option value="energy-status-electricity">Electra Status</option>
                 <option value="energy-status-gas">Gas Status</option>
                 <option value="historical-comparison">Historische Vergelijking</option>
+                <option value="net-result">Netto resultante</option>
                 <option value="energy-chart">Energie Grafiek</option>
                 <option value="trend-analysis">Trend Analyse</option>
                 <option value="energy-suggestions">Energiebesparingstips</option>
                 <option value="budget-alert">Budget Waarschuwing</option>
                 <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling Grafiek</option>
-<option value="energy-prediction-chart-gas">Gas Voorspelling Grafiek</option>
+                <option value="energy-prediction-chart-gas">Gas Voorspelling Grafiek</option>
             </select>
         </div>
         
