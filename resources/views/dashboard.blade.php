@@ -269,6 +269,7 @@
                             'energy-suggestions' => 'large',
                             'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
                             'switch-meter' => 'full',
+                            'net-result' => 'small',
                             default => 'full',
                         };
 
@@ -349,7 +350,7 @@
                                 @break
 
                                 @case('net-result')
-                                    <x-dashboard.net-result :liveData="$liveData" :totals="$totals" />
+                                    <x-dashboard.net-result  />
                                 @break
 
                                 @default
