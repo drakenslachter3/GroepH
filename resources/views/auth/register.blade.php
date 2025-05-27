@@ -50,15 +50,25 @@
         <!-- Wachtwoord -->
         <div class="mt-4">
             <x-etc.input-label for="password" :value="__('Wachtwoord')" />
-            <x-etc.text-input
-                id="password"
-                name="password"
-                type="password"
-                class="block mt-1 w-full"
-                required
-                autocomplete="new-password"
-                aria-describedby="{{ $errors->has('password') ? 'password-error' : '' }}"
-            />
+
+            <x-etc.text-input id="password" class="block mt-1 w-full"
+                            type="password"
+                            name="password"
+                            required autocomplete="new-password"
+                            aria-describedby="{{ $errors->has('password') ? 'password-error' : '' }}"/>
+
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {{ __('Het wachtwoord moet minstens 8 tekens lang zijn en bestaan uit:') }}
+            </p>
+            <ul class="mt-1 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
+                <li>{{ __('Eén hoofdletter') }}</li>
+                <li>{{ __('Eén kleine letter') }}</li>
+                <li>{{ __('Eén cijfer') }}</li>
+                <li>{{ __('Eén speciaal teken') }}</li>
+            </ul>
+
+            <x-etc.input-error :messages="$errors->get('password')" class="mt-2" />
+            
             @if ($errors->has('password'))
                 <div id="password-error" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
                     {{ $errors->first('password') }}
