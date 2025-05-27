@@ -1,4 +1,4 @@
-<div class="max-w-md mx-auto my-8 p-6 bg-white shadow-lg rounded-lg border border-gray-100">
+<section class="max-w-md mx-auto my-8 p-6 bg-white shadow-lg rounded-lg border border-gray-100">
     <h2 class="text-xl font-semibold text-gray-800 mb-6">Widget Configuratie</h2>
     
     <form action="{{ route('dashboard.setWidget') }}" method="POST" class="space-y-6">
@@ -47,4 +47,4 @@
             Budget Aanpassen
         </button>
     </div>
-</div>
+</section>

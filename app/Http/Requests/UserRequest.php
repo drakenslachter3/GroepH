@@ -52,7 +52,7 @@ class UserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.regex' => 'Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.',
+            'password.regex' => 'Het wachtwoord voldoet niet aan de eisen.',
         ];
     }
 }
