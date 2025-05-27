@@ -269,7 +269,7 @@
                             'energy-suggestions' => 'large',
                             'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
                             'switch-meter' => 'full',
-                            'net-result' => 'small',
+                            'net-result' => 'large',
                             default => 'full',
                         };
 
@@ -350,7 +350,12 @@
                                 @break
 
                                 @case('net-result')
-                                    <x-dashboard.net-result  />
+                                    <x-dashboard.net-result 
+                                        :date="$date"
+                                        :period="$period"
+                                        :energyConsumed="$meterDataForPeriod['current_data']['energy_consumed'] ?? []"
+                                        :energyProduced="$meterDataForPeriod['current_data']['energy_produced'] ?? []"
+                                    />
                                 @break
 
                                 @default

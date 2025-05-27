@@ -1,3 +1,15 @@
+@props(['date' => null,'period' => null,'energyConsumed' => null, 'energyProduced' => null])
+
+@php
+    $formattedEnergyConsumed = number_format(array_sum($energyConsumed ?? []), 2);
+    $formattedEnergyProduced = number_format(array_sum($energyProduced ?? []), 2);
+    
+    $percentageProduced = $formattedEnergyConsumed > 0
+        ? number_format(($formattedEnergyProduced / $formattedEnergyConsumed) * 100, 2)
+        : 0;
+    
+    $percentageConsumed = 100 - $percentageProduced;
+@endphp
 
 <div class="w-full p-2">
     <div class="flex flex-col">
@@ -15,45 +27,81 @@
             </div>
         </div>
         <!-- Metrics -->
-            <div class="space-y-2">
-                <!-- Usage value -->
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-700 dark:text-gray-300">Verbruik Gas:</span>
-                    <span tabindex="0"
-                        aria-label=""
-                        class="font-bold dark:text-white">
-                        0,00
-                    </span>
-                </div>
-                <!-- Generated value -->
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-700 dark:text-gray-300">Opgewekte Gas:</span>
-                    <span tabindex="0"
-                        aria-label=""
-                        class="font-bold dark:text-white">
-                        0,00
-                    </span>
-                </div>
-                
-                <!-- Target value -->
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-700 dark:text-gray-300">Verbruik Elektriciteit:</span>
-                    <span tabindex="0"
-                        aria-label=""
-                        class="font-bold dark:text-white">
-                        0,00
-                    </span>
-                </div>
-                <!-- Generated value -->
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-700 dark:text-gray-300">Opgewekte Elektriciteit:</span>
-                    <span tabindex="0"
-                        aria-label=""
-                        class="font-bold dark:text-white">
-                        0,00
-                    </span>
-                </div>
+        <div class="space-y-2 mt-2">
+            <!-- Target value -->
+            <div class="flex justify-between items-center">
+                <span class="text-gray-700 dark:text-gray-300">Verbruikte elektriciteit:</span>
+                <span tabindex="0"
+                    aria-label=""
+                    class="font-bold dark:text-white">
+                    {{ $formattedEnergyConsumed }} kWh
+                </span>
             </div>
+            <!-- Generated value -->
+            <div class="flex justify-between items-center">
+                <span class="text-gray-700 dark:text-gray-300">Opgewekte elektriciteit:</span>
+                <span tabindex="0"
+                    aria-label=""
+                    class="font-bold dark:text-white">
+                    {{ $formattedEnergyProduced }} kWh
+                </span>
+            </div>
+            <!-- Generated value -->
+            <div class="flex justify-between items-center">
+                <span class="text-gray-700 dark:text-gray-300">U heeft <span class="font-bold">{{ $percentageProduced }}%</span> van uw stroomverbruik zelf opgewekt!</span>
+                <span tabindex="0"
+                    aria-label=""
+                    class="font-bold dark:text-white">
+                </span>
+            </div>
+        </div>
+    </div>
+     <!-- Canvas for pie chart -->
+    <div class="mt-6 w-56 flex justify-center">
+        <canvas id="nettoPieChart" class="max-w-xs"></canvas>
     </div>
 </div>
 
+<!-- Load chartJS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const percentageConsumed = @json($percentageConsumed);
+    const percentageProduced = @json($percentageProduced);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('nettoPieChart').getContext('2d');
+
+        const data = {
+            labels: ['Zelf opgewekte elektriciteit', 'Restant'],
+            datasets: [{
+                data: [percentageProduced, percentageConsumed],
+                backgroundColor: ['#EAB308', '#E5E7EB'],
+                borderWidth: 1
+            }]
+        };
+
+        const options = {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            return `${label}: ${value}%`;
+                        }
+                    }
+                }
+            }
+        };
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: data,
+            options: options
+        });
+    });
+</script>
