@@ -139,6 +139,7 @@ class SmartMeterController extends Controller
 
         $validated = $request->validate([
             'meter_id' => ['required', 'string', 'max:255', Rule::unique('smart_meters')->ignore($smartmeter->id)],
+            'name' => ['required', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
             'measures_electricity' => ['boolean'],
             'measures_gas' => ['boolean'],
@@ -290,7 +291,7 @@ class SmartMeterController extends Controller
         $meters = SmartMeter::where('meter_id', 'like', '%' . $query . '%')
             ->whereNull('account_id')
             ->limit(10)
-            ->get(['id', 'meter_id', 'location', 'measures_electricity', 'measures_gas']);
+            ->get(['id', 'name', 'meter_id', 'location', 'measures_electricity', 'measures_gas']);
 
         // Converteer de meettype-velden naar een leesbare string
         $meters->each(function($meter) {
@@ -299,6 +300,4 @@ class SmartMeterController extends Controller
 
         return response()->json($meters);
     }
-
-
 }
