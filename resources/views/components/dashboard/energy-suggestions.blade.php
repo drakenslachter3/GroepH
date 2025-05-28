@@ -8,7 +8,7 @@
     </div>
     <div class="space-y-4">
         <!-- Elektriciteit tips -->
-        <div class="bg-blue-50 p-4 rounded-lg">
+        <div role="document" class="bg-blue-50 p-4 rounded-lg">
             <h4 tabindex="0" class="font-medium text-blue-700">Elektriciteit Besparing</h4>
             <p tabindex="0" class="mt-1 text-blue-600">
                 @if($usagePattern === 'avond')
@@ -22,7 +22,7 @@
         </div>
         
         <!-- Gas tips op basis van woningtype -->
-        <div class="bg-yellow-50 p-4 rounded-lg">
+        <div role="document" class="bg-yellow-50 p-4 rounded-lg">
             <h4 tabindex="0" class="font-medium text-yellow-700">Gas Besparing voor uw {{ $housingType }}</h4>
             <p tabindex="0" class="mt-1 text-yellow-600">
                 @switch($housingType)
@@ -48,7 +48,7 @@
         </div>
         
         <!-- Seizoensgebonden tips -->
-        <div class="bg-green-50 p-4 rounded-lg">
+        <div role="document"class="bg-green-50 p-4 rounded-lg">
             <h4 tabindex="0" class="font-medium text-green-700">Tips voor de {{ $season }}</h4>
             <p tabindex="0" class="mt-1 text-green-600">
                 @switch($season)
