@@ -13,7 +13,7 @@
                     {{ session('status') }}
                 </div>
             @endif
-
+                <x-dashboard.budget-setup-notification :budgetStatus="$budgetStatus" />
             <div class="bg-white shadow-lg rounded-lg mb-8 dark:bg-gray-800">
                 <!-- Toggle button for the entire config section -->
                 <div class="p-4">

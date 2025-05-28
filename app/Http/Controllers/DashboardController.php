@@ -232,7 +232,9 @@ class DashboardController extends Controller
         $electricityStatus = $this->determineStatus($predictionPercentage['electricity']);
         $gasStatus         = $this->determineStatus($predictionPercentage['gas']);
 
-        // Create live data structure for energy status widgets
+        $budgetStatus                         = CheckBudgetSetup::getBudgetSetupStatus();
+        $energydashboard_data['budgetStatus'] = $budgetStatus;
+
         $energydashboard_data['liveData'] = [
             'electricity' => [
                 'usage'         => $actualElectricity,
