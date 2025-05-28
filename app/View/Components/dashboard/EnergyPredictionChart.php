@@ -7,57 +7,55 @@ use Illuminate\View\View;
 
 class EnergyPredictionChart extends Component
 {
-    /**
-     * Current energy usage data
-     */
+    /** Chart title */
+    public $title;
+
+    /** Actual measured data */
     public $currentData;
-    
-    /**
-     * Budget target data
-     */
+
+    /** Budget or forecast data */
     public $budgetData;
-    
-    /**
-     * Type of energy (electricity or gas)
-     */
+
+    /** Energy type (e.g. electricity, gas) */
     public $type;
-    
-    /**
-     * Period (day, month, year)
-     */
+
+    /** Period shown (day, month, year) */
     public $period;
-    
-    /**
-     * Current percentage of budget used
-     */
+
+    /** Selected date */
+    public $date;
+
+    /** Difference between actual and budget (as % value) */
     public $percentage;
-    
-    /**
-     * Confidence level for predictions (0-100)
-     */
+
+    /** Confidence level in prediction (0–100) */
     public $confidence;
-    
+
     /**
      * Create a new component instance.
      */
     public function __construct(
+        string $title,
         array $currentData, 
         array $budgetData, 
-        string $type = 'electricity', 
-        string $period = 'year',
-        float $percentage = 0,
-        int $confidence = 80
+        string $type, 
+        string $period,
+        string $date,
+        float $percentage,
+        int $confidence
     ) {
+        $this->title = $title;
         $this->currentData = $currentData;
         $this->budgetData = $budgetData;
         $this->type = $type;
         $this->period = $period;
+        $this->date = $date;
         $this->percentage = $percentage;
         $this->confidence = $confidence;
     }
 
     /**
-     * Get the view / contents that represent the component.
+     * Return the component view.
      */
     public function render(): View
     {
