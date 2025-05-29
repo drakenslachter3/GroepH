@@ -16,10 +16,10 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg dark:bg-gray-800">
                 <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                     <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Marges voor voorspellingen</h3>
-                    
+
                     <form action="{{ route('admin.prediction-settings.update') }}" method="POST">
                         @csrf
-                        
+
                         <!-- Global Settings -->
                         <div class="mb-8">
                             <h4 class="text-md font-medium mb-3 text-gray-800 dark:text-gray-200">Globale instellingen</h4>
@@ -33,22 +33,24 @@
                                     </div>
                                     <div>
                                         <label for="global_best_case" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Best case marge (%)</label>
-                                        <input type="number" name="settings[0][best_case_margin]" id="global_best_case" 
+                                        <input type="number" name="settings[0][best_case_margin]" id="global_best_case"
                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400"
                                             value="{{ old('settings.0.best_case_margin', $globalSettings->where('period', 'all')->first()->best_case_margin ?? 10) }}"
-                                            min="0" max="50" step="0.1">
+                                            min="0" max="50" step="0.1"
+                                            dusk="global-best-case">
                                     </div>
                                     <div>
                                         <label for="global_worst_case" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Worst case marge (%)</label>
-                                        <input type="number" name="settings[0][worst_case_margin]" id="global_worst_case" 
+                                        <input type="number" name="settings[0][worst_case_margin]" id="global_worst_case"
                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400"
                                             value="{{ old('settings.0.worst_case_margin', $globalSettings->where('period', 'all')->first()->worst_case_margin ?? 15) }}"
-                                            min="0" max="50" step="0.1">
+                                            min="0" max="50" step="0.1"
+                                            dusk="global-worst-case">
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Electricity Settings -->
                         <div class="mb-8">
                             <h4 class="text-md font-medium mb-3 text-gray-800 dark:text-gray-200">Elektriciteit instellingen</h4>
@@ -64,14 +66,14 @@
                                             </div>
                                             <div>
                                                 <label for="electricity_{{ $periodKey }}_best_case" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Best case marge (%)</label>
-                                                <input type="number" name="settings[{{ $loop->index + 1 }}][best_case_margin]" id="electricity_{{ $periodKey }}_best_case" 
+                                                <input type="number" name="settings[{{ $loop->index + 1 }}][best_case_margin]" id="electricity_{{ $periodKey }}_best_case"
                                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400"
                                                     value="{{ old('settings.'.($loop->index + 1).'.best_case_margin', $electricitySettings->where('period', $periodKey)->first()->best_case_margin ?? 10) }}"
                                                     min="0" max="50" step="0.1">
                                             </div>
                                             <div>
                                                 <label for="electricity_{{ $periodKey }}_worst_case" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Worst case marge (%)</label>
-                                                <input type="number" name="settings[{{ $loop->index + 1 }}][worst_case_margin]" id="electricity_{{ $periodKey }}_worst_case" 
+                                                <input type="number" name="settings[{{ $loop->index + 1 }}][worst_case_margin]" id="electricity_{{ $periodKey }}_worst_case"
                                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400"
                                                     value="{{ old('settings.'.($loop->index + 1).'.worst_case_margin', $electricitySettings->where('period', $periodKey)->first()->worst_case_margin ?? 15) }}"
                                                     min="0" max="50" step="0.1">
@@ -81,7 +83,7 @@
                                 @endforeach
                             </div>
                         </div>
-                        
+
                         <!-- Gas Settings -->
                         <div class="mb-8">
                             <h4 class="text-md font-medium mb-3 text-gray-800 dark:text-gray-200">Gas instellingen</h4>
@@ -97,14 +99,14 @@
                                             </div>
                                             <div>
                                                 <label for="gas_{{ $periodKey }}_best_case" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Best case marge (%)</label>
-                                                <input type="number" name="settings[{{ $loop->index + 4 }}][best_case_margin]" id="gas_{{ $periodKey }}_best_case" 
+                                                <input type="number" name="settings[{{ $loop->index + 4 }}][best_case_margin]" id="gas_{{ $periodKey }}_best_case"
                                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:focus:border-yellow-400 dark:focus:ring-yellow-400"
                                                     value="{{ old('settings.'.($loop->index + 4).'.best_case_margin', $gasSettings->where('period', $periodKey)->first()->best_case_margin ?? 10) }}"
                                                     min="0" max="50" step="0.1">
                                             </div>
                                             <div>
                                                 <label for="gas_{{ $periodKey }}_worst_case" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Worst case marge (%)</label>
-                                                <input type="number" name="settings[{{ $loop->index + 4 }}][worst_case_margin]" id="gas_{{ $periodKey }}_worst_case" 
+                                                <input type="number" name="settings[{{ $loop->index + 4 }}][worst_case_margin]" id="gas_{{ $periodKey }}_worst_case"
                                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:focus:border-yellow-400 dark:focus:ring-yellow-400"
                                                     value="{{ old('settings.'.($loop->index + 4).'.worst_case_margin', $gasSettings->where('period', $periodKey)->first()->worst_case_margin ?? 15) }}"
                                                     min="0" max="50" step="0.1">
@@ -114,9 +116,9 @@
                                 @endforeach
                             </div>
                         </div>
-                        
+
                         <div class="mt-6">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-400 transition-colors">
+                            <button type="submit" dusk="save-button" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-400 transition-colors">
                                 Instellingen opslaan
                             </button>
                         </div>
