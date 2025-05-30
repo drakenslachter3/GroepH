@@ -1,13 +1,19 @@
 @props(['date' => null,'period' => null,'energyConsumed' => null, 'energyProduced' => null])
 
 @php
-    $formattedEnergyConsumed = number_format(array_sum($energyConsumed ?? []), 2);
-    $formattedEnergyProduced = number_format(array_sum($energyProduced ?? []), 2);
-    
-    $percentageProduced = $formattedEnergyConsumed > 0
-        ? number_format(($formattedEnergyProduced / $formattedEnergyConsumed) * 100, 2)
+    $energyConsumed = array_filter($energyConsumed ?? [], 'is_numeric');
+    $energyProduced = array_filter($energyProduced ?? [], 'is_numeric');
+
+    $sumConsumed = array_sum($energyConsumed);
+    $sumProduced = array_sum($energyProduced);
+
+    $formattedEnergyConsumed = number_format($sumConsumed, 2);
+    $formattedEnergyProduced = number_format($sumProduced, 2);
+
+    $percentageProduced = $sumConsumed > 0
+        ? number_format(($sumProduced / $sumConsumed) * 100, 2)
         : 0;
-    
+
     $percentageConsumed = 100 - $percentageProduced;
 @endphp
 
