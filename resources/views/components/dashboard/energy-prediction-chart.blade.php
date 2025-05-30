@@ -1,5 +1,4 @@
-@props(['title', 'currentData', 'budgetData', 'type', 'period', 'percentage', 'confidence', 'yearlyConsumptionToDate' => 0, 'dailyAverageConsumption' => 0, 'date' => null, 'currentMonthName' => null, 'monthlyBudgetValue' => null, 'isInFuture' => true, 'unit' => null])
-
+@props(['title', 'currentData', 'budgetData', 'type', 'period', 'percentage', 'confidence', 'yearlyConsumptionToDate' => 0, 'dailyAverageConsumption' => 0, 'date' => null, 'currentMonthName' => null, 'monthlyBudgetValue' => null, 'isInFuture' => true, 'unit' => null, 'realMeterData' => [], 'dataKey' => null])
 {{-- Set default values for any missing props --}}
 @php
 use Carbon\Carbon;
@@ -7,6 +6,10 @@ use Carbon\Carbon;
 // Ensure we have the correct unit
 $unit = $unit ?? ($type === 'electricity' ? 'kWh' : 'm³');
 
+$dataKey = $dataKey ?? ($type === 'electricity' ? 'energy_consumed' : 'gas_delivered');
+
+// Use real meter data instead of prediction data for actual consumption
+$actualMeterData = $realMeterData[$dataKey] ?? [];
 // Calculate yearlyBudgetTarget if not provided
 $yearlyBudgetTarget = $yearlyBudgetTarget ?? $budgetData['target'] ?? 0;
 
@@ -45,8 +48,8 @@ $averageConsumptionId = "averageConsumption{$type}{$period}" . uniqid();
 
 // Calculate actual total from the data array using same logic as energy-chart
 $actualTotal = 0;
-if (isset($currentData['actual']) && is_array($currentData['actual'])) {
-    foreach ($currentData['actual'] as $value) {
+if (is_array($actualMeterData)) {
+    foreach ($actualMeterData as $value) {
         if ($value !== null && is_numeric($value)) {
             $actualTotal += $value;
         }
@@ -329,20 +332,23 @@ if ($period === 'day') {
             
             // Only add datasets if they exist in the data
             // Actual data - always show this (keep null values as Chart.js handles them properly)
-            if (Array.isArray(currentData.actual)) {
-                chartData.datasets.push({
-                    label: 'Werkelijk verbruik',
-                    data: currentData.actual,
-                    borderColor: mainColor,
-                    backgroundColor: mainColorLight,
-                    tension: 0.2,
-                    fill: false,
-                    pointRadius: 4,
-                    pointBackgroundColor: mainColor,
-                    borderWidth: 3,
-                    order: 0 // Put actual data at the foreground
-                });
-            }
+           // Only add datasets if they exist in the data
+// Actual data - use REAL meter data, not prediction data
+const realMeterData = @json($actualMeterData);
+if (Array.isArray(realMeterData)) {
+    chartData.datasets.push({
+        label: 'Werkelijk verbruik',
+        data: realMeterData, // Use real meter data instead of currentData.actual
+        borderColor: mainColor,
+        backgroundColor: mainColorLight,
+        tension: 0.2,
+        fill: false,
+        pointRadius: 4,
+        pointBackgroundColor: mainColor,
+        borderWidth: 3,
+        order: 0 // Put actual data at the foreground
+    });
+}
             
             // Budget line - always show this
             const budgetLine = getPeriodBudgetLine(periodType, budgetData);
