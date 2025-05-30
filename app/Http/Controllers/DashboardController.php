@@ -2,11 +2,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\EnergyVisualizationController;
+use App\Http\Middleware\CheckBudgetSetup;
 use App\Models\EnergyStatusData;
 use App\Models\SmartMeter;
 use App\Models\UserGridLayout;
 use App\Services\DashboardPredictionService;
-use App\Services\EnergyConversionService; // Add this import
+use App\Services\EnergyConversionService;
 use App\Services\EnergyNotificationService;
 use App\Services\EnergyPredictionService;
 use App\Services\InfluxDBService;
@@ -14,27 +15,26 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Http\Middleware\CheckBudgetSetup;
 
 class DashboardController extends Controller
 {
     private $energyVisController;
     private $notificationService;
-    private $influxService; // Add this property
+    private $influxService;
 
     public function __construct(
         EnergyConversionService $conversionService,
         EnergyPredictionService $predictionService,
         EnergyNotificationService $notificationService,
         DashboardPredictionService $dashboardPredictionService,
-        InfluxDBService $influxService // Inject InfluxDB service
+        InfluxDBService $influxService
     ) {
         $this->energyVisController        = new EnergyVisualizationController($conversionService, $predictionService);
         $this->notificationService        = $notificationService;
         $this->predictionService          = $predictionService;
         $this->dashboardPredictionService = $dashboardPredictionService;
         $this->conversionService          = $conversionService;
-        $this->influxService              = $influxService; // Set the property
+        $this->influxService              = $influxService;
     }
 
     public function index(Request $request)
@@ -220,9 +220,29 @@ class DashboardController extends Controller
         $yearlyConsumptionToDate['gas'] = $this->getYearlyConsumptionToDate('gas');
         $dailyAverageConsumption['gas'] = $yearlyConsumptionToDate['gas'] / $daysPassedThisYear;
 
-        // Calculate targets for the selected period
-        $electricityTarget = $this->calculateTargetForPeriod('electricity', $period, $date, $budgetData['electricity']);
-        $gasTarget         = $this->calculateTargetForPeriod('gas', $period, $date, $budgetData['gas']);
+        // Get the selected meter's budget instead of user's general budget
+        $selectedMeter = SmartMeter::where('meter_id', $selectedMeterId)->first();
+        $meterBudget   = null;
+
+        if ($selectedMeter) {
+            $meterBudget = \App\Models\EnergyBudget::where('user_id', $user->id)
+                ->where('smart_meter_id', $selectedMeter->id)
+                ->where('year', Carbon::parse($date)->year)
+                ->with(['monthlyBudgets' => function ($query) {
+                    $query->orderBy('month');
+                }])
+                ->first();
+        }
+
+// If no meter-specific budget found, redirect to budget setup
+        if (! $meterBudget) {
+            return redirect()->route('budget.form')
+                ->with('error', 'Geen budget gevonden voor de geselecteerde meter. Stel eerst een budget in.');
+        }
+
+// Calculate targets using meter-specific budget
+        $electricityTarget = $this->calculateMeterTargetForPeriod('electricity', $period, $date, $meterBudget);
+        $gasTarget         = $this->calculateMeterTargetForPeriod('gas', $period, $date, $meterBudget);
 
         // Calculate costs using the conversion service
         // TODO REMOVE
@@ -243,6 +263,8 @@ class DashboardController extends Controller
                 'cost'          => $electricityCost,
                 'percentage'    => $electricityTarget > 0 ? ($actualElectricity / $electricityTarget) * 100 : 0,
                 'status'        => $electricityStatus,
+                'budget_id'     => $meterBudget->id,   // Add budget reference
+                'meter_id'      => $selectedMeter->id, // Add meter reference
                 'previous_year' => [
                     'usage'             => $liveInfluxData['historical_data']['energy_consumed'] ?? [],
                     'reduction_percent' => $this->calculateReductionPercentage(
@@ -258,6 +280,8 @@ class DashboardController extends Controller
                 'cost'          => $gasCost,
                 'percentage'    => $gasTarget > 0 ? ($actualGas / $gasTarget) * 100 : 0,
                 'status'        => $gasStatus,
+                'budget_id'     => $meterBudget->id,   // Add budget reference
+                'meter_id'      => $selectedMeter->id, // Add meter reference
                 'previous_year' => [
                     'usage'             => $liveInfluxData['historical_data']['gas_delivered'] ?? [],
                     'reduction_percent' => $this->calculateReductionPercentage(
@@ -736,6 +760,42 @@ class DashboardController extends Controller
 /**
  * Get usage between two dates (first and last readings)
  */
+/**
+ * Calculate target for a specific period using meter-specific budget
+ */
+    private function calculateMeterTargetForPeriod(string $type, string $period, string $date, \App\Models\EnergyBudget $meterBudget): float
+    {
+        $targetField  = $type === 'electricity' ? 'electricity_target_kwh' : 'gas_target_m3';
+        $yearlyTarget = $meterBudget->$targetField ?? 0;
+        $dateObj      = Carbon::parse($date);
+        $currentMonth = $dateObj->month;
+
+        // Get monthly budget for current month
+        $monthlyBudget = $meterBudget->monthlyBudgets->firstWhere('month', $currentMonth);
+        $monthlyTarget = $monthlyBudget ? $monthlyBudget->$targetField : ($yearlyTarget / 12);
+
+        switch ($period) {
+            case 'day':
+                $daysInMonth = $dateObj->daysInMonth;
+                return $monthlyTarget / $daysInMonth;
+
+            case 'month':
+                return $monthlyTarget;
+
+            case 'year':
+                $currentYear = Carbon::now()->year;
+                if ($dateObj->year == $currentYear) {
+                    $dayOfYear  = Carbon::now()->dayOfYear;
+                    $daysInYear = Carbon::now()->isLeapYear() ? 366 : 365;
+                    return $yearlyTarget * ($dayOfYear / $daysInYear);
+                }
+                return $yearlyTarget;
+
+            default:
+                return $monthlyTarget;
+        }
+    }
+
     private function getUsageBetweenDates(string $meterId, string $startDate, string $endDate): array
     {
         $startTime = Carbon::parse($startDate)->startOfDay()->toIso8601ZuluString();
