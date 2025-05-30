@@ -53,8 +53,49 @@ if (isset($currentData['actual']) && is_array($currentData['actual'])) {
     }
 }
 
-// Use the calculated actual total for display (consistent with other charts)
-$displayTotal = $actualTotal > 0 ? $actualTotal : $yearlyConsumptionToDate;
+// Always use the calculated actual total - don't fallback to yearly consumption
+// If there's no consumption for the period, it should show 0, not yearly total
+$displayTotal = $actualTotal;
+
+// Calculate correct average based on period and actual data
+$calculatedAverage = 0;
+$averageUnit = '';
+
+if ($period === 'day') {
+    // For day view: average per hour
+    $averageUnit = '/uur';
+    if ($selectedDate->isToday()) {
+        // If it's today, divide by hours elapsed
+        $hoursElapsed = max(1, $now->hour + 1); // +1 because we include current hour
+        $calculatedAverage = $hoursElapsed > 0 ? $displayTotal / $hoursElapsed : 0;
+    } else {
+        // For past/future days, divide by 24 hours
+        $calculatedAverage = $displayTotal / 24;
+    }
+} elseif ($period === 'month') {
+    // For month view: average per day
+    $averageUnit = '/dag';
+    if ($selectedDate->isSameMonth($now)) {
+        // If it's current month, divide by days elapsed
+        $daysElapsed = max(1, $now->day);
+        $calculatedAverage = $daysElapsed > 0 ? $displayTotal / $daysElapsed : 0;
+    } else {
+        // For past/future months, divide by total days in that month
+        $daysInMonth = $selectedDate->daysInMonth;
+        $calculatedAverage = $daysInMonth > 0 ? $displayTotal / $daysInMonth : 0;
+    }
+} else {
+    // For year view: average per month
+    $averageUnit = '/maand';
+    if ($selectedDate->isSameYear($now)) {
+        // If it's current year, divide by months elapsed
+        $monthsElapsed = max(1, $now->month);
+        $calculatedAverage = $monthsElapsed > 0 ? $displayTotal / $monthsElapsed : 0;
+    } else {
+        // For past/future years, divide by 12 months
+        $calculatedAverage = $displayTotal / 12;
+    }
+}
 @endphp
 
 <section aria-labelledby="prediction-chart-title-{{ $type }}-{{ $period }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
@@ -90,51 +131,7 @@ $displayTotal = $actualTotal > 0 ? $actualTotal : $yearlyConsumptionToDate;
             <x-dashboard.widget-navigation :showNext="true" />
         </div>
         
-        {{-- Show different content based on whether we have predictions --}}
-        @if($showPredictions)
-            {{-- Confidence and Budget Status Section for Future Dates --}}
-            <div class="mb-4">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
-                        <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
-                            <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
-                                style="width: {{ $confidence }}%"></div>
-                        </div>
-                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
-                    </div>
-                            
-                    <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
-                        @if($period == 'year')
-                            Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
-                        @else
-                            {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
-                        @endif
-                    </div>
-                </div>
-        @else
-            {{-- Status Section for Past Dates --}}
-            <div class="mb-4">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-300">
-                            @if($selectedDate->isPast())
-                                Historische data
-                            @else
-                                Actuele data
-                            @endif
-                        </span>
-                    </div>
-                            
-                    <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
-                        @if($period == 'year')
-                            Totaal verbruik: {{ number_format($percentage, 1) }}%
-                        @else
-                            {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
-                        @endif
-                    </div>
-                </div>
-        @endif
+    
                 
         {{-- Chart Canvas --}}
         <div class="relative" style="height: 350px;">
@@ -170,7 +167,7 @@ $displayTotal = $actualTotal > 0 ? $actualTotal : $yearlyConsumptionToDate;
             <div>
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ $averagePeriodLabel }}:</span>
                 <p class="text-sm font-medium text-gray-800 dark:text-white" id="{{ $averageConsumptionId }}">
-                    {{ number_format($dailyAverageConsumption, 1) }} {{ $unit }}
+                    {{ number_format($calculatedAverage, 1) }} {{ $unit }}{{ $averageUnit }}
                 </p>
             </div>
         </div>
@@ -184,13 +181,7 @@ $displayTotal = $actualTotal > 0 ? $actualTotal : $yearlyConsumptionToDate;
                     <p class="text-2xl font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
                         {{ number_format($currentData['expected'], 2) }} {{ $unit }}
                     </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        @if($isExceedingBudget)
-                            Overschrijding budget: {{ number_format($exceedingPercentage, 1) }}%
-                        @else
-                            Onder budget: {{ number_format($exceedingPercentage, 1) }}%
-                        @endif
-                    </p>
+                    
                 </div>
                 
                 {{-- Best Case Card --}}
@@ -199,10 +190,7 @@ $displayTotal = $actualTotal > 0 ? $actualTotal : $yearlyConsumptionToDate;
                     <p class="text-2xl font-bold text-green-600 dark:text-green-400">
                         {{ number_format($currentData['best_case'], 2) }} {{ $unit }}
                     </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                        {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
-                    </p>
+                    
                 </div>
                 
                 {{-- Worst Case Card --}}
@@ -211,10 +199,7 @@ $displayTotal = $actualTotal > 0 ? $actualTotal : $yearlyConsumptionToDate;
                     <p class="text-2xl font-bold text-red-600 dark:text-red-400">
                         {{ number_format($currentData['worst_case'], 2) }} {{ $unit }}
                     </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                        {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
-                    </p>
+                    
                 </div>
             </div>
             
@@ -308,12 +293,14 @@ $displayTotal = $actualTotal > 0 ? $actualTotal : $yearlyConsumptionToDate;
             const showPredictions = @json($showPredictions);
             const unitFromPHP = @json($unit);
             const displayTotal = @json($displayTotal);
-            const averageConsumptionValue = @json($dailyAverageConsumption);
+            const calculatedAverage = @json($calculatedAverage);
+            const averageUnit = @json($averageUnit);
             
             console.log(`Chart setup for ${energyType} ${periodType} with ID: ${chartId}`);
             console.log("Unit from PHP:", unitFromPHP);
             console.log("Current data keys:", Object.keys(currentData));
             console.log("Display total:", displayTotal);
+            console.log("Calculated average:", calculatedAverage, averageUnit);
             
             // Define colors for different energy types
             const mainColor = energyType === 'electricity' ? 
@@ -681,7 +668,7 @@ $displayTotal = $actualTotal > 0 ? $actualTotal : $yearlyConsumptionToDate;
                 }
                 
                 if (averageConsumptionElement) {
-                    averageConsumptionElement.textContent = `${Number(averageConsumptionValue).toFixed(1)} ${unitFromPHP}`;
+                    averageConsumptionElement.textContent = `${Number(calculatedAverage).toFixed(1)} ${unitFromPHP}${averageUnit}`;
                 }
             }
             
