@@ -3,9 +3,11 @@ namespace App\Http\Controllers;
 
 use App\Models\EnergyBudget;
 use App\Models\MonthlyEnergyBudget;
+use App\Models\SmartMeter;
 use App\Services\EnergyConversionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EnergyBudgetController extends Controller
 {
@@ -16,127 +18,207 @@ class EnergyBudgetController extends Controller
         $this->conversionService = $conversionService;
     }
 
+    /**
+     * Show the budget form with per-meter setup
+     */
     public function index()
     {
         $user = Auth::user();
         $currentYear = date('Y');
         
-        // Get current year's budget
-        $yearlyBudget = EnergyBudget::where('user_id', $user->id)
-            ->where('year', $currentYear)
-            ->latest()
-            ->first();
-            
-        // Get monthly budgets if yearly budget exists
-        $monthlyBudgets = null;
-        if ($yearlyBudget) {
-            $monthlyBudgets = MonthlyEnergyBudget::where('user_id', $user->id)
-                ->where('energy_budget_id', $yearlyBudget->id)
-                ->orderBy('month')
+        // Get all smart meters for the current user
+        $smartMeters = SmartMeter::where('account_id', $user->id)
+            ->where('active', true)
+            ->get();
+        
+        // Get existing budgets for all meters
+        $existingBudgets = collect();
+        if ($smartMeters->count() > 0) {
+            $existingBudgets = EnergyBudget::where('user_id', $user->id)
+                ->where('year', $currentYear)
+                ->whereIn('smart_meter_id', $smartMeters->pluck('id'))
+                ->with(['monthlyBudgets' => function($query) {
+                    $query->orderBy('month');
+                }])
                 ->get();
         }
         
         return view('energy.form', [
-            'yearlyBudget' => $yearlyBudget,
-            'monthlyBudgets' => $monthlyBudgets
+            'smartMeters' => $smartMeters,
+            'existingBudgets' => $existingBudgets,
+            'currentYear' => $currentYear
         ]);
     }
 
-    public function calculate(Request $request)
+    /**
+     * Store budgets for multiple meters
+     */
+    public function storePerMeter(Request $request)
     {
-        // Validate input
-        $request->validate([
-            'electricity_value' => 'required|numeric|min:0',
-            'gas_value' => 'required|numeric|min:0',
-        ]);
-        
-        // Calculate euro values
-        $electricityEuro = $this->conversionService->kwhToEuro($request->electricity_value);
-        $gasEuro = $this->conversionService->m3ToEuro($request->gas_value);
-        
-        // Prepare calculation result
-        $calculations = [
-            'electricity_kwh' => (float) $request->electricity_value,
-            'electricity_euro' => $electricityEuro,
-            'gas_m3' => (float) $request->gas_value,
-            'gas_euro' => $gasEuro,
-        ];
-        
-        // Return result to confirmation view
-        return view('energy.confirm', [
-            'calculations' => $calculations,
-            'energyService' => $this->conversionService,
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'electricity_value' => 'required|numeric|min:0',
-            'gas_value' => 'required|numeric|min:0',
-            'budgets' => 'sometimes|array',
-            'budgets.*.month' => 'sometimes|integer|min:1|max:12',
-            'budgets.*.electricity_target_kwh' => 'sometimes|numeric|min:0',
-            'budgets.*.gas_target_m3' => 'sometimes|numeric|min:0',
-        ]);
-        
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-        
         $user = Auth::user();
         $currentYear = date('Y');
         
-        // Calculate euro values
-        $electricityValue = (float) $request->electricity_value;
-        $gasValue = (float) $request->gas_value;
-        $electricityEuro = $this->conversionService->kwhToEuro($electricityValue);
-        $gasEuro = $this->conversionService->m3ToEuro($gasValue);
+        // Get user's smart meters
+        $smartMeters = SmartMeter::where('account_id', $user->id)
+            ->where('active', true)
+            ->get();
         
-        // Create or update the yearly budget
-        $budget = EnergyBudget::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'year' => $currentYear
-            ],
-            [
-                'electricity_target_kwh' => $electricityValue,
-                'electricity_target_euro' => $electricityEuro,
-                'gas_target_m3' => $gasValue,
-                'gas_target_euro' => $gasEuro,
-            ]
-        );
-        
-        // Handle monthly budget data if provided
-        if ($request->has('budgets')) {
-            // Delete existing monthly budgets for this user and year
-            MonthlyEnergyBudget::where('user_id', $user->id)
-                ->where('energy_budget_id', $budget->id)
-                ->delete();
-                
-            // Process each month's budget
-            foreach ($request->budgets as $index => $monthData) {
-                if (isset($monthData['month']) && isset($monthData['electricity_target_kwh']) && isset($monthData['gas_target_m3'])) {
-                    MonthlyEnergyBudget::create([
-                        'user_id' => $user->id,
-                        'energy_budget_id' => $budget->id,
-                        'month' => $monthData['month'],
-                        'electricity_target_kwh' => (float) $monthData['electricity_target_kwh'],
-                        'gas_target_m3' => (float) $monthData['gas_target_m3'],
-                        'is_default' => false,
-                    ]);
-                }
-            }
-        } else {
-            // If no monthly data provided, create default monthly budgets
-            $this->createDefaultMonthlyBudgets($budget);
+        if ($smartMeters->isEmpty()) {
+            return redirect()->route('budget.form')
+                ->with('error', 'Geen actieve slimme meters gevonden.');
         }
         
-        return redirect()->route('budget.form')
-            ->with('success', 'Energiebudget succesvol opgeslagen!');
+        // Validate that we have data for all meters
+        $validationRules = [];
+        foreach ($smartMeters as $meter) {
+            $meterKey = "meters.{$meter->id}";
+            
+            if ($meter->measures_electricity) {
+                $validationRules["{$meterKey}.electricity_target_kwh"] = 'required|numeric|min:0';
+            }
+            
+            if ($meter->measures_gas) {
+                $validationRules["{$meterKey}.gas_target_m3"] = 'required|numeric|min:0';
+            }
+            
+            // Validate monthly data if provided
+            if ($request->has("{$meterKey}.monthly")) {
+                for ($i = 0; $i < 12; $i++) {
+                    $validationRules["{$meterKey}.monthly.{$i}.month"] = 'required|integer|min:1|max:12';
+                    
+                    if ($meter->measures_electricity) {
+                        $validationRules["{$meterKey}.monthly.{$i}.electricity_target_kwh"] = 'required|numeric|min:0';
+                    }
+                    
+                    if ($meter->measures_gas) {
+                        $validationRules["{$meterKey}.monthly.{$i}.gas_target_m3"] = 'required|numeric|min:0';
+                    }
+                }
+            }
+        }
+        
+        $validated = $request->validate($validationRules);
+        
+        DB::beginTransaction();
+        try {
+            $savedBudgets = 0;
+            
+            foreach ($smartMeters as $meter) {
+                $meterData = $validated['meters'][$meter->id] ?? null;
+                
+                if (!$meterData) {
+                    continue;
+                }
+                
+                // Calculate euro values
+                $electricityEuro = 0;
+                $gasEuro = 0;
+                
+                if ($meter->measures_electricity && isset($meterData['electricity_target_kwh'])) {
+                    $electricityEuro = $this->conversionService->kwhToEuro($meterData['electricity_target_kwh']);
+                }
+                
+                if ($meter->measures_gas && isset($meterData['gas_target_m3'])) {
+                    $gasEuro = $this->conversionService->m3ToEuro($meterData['gas_target_m3']);
+                }
+                
+                // Create or update the yearly budget for this meter
+                $budget = EnergyBudget::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'smart_meter_id' => $meter->id,
+                        'year' => $currentYear
+                    ],
+                    [
+                        'electricity_target_kwh' => $meter->measures_electricity ? ($meterData['electricity_target_kwh'] ?? 0) : 0,
+                        'electricity_target_euro' => $electricityEuro,
+                        'gas_target_m3' => $meter->measures_gas ? ($meterData['gas_target_m3'] ?? 0) : 0,
+                        'gas_target_euro' => $gasEuro,
+                    ]
+                );
+                
+                // Handle monthly budget data
+                if (isset($meterData['monthly'])) {
+                    // Delete existing monthly budgets for this meter and year
+                    MonthlyEnergyBudget::where('user_id', $user->id)
+                        ->where('energy_budget_id', $budget->id)
+                        ->delete();
+                    
+                    // Create new monthly budgets
+                    foreach ($meterData['monthly'] as $monthData) {
+                        if (!isset($monthData['month'])) {
+                            continue;
+                        }
+                        
+                        MonthlyEnergyBudget::create([
+                            'user_id' => $user->id,
+                            'energy_budget_id' => $budget->id,
+                            'month' => $monthData['month'],
+                            'electricity_target_kwh' => $meter->measures_electricity ? ($monthData['electricity_target_kwh'] ?? 0) : 0,
+                            'gas_target_m3' => $meter->measures_gas ? ($monthData['gas_target_m3'] ?? 0) : 0,
+                            'is_default' => false,
+                        ]);
+                    }
+                } else {
+                    // Create default monthly budgets if no monthly data provided
+                    $this->createDefaultMonthlyBudgets($budget, $meter);
+                }
+                
+                $savedBudgets++;
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('budget.form')
+                ->with('success', "Energiebudgetten voor {$savedBudgets} meter(s) succesvol opgeslagen!");
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->route('budget.form')
+                ->with('error', 'Er is een fout opgetreden bij het opslaan van de budgetten: ' . $e->getMessage());
+        }
     }
-    
-    protected function createDefaultMonthlyBudgets(EnergyBudget $yearlyBudget)
+
+    /**
+     * Get budget data for a specific meter
+     */
+    public function getBudgetForMeter(SmartMeter $meter, $year = null)
+    {
+        $year = $year ?? date('Y');
+        
+        $budget = EnergyBudget::where('user_id', Auth::id())
+            ->where('smart_meter_id', $meter->id)
+            ->where('year', $year)
+            ->with(['monthlyBudgets' => function($query) {
+                $query->orderBy('month');
+            }])
+            ->first();
+        
+        return $budget;
+    }
+
+    /**
+     * Get all budgets for the current user
+     */
+    public function getAllBudgetsForUser($year = null)
+    {
+        $year = $year ?? date('Y');
+        
+        $budgets = EnergyBudget::where('user_id', Auth::id())
+            ->where('year', $year)
+            ->with(['smartMeter', 'monthlyBudgets' => function($query) {
+                $query->orderBy('month');
+            }])
+            ->get();
+        
+        return $budgets;
+    }
+
+    /**
+     * Create default monthly budgets for a meter
+     */
+    protected function createDefaultMonthlyBudgets(EnergyBudget $yearlyBudget, SmartMeter $meter)
     {
         $user_id = $yearlyBudget->user_id;
         
@@ -151,11 +233,19 @@ class EnergyBudgetController extends Controller
         // Create a budget for each month
         for ($month = 1; $month <= 12; $month++) {
             $index = $month - 1;
-            $normalizedGasFactor = $monthlyGasFactors[$index] * 12 / $gasFactorSum;
-            $normalizedElectricityFactor = $monthlyElectricityFactors[$index] * 12 / $electricityFactorSum;
             
-            $gasTarget = round(($yearlyBudget->gas_target_m3 / 12) * $normalizedGasFactor, 2);
-            $electricityTarget = round(($yearlyBudget->electricity_target_kwh / 12) * $normalizedElectricityFactor, 2);
+            $electricityTarget = 0;
+            $gasTarget = 0;
+            
+            if ($meter->measures_electricity && $yearlyBudget->electricity_target_kwh > 0) {
+                $normalizedElectricityFactor = $monthlyElectricityFactors[$index] * 12 / $electricityFactorSum;
+                $electricityTarget = round(($yearlyBudget->electricity_target_kwh / 12) * $normalizedElectricityFactor, 2);
+            }
+            
+            if ($meter->measures_gas && $yearlyBudget->gas_target_m3 > 0) {
+                $normalizedGasFactor = $monthlyGasFactors[$index] * 12 / $gasFactorSum;
+                $gasTarget = round(($yearlyBudget->gas_target_m3 / 12) * $normalizedGasFactor, 2);
+            }
             
             MonthlyEnergyBudget::create([
                 'user_id' => $user_id,
@@ -166,5 +256,60 @@ class EnergyBudgetController extends Controller
                 'is_default' => true,
             ]);
         }
+    }
+
+    /**
+     * Delete budget for a specific meter
+     */
+    public function deleteBudgetForMeter(SmartMeter $meter, $year = null)
+    {
+        $year = $year ?? date('Y');
+        
+        DB::beginTransaction();
+        try {
+            $budget = EnergyBudget::where('user_id', Auth::id())
+                ->where('smart_meter_id', $meter->id)
+                ->where('year', $year)
+                ->first();
+            
+            if ($budget) {
+                // Delete monthly budgets first
+                MonthlyEnergyBudget::where('energy_budget_id', $budget->id)->delete();
+                
+                // Delete yearly budget
+                $budget->delete();
+            }
+            
+            DB::commit();
+            
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
+    }
+
+    /**
+     * Legacy method for backwards compatibility
+     * This will return the combined budgets of all meters for the user
+     * @deprecated Use getAllBudgetsForUser() instead
+     */
+    public function calculate(Request $request)
+    {
+        // This method is kept for backwards compatibility
+        // but should be updated to handle per-meter budgets
+        
+        return redirect()->route('budget.form')
+            ->with('error', 'Deze functionaliteit is bijgewerkt. Stel budgetten per meter in.');
+    }
+
+    /**
+     * Legacy method for backwards compatibility
+     * @deprecated Use storePerMeter() instead
+     */
+    public function store(Request $request)
+    {
+        // Redirect to the new per-meter storage method
+        return $this->storePerMeter($request);
     }
 }

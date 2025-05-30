@@ -4,61 +4,102 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 
 class SmartMeter extends Model
 {
     use HasFactory;
 
-    /**
-     * De attributen die massaal toegewezen mogen worden.
-     *
-     * @var array
-     */
     protected $fillable = [
         'meter_id',
         'name',
         'location',
-        'measures_electricity',  // Boolean: kan elektriciteit meten
-        'measures_gas',          // Boolean: kan gas meten
-        'account_id',
+        'measures_electricity',
+        'measures_gas',
         'installation_date',
-        'last_reading_date',
         'active',
-        'metadata'
+        'account_id',
+        'last_reading_date',
     ];
 
-    /**
-     * De attributen die gecast moeten worden.
-     *
-     * @var array
-     */
     protected $casts = [
-        'installation_date' => 'datetime',
-        'last_reading_date' => 'datetime',
-        'active' => 'boolean',
         'measures_electricity' => 'boolean',
         'measures_gas' => 'boolean',
-        'metadata' => 'array'
+        'active' => 'boolean',
+        'installation_date' => 'date',
+        'last_reading_date' => 'datetime',
     ];
 
     /**
-     * Get de gebruiker waartoe deze meter behoort.
+     * Relationship with User (account owner)
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'account_id');
     }
 
     /**
-     * Get alle meterstanden van deze slimme meter.
+     * Relationship with MeterReading
      */
-    public function readings()
+    public function readings(): HasMany
     {
         return $this->hasMany(MeterReading::class);
     }
 
     /**
-     * Get de laatste meterstand van deze slimme meter.
+     * Relationship with EnergyBudget
+     */
+    public function energyBudgets(): HasMany
+    {
+        return $this->hasMany(EnergyBudget::class);
+    }
+
+    /**
+     * Get the current year's budget for this meter
+     */
+    public function getCurrentBudget(): ?EnergyBudget
+    {
+        return $this->energyBudgets()
+            ->where('year', date('Y'))
+            ->with(['monthlyBudgets' => function($query) {
+                $query->orderBy('month');
+            }])
+            ->first();
+    }
+
+    /**
+     * Get budget for a specific year
+     */
+    public function getBudgetForYear(int $year): ?EnergyBudget
+    {
+        return $this->energyBudgets()
+            ->where('year', $year)
+            ->with(['monthlyBudgets' => function($query) {
+                $query->orderBy('month');
+            }])
+            ->first();
+    }
+
+    /**
+     * Check if this meter has a budget set for the current year
+     */
+    public function hasBudget(): bool
+    {
+        return $this->energyBudgets()->where('year', date('Y'))->exists();
+    }
+
+    /**
+     * Check if this meter has a budget set for a specific year
+     */
+    public function hasBudgetForYear(int $year): bool
+    {
+        return $this->energyBudgets()->where('year', $year)->exists();
+    }
+
+    /**
+     * Get the latest meter reading
      */
     public function latestReading()
     {
@@ -66,157 +107,159 @@ class SmartMeter extends Model
     }
 
     /**
-     * Get het huidige elektriciteitsverbruik (laatste meting).
-     *
-     * @return float
+     * Get meter readings for a specific date range
      */
-    public function getCurrentElectricityUsage()
+    public function readingsForPeriod(\Carbon\Carbon $start, \Carbon\Carbon $end)
     {
-        if (!$this->measures_electricity) return 0;
-
-        $reading = $this->latestReading()->first();
-        return $reading ? $reading->current_electricity_usage : 0;
+        return $this->readings()
+            ->whereBetween('timestamp', [$start, $end])
+            ->orderBy('timestamp');
     }
 
     /**
-     * Get het huidige gasverbruik (laatste meting).
-     *
-     * @return float
+     * Get a human-readable description of what this meter measures
      */
-    public function getCurrentGasUsage()
+    public function getMeasurementTypeString(): string
     {
-        if (!$this->measures_gas) return 0;
-
-        $reading = $this->latestReading()->first();
-        return $reading ? $reading->gas_meter_reading : 0;
-    }
-
-    /**
-     * Get de totale elektriciteit geleverd aan de klant (standaard: tarief 1 + tarief 2).
-     *
-     * @return float
-     */
-    public function getTotalElectricityDelivered()
-    {
-        if (!$this->measures_electricity) return 0;
-
-        $reading = $this->latestReading()->first();
-        if (!$reading) {
-            return 0;
+        if ($this->measures_electricity && $this->measures_gas) {
+            return 'Elektriciteit en Gas';
+        } elseif ($this->measures_electricity) {
+            return 'Elektriciteit';
+        } elseif ($this->measures_gas) {
+            return 'Gas';
         }
-
-        return ($reading->electricity_delivered_tariff1 ?? 0) +
-               ($reading->electricity_delivered_tariff2 ?? 0);
+        
+        return 'Onbekend';
     }
 
     /**
-     * Get de totale elektriciteit teruggeleverd door de klant (standaard: tarief 1 + tarief 2).
-     *
-     * @return float
+     * Check if this meter belongs to the current authenticated user
      */
-    public function getTotalElectricityReturned()
+    public function belongsToCurrentUser(): bool
     {
-        if (!$this->measures_electricity) return 0;
-
-        $reading = $this->latestReading()->first();
-        if (!$reading) {
-            return 0;
-        }
-
-        return ($reading->electricity_returned_tariff1 ?? 0) +
-               ($reading->electricity_returned_tariff2 ?? 0);
+        return Auth::check() && $this->account_id === Auth::id();
     }
 
     /**
-     * Controleer of de smart meter is gekoppeld aan een gebruiker.
+     * Scope to get meters for a specific user
      */
-    public function isLinked()
+    public function scopeForUser($query, int $userId)
     {
-        return !is_null($this->account_id);
+        return $query->where('account_id', $userId);
     }
 
+    /**
+     * Scope to get active meters only
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
+
+    /**
+     * Scope to get meters that measure electricity
+     */
+    public function scopeMeasuresElectricity($query)
+    {
+        return $query->where('measures_electricity', true);
+    }
+
+    /**
+     * Scope to get meters that measure gas
+     */
+    public function scopeMeasuresGas($query)
+    {
+        return $query->where('measures_gas', true);
+    }
+
+    /**
+     * Get all smart meters for the current authenticated user
+     */
     public static function getAllSmartMetersForCurrentUser()
     {
-        return self::where('account_id', auth()->id())->get();
+        if (!Auth::check()) {
+            return collect();
+        }
+
+        return static::forUser(Auth::id())
+            ->active()
+            ->orderBy('name')
+            ->get();
     }
 
     /**
-     * Beschrijf wat deze meter kan meten
+     * Get meter ID by database ID
      */
-    public function getMeasurementTypes()
+    public static function getMeterIdByDatabaseId(int $databaseId): ?string
     {
-        $types = [];
-
-        if ($this->measures_electricity) {
-            $types[] = 'Elektriciteit';
-        }
-
-        if ($this->measures_gas) {
-            $types[] = 'Gas';
-        }
-
-        return empty($types) ? ['Onbekend'] : $types;
+        $meter = static::find($databaseId);
+        return $meter ? $meter->meter_id : null;
     }
 
     /**
-     * Krijg een beschrijvende tekst van wat deze meter meet
+     * Get database ID by meter ID
      */
-    public function getMeasurementTypeString()
+    public static function getDatabaseIdByMeterId(string $meterId): ?int
     {
-        return implode(' & ', $this->getMeasurementTypes());
+        $meter = static::where('meter_id', $meterId)->first();
+        return $meter ? $meter->id : null;
     }
 
     /**
-     * Krijg een lijst met beschikbare metrics voor deze meter.
-     *
-     * @return array
+     * Get the budget target for a specific period and energy type
      */
-    public function getAvailableMetrics()
+    public function getBudgetTargetForPeriod(string $period, string $date, string $type): float
     {
-        $metrics = [];
-
-        if ($this->measures_electricity) {
-            $metrics = array_merge($metrics, [
-                'current_usage' => 'Huidig verbruik (kW)',
-                'total_delivered' => 'Totaal geleverd (kWh)',
-                'tariff1_delivered' => 'Tarief 1 geleverd (kWh)',
-                'tariff2_delivered' => 'Tarief 2 geleverd (kWh)',
-                'total_returned' => 'Totaal teruggeleverd (kWh)',
-                'tariff1_returned' => 'Tarief 1 teruggeleverd (kWh)',
-                'tariff2_returned' => 'Tarief 2 teruggeleverd (kWh)',
-            ]);
+        $budget = $this->getCurrentBudget();
+        
+        if (!$budget) {
+            return 0;
         }
-
-        if ($this->measures_gas) {
-            $metrics = array_merge($metrics, [
-                'gas_reading' => 'Gasmeterstand (m³)',
-            ]);
-        }
-
-        return $metrics;
+        
+        return $budget->getBudgetForPeriod($period, $date, $type);
     }
 
     /**
- * Get a display-friendly name for the meter type.
- *
- * @return string
- */
-    public function getTypeDisplayName()
+     * Check if the meter needs budget setup
+     */
+    public function needsBudgetSetup(): bool
     {
-        $types = [];
-
-        if ($this->measures_electricity) {
-            $types[] = 'Elektriciteit';
+        $budget = $this->getCurrentBudget();
+        
+        if (!$budget) {
+            return true;
         }
-
-        if ($this->measures_gas) {
-            $types[] = 'Gas';
-        }
-
-        return empty($types) ? 'Onbekend' : implode(' & ', $types);
+        
+        // Check if at least one energy type has a budget > 0
+        $hasElectricityBudget = $this->measures_electricity && $budget->electricity_target_kwh > 0;
+        $hasGasBudget = $this->measures_gas && $budget->gas_target_m3 > 0;
+        
+        return !($hasElectricityBudget || $hasGasBudget);
     }
 
-    public static function getMeterIdByDatabaseId($database_id){
-        return self::where('id', $database_id)->value('meter_id');
+    /**
+     * Get summary information about this meter
+     */
+    public function getSummary(): array
+    {
+        $budget = $this->getCurrentBudget();
+        
+        return [
+            'id' => $this->id,
+            'meter_id' => $this->meter_id,
+            'name' => $this->name,
+            'location' => $this->location,
+            'measures_electricity' => $this->measures_electricity,
+            'measures_gas' => $this->measures_gas,
+            'active' => $this->active,
+            'has_budget' => $this->hasBudget(),
+            'needs_budget_setup' => $this->needsBudgetSetup(),
+            'budget' => $budget ? [
+                'electricity_target_kwh' => $budget->electricity_target_kwh,
+                'gas_target_m3' => $budget->gas_target_m3,
+                'year' => $budget->year,
+            ] : null,
+            'measurement_types' => $this->getMeasurementTypeString(),
+        ];
     }
 }
