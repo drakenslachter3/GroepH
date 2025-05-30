@@ -7,6 +7,9 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <link rel="icon" href="{{ asset('images/mnext_logo_light.svg') }}" type="image/svg+xml" media="(prefers-color-scheme: light)">
+        <link rel="icon" href="{{ asset('images/mnext_logo_dark.svg') }}" type="image/svg+xml" media="(prefers-color-scheme: dark)">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

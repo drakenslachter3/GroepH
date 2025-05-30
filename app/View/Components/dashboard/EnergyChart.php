@@ -7,51 +7,55 @@ use Illuminate\View\View;
 
 class EnergyChart extends Component
 {
-    /**
-     * Type energie (electricity, gas)
-     */
-    public $type;
-    
-    /**
-     * Titel van de grafiek
-     */
+    /** Chart title */
     public $title;
-    
-    /**
-     * Label voor de toggle knop
-     */
-    public $buttonLabel;
-    
-    /**
-     * Kleur voor de knop
-     */
-    public $buttonColor;
-    
-    /**
-     * Grafiek data
-     */
-    public $chartData;
-    
-    /**
-     * Periode (day, month, year)
-     */
+
+    /** Energy type (e.g. electricity, gas) */
+    public $type;
+
+    /** Unit of measurement (e.g. kWh, m³) */
+    public $unit;
+
+    /** Time period (day, month, year) */
     public $period;
 
+    /** Selected date */
+    public $date;
+
+    /** Label for the toggle button */
+    public $buttonLabel;
+
+    /** Color for the button */
+    public $buttonColor;
+
+    /** Chart data */
+    public $chartData;
+
     /**
-     * Maak een nieuwe component instantie.
+     * Create a new component instance.
      */
-    public function __construct($type, $title, $buttonLabel, $buttonColor, $chartData, $period)
-    {
-        $this->type = $type;
+    public function __construct(
+        $title,
+        $type,
+        $unit,
+        $period,
+        $date,
+        $buttonLabel,
+        $buttonColor,
+        $chartData
+    ) {
         $this->title = $title;
+        $this->type = $type;
+        $this->unit = $unit;
+        $this->period = $period;
+        $this->date = $date;
         $this->buttonLabel = $buttonLabel;
         $this->buttonColor = $buttonColor;
         $this->chartData = $chartData;
-        $this->period = $period;
     }
 
     /**
-     * Bepaal de view / inhoud die de component representeert.
+     * Return the component view.
      */
     public function render(): View
     {

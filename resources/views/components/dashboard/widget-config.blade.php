@@ -1,4 +1,4 @@
-<div class="max-w-md mx-auto my-8 p-6 bg-white shadow-lg rounded-lg border border-gray-100">
+<section class="max-w-md mx-auto my-8 p-6 bg-white shadow-lg rounded-lg border border-gray-100">
     <h2 class="text-xl font-semibold text-gray-800 mb-6">Widget Configuratie</h2>
     
     <form action="{{ route('dashboard.setWidget') }}" method="POST" class="space-y-6">
@@ -20,12 +20,13 @@
                 <option value="energy-status-electricity">Electra Status</option>
                 <option value="energy-status-gas">Gas Status</option>
                 <option value="historical-comparison">Historische Vergelijking</option>
+                <option value="net-result">Netto resultante</option>
                 <option value="energy-chart">Energie Grafiek</option>
                 <option value="trend-analysis">Trend Analyse</option>
                 <option value="energy-suggestions">Energiebesparingstips</option>
                 <option value="budget-alert">Budget Waarschuwing</option>
                 <option value="energy-prediction-chart-electricity">Elektriciteit Voorspelling Grafiek</option>
-<option value="energy-prediction-chart-gas">Gas Voorspelling Grafiek</option>
+                <option value="energy-prediction-chart-gas">Gas Voorspelling Grafiek</option>
             </select>
         </div>
         
@@ -46,4 +47,4 @@
             Budget Aanpassen
         </button>
     </div>
-</div>
+</section>

@@ -5,14 +5,13 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Zorg ervoor dat je account een lang en willekeurig wachtwoord gebruikt om veilig te blijven. Een sterk wachtwoord voldoet aan de volgende eisen:') }}
+            {{ __('Het wachtwoord moet minstens 8 tekens lang zijn en bestaan uit:') }}
         </p>
         <ul class="mt-1 text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
-            <li>{{ __('Minstens 8 karakters lang') }}</li>
             <li>{{ __('Eén hoofdletter') }}</li>
             <li>{{ __('Eén kleine letter') }}</li>
-            <li>{{ __('Eén nummer') }}</li>
-            <li>{{ __('Bevat minstens één speciaal karakter') }}</li>
+            <li>{{ __('Eén cijfer') }}</li>
+            <li>{{ __('Eén speciaal teken') }}</li>
         </ul>
     </header>
 

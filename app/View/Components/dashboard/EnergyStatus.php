@@ -7,47 +7,45 @@ use Illuminate\View\View;
 
 class EnergyStatus extends Component
 {
-    /**
-     * Type energie (Elektriciteit, Gas)
-     */
+    /** Chart title */
+    public $title;
+
+    /** Energy type (e.g. electricity, gas) */
     public $type;
-    
-    /**
-     * Huidig verbruik
-     */
+
+    /** Current usage value */
     public $usage;
-    
-    /**
-     * Target verbruik
-     */
+
+    /** Target value */
     public $target;
-    
-    /**
-     * Huidige kosten
-     */
+
+    /** Cost value */
     public $cost;
-    
-    /**
-     * Percentage t.o.v. target
-     */
+
+    /** Percentage of target used */
     public $percentage;
-    
-    /**
-     * Status (goed, waarschuwing, kritiek)
-     */
+
+    /** Current status (e.g. alert, ok) */
     public $status;
-    
-    /**
-     * Eenheid (kWh, m³)
-     */
+
+    /** Unit of measurement (e.g. kWh, m³) */
     public $unit;
-    
+
     /**
-     * Maak een nieuwe component instantie.
+     * Create a new component instance.
      */
-    public function __construct($type, $usage, $target, $cost, $percentage, $status, $unit)
-    {
+    public function __construct(
+        $type,
+        $title,
+        $usage,
+        $target,
+        $cost,
+        $percentage,
+        $status,
+        $unit
+    ) {
         $this->type = $type;
+        $this->title = $title;
         $this->usage = $usage;
         $this->target = $target;
         $this->cost = $cost;
@@ -57,7 +55,7 @@ class EnergyStatus extends Component
     }
 
     /**
-     * Bepaal de view / inhoud die de component representeert.
+     * Return the component view.
      */
     public function render(): View
     {
