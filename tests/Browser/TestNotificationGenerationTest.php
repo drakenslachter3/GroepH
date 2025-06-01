@@ -34,7 +34,7 @@ class TestNotificationGenerationTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                ->visit('/test/notifications?period=month&type=electricity')
+                ->visit('/testing/generate-notification?period=month&type=electricity')
                 ->screenshot('electricity-test-generation-request')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: month')
                 ->screenshot('electricity-test-generation-success')
@@ -56,7 +56,7 @@ class TestNotificationGenerationTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                ->visit('/test/notifications?period=month&type=gas')
+                ->visit('/testing/generate-notification?period=month&type=gas')
                 ->screenshot('gas-test-generation-request')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: month')
                 ->screenshot('gas-test-generation-success')
@@ -77,7 +77,7 @@ class TestNotificationGenerationTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                ->visit('/test/notifications?period=year&type=both')
+                ->visit('/testing/generate-notification?period=year&type=both')
                 ->screenshot('both-types-test-generation-request')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: year')
                 ->screenshot('both-types-test-generation-success')
@@ -96,7 +96,7 @@ class TestNotificationGenerationTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // Test day period
             $browser->loginAs($this->user)
-                ->visit('/test/notifications?period=day&type=electricity')
+                ->visit('/testing/generate-notification?period=day&type=electricity')
                 ->screenshot('day-period-test-generation-request')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: day')
                 ->screenshot('day-period-test-generation-success')
@@ -113,10 +113,9 @@ class TestNotificationGenerationTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($regularUser) {
             $browser->loginAs($regularUser)
-                ->visit('/test/notifications?period=month&type=electricity')
+                ->visit('/testing/generate-notification?period=month&type=electricity')
                 ->screenshot('non-admin-access-denied')
-                ->assertSee('403')
-                ->orSee('Geen toegang');
+                ->assertSee('403');
         });
     }
 
@@ -128,7 +127,7 @@ class TestNotificationGenerationTest extends DuskTestCase
                 ->screenshot('01-admin-logged-in')
 
                 // Generate electricity notification for month
-                ->visit('/test/notifications?period=month&type=electricity')
+                ->visit('/testing/generate-notification?period=month&type=electricity')
                 ->screenshot('02-electricity-month-generation')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: month')
                 ->screenshot('03-electricity-month-success')
@@ -138,7 +137,7 @@ class TestNotificationGenerationTest extends DuskTestCase
                 ->screenshot('04-notifications-after-electricity')
 
                 // Generate gas notification for week
-                ->visit('/test/notifications?period=week&type=gas')
+                ->visit('/testing/generate-notification?period=week&type=gas')
                 ->screenshot('05-gas-week-generation')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: week')
                 ->screenshot('06-gas-week-success')
@@ -148,7 +147,7 @@ class TestNotificationGenerationTest extends DuskTestCase
                 ->screenshot('07-notifications-after-both-types')
 
                 // Generate both types for year
-                ->visit('/test/notifications?period=year&type=both')
+                ->visit('/testing/generate-notification?period=year&type=both')
                 ->screenshot('08-both-year-generation')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: year')
                 ->screenshot('09-both-year-success')
@@ -177,7 +176,7 @@ class TestNotificationGenerationTest extends DuskTestCase
                 $type = $testCase['type'];
                 $screenshotPrefix = sprintf('%02d', $index + 1);
 
-                $browser->visit("/test/notifications?period={$period}&type={$type}")
+                $browser->visit("/testing/generate-notification?period={$period}&type={$type}")
                     ->screenshot("{$screenshotPrefix}-test-{$period}-{$type}-request")
                     ->waitForText("Testnotificatie(s) gegenereerd voor periode: {$period}")
                     ->screenshot("{$screenshotPrefix}-test-{$period}-{$type}-success")
@@ -198,18 +197,18 @@ class TestNotificationGenerationTest extends DuskTestCase
                 ->screenshot('before-error-testing')
 
                 // Test with invalid parameters
-                ->visit('/test/notifications?period=invalid&type=electricity')
+                ->visit('/testing/generate-notification?period=invalid&type=electricity')
                 ->screenshot('invalid-period-parameter')
 
-                ->visit('/test/notifications?period=month&type=invalid')
+                ->visit('/testing/generate-notification?period=month&type=invalid')
                 ->screenshot('invalid-type-parameter')
 
                 // Test with missing parameters
-                ->visit('/test/notifications')
+                ->visit('/testing/generate-notification')
                 ->screenshot('missing-parameters')
 
                 // Test valid generation after errors
-                ->visit('/test/notifications?period=month&type=electricity')
+                ->visit('/testing/generate-notification?period=month&type=electricity')
                 ->screenshot('valid-generation-after-errors')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: month')
                 ->screenshot('successful-generation-after-error-testing');

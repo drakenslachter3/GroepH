@@ -9,6 +9,7 @@ use App\Http\Controllers\InfluxDataController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SmartMeterController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -86,7 +87,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Testroutes - apart van de productie routes
-Route::middleware('auth')->prefix('testing')->group(function () {
+Route::middleware(['auth', CheckRole::class.':admin'])->prefix('testing')->group(function () {
     Route::get('/generate-notification', [App\Http\Controllers\TestNotificationController::class, 'generateTestNotification'])
         ->name('testing.notification');
 });
