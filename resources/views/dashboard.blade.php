@@ -13,13 +13,9 @@
                     {{ session('status') }}
                 </div>
             @endif
-
             <div class="bg-white shadow-lg rounded-lg mb-8 dark:bg-gray-800">
-                <!-- Toggle button for the entire config section -->
                 <div class="p-4">
-                    <!-- Dropdown button, last update info & refresh button in one row -->
                     <div class="flex justify-between items-center">
-                        <!-- Dropdown button with title and icon -->
                         <button id="toggleConfigSection"
                             class="flex items-center text-left dark:text-white">
                             <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Dashboard Configuratie</h2>
