@@ -6,6 +6,7 @@ use App\Http\Controllers\EnergyPredictionController;
 use App\Http\Controllers\EnergyVisualizationController;
 use App\Http\Controllers\InfluxController;
 use App\Http\Controllers\InfluxDataController;
+use App\Http\Controllers\PredictionSettingsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SmartMeterController;
 use App\Http\Controllers\UserController;
@@ -23,7 +24,21 @@ Route::get('/influx/explore', [InfluxController::class, 'explore']);
 Route::get('/energy/data-form', [InfluxDataController::class, 'showEnergyForm'])
     ->name('energy.form');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'budget.check'])->group(function () {
+    // Budget routes - updated for per-meter functionality
+    Route::get('/budget/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
+    Route::post('/budget/store-per-meter', [EnergyBudgetController::class, 'storePerMeter'])->name('budget.store-per-meter');
+
+    // Legacy routes for backwards compatibility
+    Route::post('/budget/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
+    Route::post('/budget/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
+
+    // Additional budget management routes
+    Route::get('/budget/meter/{meter}', [EnergyBudgetController::class, 'getBudgetForMeter'])->name('budget.meter');
+    Route::delete('/budget/meter/{meter}', [EnergyBudgetController::class, 'deleteBudgetForMeter'])->name('budget.meter.delete');
+});
+
+Route::middleware('auth', 'budget.check')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
     Route::post('/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
     Route::post('/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
@@ -90,6 +105,14 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', CheckRole::class.':admin'])->prefix('testing')->group(function () {
     Route::get('/generate-notification', [App\Http\Controllers\TestNotificationController::class, 'generateTestNotification'])
         ->name('testing.notification');
+});
+
+// Prediction settings routes - match other admin routes pattern
+Route::middleware('auth')->group(function () {
+    Route::get('/admin/prediction-settings', [PredictionSettingsController::class, 'index'])
+        ->name('admin.prediction-settings.index');
+    Route::post('/admin/prediction-settings', [PredictionSettingsController::class, 'update'])
+        ->name('admin.prediction-settings.update');
 });
 
 require __DIR__ . '/auth.php';

@@ -24,13 +24,14 @@ class NotificationSettingsTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function user_can_access_notification_settings()
+    public function test_user_can_access_notification_settings()
     {
+        $this->setTestName('user_can_access_notification_settings');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications/settings')
-                ->pause(1000)
+                ->pause(5000)
                 ->screenshot('notification-settings-page')
                 ->assertSee('Notificatie-instellingen')
                 ->assertSee('Notificatie-frequentie')
@@ -38,12 +39,14 @@ class NotificationSettingsTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function user_can_update_notification_frequency()
+    public function test_user_can_update_notification_frequency()
     {
+        $this->setTestName('user_can_update_notification_frequency');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications/settings')
+                ->pause(5000)
                 ->screenshot('before-frequency-change')
                 ->radio('notification_frequency', 'daily')
                 ->screenshot('after-selecting-daily')
@@ -59,9 +62,10 @@ class NotificationSettingsTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function user_can_update_threshold_sliders()
+    public function test_user_can_update_threshold_sliders()
     {
+        $this->setTestName('user_can_update_threshold_sliders');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications/settings')
@@ -88,9 +92,10 @@ class NotificationSettingsTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function threshold_sliders_update_display_values()
+    public function test_threshold_sliders_update_display_values()
     {
+        $this->setTestName('threshold_sliders_update_display_values');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications/settings')
@@ -106,9 +111,10 @@ class NotificationSettingsTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function user_can_toggle_additional_options()
+    public function test_user_can_toggle_additional_options()
     {
+        $this->setTestName('user_can_toggle_additional_options');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications/settings')
@@ -130,9 +136,10 @@ class NotificationSettingsTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function user_can_disable_all_notifications()
+    public function test_user_can_disable_all_notifications()
     {
+        $this->setTestName('user_can_disable_all_notifications');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications/settings')
@@ -151,9 +158,10 @@ class NotificationSettingsTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function threshold_validation_prevents_invalid_values()
+    public function test_threshold_validation_prevents_invalid_values()
     {
+        $this->setTestName('threshold_validation_prevents_invalid_values');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications/settings')
@@ -180,9 +188,10 @@ class NotificationSettingsTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function settings_link_is_accessible_from_notifications_page()
+    public function test_settings_link_is_accessible_from_notifications_page()
     {
+        $this->setTestName('settings_link_is_accessible_from_notifications_page');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications')
@@ -194,9 +203,10 @@ class NotificationSettingsTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function complete_settings_workflow_documentation()
+    public function test_complete_settings_workflow_documentation()
     {
+        $this->setTestName('complete_settings_workflow_documentation');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/notifications/settings')

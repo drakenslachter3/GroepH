@@ -18,8 +18,7 @@ class NotificationListTest extends DuskTestCase
         $this->user = User::factory()->create();
     }
 
-    /** @test */
-    public function user_can_mark_notification_as_read()
+    public function test_user_can_mark_notification_as_read()
     {
         $this->setTestName('user_can_mark_notification_as_read');
 
@@ -45,8 +44,7 @@ class NotificationListTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function user_can_dismiss_notification()
+    public function test_user_can_dismiss_notification()
     {
         $this->setTestName('user_can_dismiss_notification');
 
@@ -72,8 +70,7 @@ class NotificationListTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function notification_shows_correct_severity_styling()
+    public function test_notification_shows_correct_severity_styling()
     {
         $this->setTestName('notification_shows_correct_severity_styling');
 
@@ -108,8 +105,7 @@ class NotificationListTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function notification_suggestions_can_be_viewed()
+    public function test_notification_suggestions_can_be_viewed()
     {
         $this->setTestName('notification_suggestions_can_be_viewed');
 
@@ -137,8 +133,7 @@ class NotificationListTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function empty_state_shows_when_no_notifications()
+    public function test_empty_state_shows_when_no_notifications()
     {
         $this->setTestName('empty_state_shows_when_no_notifications');
 
@@ -150,8 +145,7 @@ class NotificationListTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function pagination_works_with_many_notifications()
+    public function test_pagination_works_with_many_notifications()
     {
         $this->setTestName('pagination_works_with_many_notifications');
 
@@ -173,8 +167,7 @@ class NotificationListTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function ajax_mark_as_read_works_without_page_reload()
+    public function test_ajax_mark_as_read_works_without_page_reload()
     {
         $this->setTestName('ajax_mark_as_read_works_without_page_reload');
 
@@ -197,8 +190,7 @@ class NotificationListTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function ajax_dismiss_works_without_page_reload()
+    public function test_ajax_dismiss_works_without_page_reload()
     {
         $this->setTestName('ajax_dismiss_works_without_page_reload');
 
@@ -219,8 +211,7 @@ class NotificationListTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function notification_interactions_work_on_mobile_viewport()
+    public function test_notification_interactions_work_on_mobile_viewport()
     {
         $this->setTestName('notification_interactions_work_on_mobile_viewport');
 
@@ -241,8 +232,7 @@ class NotificationListTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function notification_error_states_are_handled_gracefully()
+    public function test_notification_error_states_are_handled_gracefully()
     {
         $this->setTestName('notification_error_states_are_handled_gracefully');
 
@@ -271,8 +261,8 @@ class NotificationListTest extends DuskTestCase
         });
     }
 
-    /** @test */ // Uitgecommentarieerd omdat de filters nog niet geïmplementeerd zijn
-//    public function notification_filters_work_correctly()
+    // Uitgecommentarieerd omdat de filters nog niet geïmplementeerd zijn
+//    public function test_notification_filters_work_correctly()
 //    {
 //        $this->setTestName('notification_filters_work_correctly');
 //

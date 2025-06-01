@@ -29,12 +29,14 @@ class TestNotificationGenerationTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function admin_can_generate_test_electricity_notification()
+    public function test_admin_can_generate_test_electricity_notification()
     {
+        $this->setTestName('admin_can_generate_test_electricity_notification');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/testing/generate-notification?period=month&type=electricity')
+                ->pause(5000)
                 ->screenshot('electricity-test-generation-request')
                 ->waitForText('Testnotificatie(s) gegenereerd voor periode: month')
                 ->screenshot('electricity-test-generation-success')
@@ -51,9 +53,10 @@ class TestNotificationGenerationTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function admin_can_generate_test_gas_notification()
+    public function test_admin_can_generate_test_gas_notification()
     {
+        $this->setTestName('admin_can_generate_test_gas_notification');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/testing/generate-notification?period=month&type=gas')
@@ -72,9 +75,10 @@ class TestNotificationGenerationTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function admin_can_generate_both_notification_types()
+    public function test_admin_can_generate_both_notification_types()
     {
+        $this->setTestName('admin_can_generate_both_notification_types');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/testing/generate-notification?period=year&type=both')
@@ -90,9 +94,10 @@ class TestNotificationGenerationTest extends DuskTestCase
         $this->assertEquals(2, $this->user->energyNotifications()->count());
     }
 
-    /** @test */
-    public function different_periods_generate_appropriate_messages()
+    public function test_different_periods_generate_appropriate_messages()
     {
+        $this->setTestName('different_periods_generate_appropriate_messages');
+
         $this->browse(function (Browser $browser) {
             // Test day period
             $browser->loginAs($this->user)
@@ -106,9 +111,10 @@ class TestNotificationGenerationTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function non_admin_users_cannot_access_test_generation()
+    public function test_non_admin_users_cannot_access_test_generation()
     {
+        $this->setTestName('non_admin_users_cannot_access_test_generation');
+
         $regularUser = User::factory()->create(['role' => 'user']);
 
         $this->browse(function (Browser $browser) use ($regularUser) {
@@ -119,9 +125,10 @@ class TestNotificationGenerationTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function complete_admin_notification_testing_workflow()
+    public function test_complete_admin_notification_testing_workflow()
     {
+        $this->setTestName('complete_admin_notification_testing_workflow');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->screenshot('01-admin-logged-in')
@@ -158,9 +165,10 @@ class TestNotificationGenerationTest extends DuskTestCase
         });
     }
 
-    /** @test */
     public function test_generation_with_different_parameters_documented()
     {
+        $this->setTestName('test_generation_with_different_parameters_documented');
+
         $testCases = [
             ['period' => 'day', 'type' => 'electricity'],
             ['period' => 'week', 'type' => 'gas'],
@@ -189,9 +197,10 @@ class TestNotificationGenerationTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function error_handling_and_edge_cases_documented()
+    public function test_error_handling_and_edge_cases_documented()
     {
+        $this->setTestName('error_handling_and_edge_cases_documented');
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->screenshot('before-error-testing')

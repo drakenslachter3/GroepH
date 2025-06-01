@@ -32,8 +32,7 @@ class NotificationInboxTest extends DuskTestCase
         ]);
     }
 
-    /** @test */
-    public function user_can_see_notification_inbox_icon()
+    public function test_user_can_see_notification_inbox_icon()
     {
         $this->setTestName('user_can_see_notification_inbox_icon');
 
@@ -45,8 +44,7 @@ class NotificationInboxTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function notification_count_badge_shows_correct_number()
+    public function test_notification_count_badge_shows_correct_number()
     {
         $this->setTestName('notification_count_badge_shows_correct_number');
 
@@ -63,8 +61,7 @@ class NotificationInboxTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function user_can_view_notification_details_in_dropdown()
+    public function test_user_can_view_notification_details_in_dropdown()
     {
         $this->setTestName('user_can_view_notification_details_in_dropdown');
 
@@ -85,8 +82,7 @@ class NotificationInboxTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function notification_dropdown_opens_and_closes()
+    public function test_notification_dropdown_opens_and_closes()
     {
         $this->setTestName('notification_dropdown_opens_and_closes');
 
@@ -111,8 +107,7 @@ class NotificationInboxTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function expired_notifications_dont_show_in_inbox()
+    public function test_expired_notifications_dont_show_in_inbox()
     {
         $this->setTestName('expired_notifications_dont_show_in_inbox');
 
@@ -138,8 +133,7 @@ class NotificationInboxTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function no_badge_shows_when_no_unread_notifications()
+    public function test_no_badge_shows_when_no_unread_notifications()
     {
         $this->setTestName('no_badge_shows_when_no_unread_notifications');
 
@@ -156,8 +150,7 @@ class NotificationInboxTest extends DuskTestCase
         });
     }
 
-    /** @test */
-    public function view_all_notifications_link_works()
+    public function test_view_all_notifications_link_works()
     {
         $this->setTestName('view_all_notifications_link_works');
 
