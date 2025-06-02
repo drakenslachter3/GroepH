@@ -866,9 +866,12 @@ class DashboardController extends Controller
             'energy-chart-electricity',
             'energy-chart-gas',
             'date-selector',
+            'historical-comparison',
+            'trend-analysis',
+            'net-result',
             'energy-suggestions',
-            'energy-prediction-chart-electricity', // Behouden van SCRUM-53
-            'energy-prediction-chart-gas',         // Behouden van SCRUM-53
+            'energy-prediction-chart-electricity',
+            'energy-prediction-chart-gas',
         ];
     }
 

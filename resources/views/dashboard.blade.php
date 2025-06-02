@@ -84,6 +84,9 @@
                                             <option value="energy-suggestions" {{ old('widget_type') == 'energy-suggestions' ? 'selected' : '' }}>
                                                 Energiebesparingstips
                                             </option>
+                                            <option value="net-result" {{ old('widget_type') == 'net-result' ? 'selected' : '' }}>
+                                                Netto resultante
+                                            </option>
                                             <option value="energy-prediction-chart-electricity" {{ old('widget_type') == 'energy-prediction-chart-electricity' ? 'selected' : '' }}>
                                                 Elektriciteit Voorspelling
                                             </option>
@@ -255,6 +258,7 @@
                             'energy-suggestions' => 'large',
                             'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
                             'switch-meter' => 'full',
+                            'net-result' => 'large',
                             default => 'full',
                         };
 
@@ -343,6 +347,15 @@
         :realMeterData="$meterDataForPeriod['current_data'] ?? []"
         :dataKey="'gas_delivered'" />
 @break
+
+                                @case('net-result')
+                                    <x-dashboard.net-result 
+                                        :date="$date"
+                                        :period="$period"
+                                        :energyConsumed="$meterDataForPeriod['current_data']['energy_consumed'] ?? []"
+                                        :energyProduced="$meterDataForPeriod['current_data']['energy_produced'] ?? []"
+                                    />
+                                @break
 
                                 @default
                                     <?php
