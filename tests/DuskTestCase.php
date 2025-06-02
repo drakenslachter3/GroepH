@@ -8,6 +8,7 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Support\Collection;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use PHPUnit\Framework\Attributes\BeforeClass;
+use Illuminate\Support\Facades\Artisan;
 
 abstract class DuskTestCase extends BaseTestCase
 {
@@ -76,7 +77,8 @@ abstract class DuskTestCase extends BaseTestCase
     {
         parent::setUp();
         $this->testStartTime = now();
-
+        Artisan::call('migrate:fresh');
+        // Artisan::call('db:seed');
         // Initialize log file once per test run (when Laravel app is available)
         static::initializeLogFile();
     }
