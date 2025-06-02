@@ -17,8 +17,17 @@ $yearlyBudgetTarget = $yearlyBudgetTarget ?? $budgetData['target'] ?? 0;
 
 // Calculate if prediction exceeds budget if not provided
 $predictedTotal = $currentData['expected'] ?? 0;
-$exceedingPercentage = $exceedingPercentage ?? ($predictedTotal > 0 ? round(abs(($predictedTotal / $yearlyBudgetTarget * 100) - 100), 1) : 0);
-$isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $yearlyBudgetTarget);
+
+// Calculate the correct budget target based on period
+$budgetTargetForPrediction = match($period) {
+    'day' => $budgetData['monthly_target'] * 12 / 365, // Daily budget
+    'month' => $budgetData['monthly_target'] ?? $monthlyBudgetValue ?? 0, // Monthly budget
+    'year' => $yearlyBudgetTarget, // Yearly budget
+    default => $yearlyBudgetTarget
+};
+
+$exceedingPercentage = $exceedingPercentage ?? ($predictedTotal > 0 ? round(abs(($predictedTotal / $budgetTargetForPrediction * 100) - 100), 1) : 0);
+$isExceedingBudget = $isExceedingBudget ?? ($predictedTotal > $budgetTargetForPrediction);
 
 // Parse the date to get proper period labels
 $selectedDate = Carbon::parse($date);
@@ -101,6 +110,28 @@ if ($period === 'day') {
         $calculatedAverage = $displayTotal / 12;
     }
 }
+
+// FIX: Herbereken het percentage om ervoor te zorgen dat het correct is
+$correctedPercentage = $percentage;
+
+if ($period === 'year') {
+    // Voor jaarweergave: verbruik tot nu toe / jaarbudget * 100
+    $yearlyTarget = $budgetData['target'] ?? $yearlyBudgetTarget ?? 0;
+    if ($yearlyTarget > 0) {
+        $correctedPercentage = ($displayTotal / $yearlyTarget) * 100;
+    }
+} else {
+    // Voor dag/maand weergave: gebruik de bestaande logica maar controleer of het klopt
+    $targetForPeriod = match($period) {
+        'day' => $budgetData['monthly_target'] * 12 / 365,
+        'month' => $budgetData['monthly_target'] ?? $monthlyBudgetValue ?? 0,
+        default => 0
+    };
+    
+    if ($targetForPeriod > 0) {
+        $correctedPercentage = ($displayTotal / $targetForPeriod) * 100;
+    }
+}
 @endphp
 
 <section aria-labelledby="prediction-chart-title-{{ $type }}-{{ $period }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
@@ -149,11 +180,11 @@ if ($period === 'day') {
                         <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
                     </div>
                             
-                    <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
+                    <div class="text-sm text-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-400 font-medium">
                         @if($period == 'year')
-                            Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
+                            Verbruik tot nu toe: {{ number_format($correctedPercentage, 1) }}%
                         @else
-                            {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
+                            {{ $correctedPercentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($correctedPercentage - 100), 1) }}%
                         @endif
                     </div>
                 </div>
@@ -223,8 +254,8 @@ if ($period === 'day') {
                         {{ number_format($currentData['best_case'], 2) }} {{ $unit }}
                     </p>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                        {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
+                        {{ $currentData['best_case'] > $budgetTargetForPrediction ? 'Overschrijding' : 'Onder' }} budget: 
+                        {{ number_format(abs(($currentData['best_case'] / $budgetTargetForPrediction * 100) - 100), 1) }}%
                     </p>
                 </div>
                 
@@ -235,23 +266,26 @@ if ($period === 'day') {
                         {{ number_format($currentData['worst_case'], 2) }} {{ $unit }}
                     </p>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
-                        {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
+                        {{ $currentData['worst_case'] > $budgetTargetForPrediction ? 'Overschrijding' : 'Onder' }} budget: 
+                        {{ number_format(abs(($currentData['worst_case'] / $budgetTargetForPrediction * 100) - 100), 1) }}%
                     </p>
                 </div>
             </div>
             
             {{-- Recommendations Based on Prediction --}}
-            <div class="mt-6 p-4 bg-{{ $isExceedingBudget ? 'red' : 'green' }}-50 rounded-lg dark:bg-{{ $isExceedingBudget ? 'red' : 'green' }}-900/30">
-                <h4 class="font-medium text-{{ $isExceedingBudget ? 'red' : 'green' }}-700 dark:text-{{ $isExceedingBudget ? 'red' : 'green' }}-400 mb-2">
-                    {{ $isExceedingBudget ? 'Actie nodig' : 'Goed op weg' }}
+            <div class="mt-6 p-4 bg-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-50 rounded-lg dark:bg-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-900/30">
+                <h4 class="font-medium text-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-700 dark:text-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-400 mb-2">
+                    {{ $correctedPercentage > 100 ? 'Actie nodig' : 'Goed op weg' }}
                 </h4>
                 <p class="text-gray-700 dark:text-gray-300">
-                    @if($exceedingPercentage > 30 && $isExceedingBudget)
+                    @php
+                        $exceedingAmount = abs($correctedPercentage - 100);
+                    @endphp
+                    @if($exceedingAmount > 30 && $correctedPercentage > 100)
                         U zit momenteel significant boven uw {{ $period === 'year' ? 'jaar' : ($period === 'month' ? 'maand' : 'dag') }}budget. Overweeg maatregelen om uw {{ $type === 'electricity' ? 'elektriciteits' : 'gas' }}verbruik te verminderen.
-                    @elseif($isExceedingBudget)
+                    @elseif($correctedPercentage > 100)
                         U zit momenteel iets boven uw {{ $period === 'year' ? 'jaar' : ($period === 'month' ? 'maand' : 'dag') }}budget. Let op uw verbruik om binnen het budget te blijven.
-                    @elseif($exceedingPercentage < 10)
+                    @elseif($exceedingAmount < 10)
                         U zit goed op schema om binnen uw {{ $period === 'year' ? 'jaar' : ($period === 'month' ? 'maand' : 'dag') }}budget te blijven. Blijf uw verbruik in de gaten houden.
                     @else
                         U zit goed op schema en gebruikt minder dan verwacht. Ga zo door!
