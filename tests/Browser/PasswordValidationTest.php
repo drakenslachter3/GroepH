@@ -37,6 +37,8 @@ class PasswordValidationTest extends DuskTestCase
 
     public function test_password_validation_when_creating_user()
     {
+        $this->setTestName('test_password_validation_when_creating_user');
+
         $this->browse(function (Browser $browser) {
             $invalidPasswords = [
                 'short' => 'Aa1!',
@@ -59,13 +61,15 @@ class PasswordValidationTest extends DuskTestCase
                     ->press('@save-button')
                     ->pause(500)
                     ->screenshot('after-creating-user-with-invalid-password')
-                    ->assertSee('Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.');
+                    ->assertSee('Het wachtwoord voldoet niet aan de eisen.');
             }
         });
     }
 
     public function test_valid_password_creates_user_successfully()
     {
+        $this->setTestName('test_valid_password_creates_user_successfully');
+
         $this->browse(function (Browser $browser) {
             $this->loginAsAdmin($browser);
 
@@ -90,6 +94,8 @@ class PasswordValidationTest extends DuskTestCase
 
     public function test_password_validation_when_updating_user()
     {
+        $this->setTestName('test_password_validation_when_updating_user');
+
         $this->browse(function (Browser $browser) {
             $user = User::factory()->create([
                 'name' => 'User To Edit',
@@ -107,12 +113,14 @@ class PasswordValidationTest extends DuskTestCase
                 ->press('@save-button')
                 ->pause(500)
                 ->screenshot('after-updating-user-with-invalid-password')
-                ->assertSee('Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.');
+                ->assertSee('Het wachtwoord voldoet niet aan de eisen.');
         });
     }
 
     public function test_empty_password_allowed_when_updating_user()
     {
+        $this->setTestName('test_empty_password_allowed_when_updating_user');
+
         $this->browse(function (Browser $browser) {
             $user = User::factory()->create([
                 'name' => 'User Empty Password',
@@ -137,6 +145,8 @@ class PasswordValidationTest extends DuskTestCase
 
     public function test_password_validation_on_profile_page()
     {
+        $this->setTestName('test_password_validation_on_profile_page');
+
         $this->browse(function (Browser $browser) {
             $this->loginAsAdmin($browser);
 
@@ -148,7 +158,7 @@ class PasswordValidationTest extends DuskTestCase
                 ->press('@save-button')
                 ->pause(500)
                 ->screenshot('after-updating-profile-with-invalid-password')
-                ->assertSee('Het wachtwoord moet minstens 8 karakters lang zijn en een hoofdletter, een kleine letter, een nummer en een speciaal karakter bevatten.');
+                ->assertSee('Het wachtwoord voldoet niet aan de eisen.');
 
             $browser->visit('/profile')
                 ->waitFor('#update_password_current_password')
