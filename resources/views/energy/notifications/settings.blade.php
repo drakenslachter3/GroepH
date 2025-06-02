@@ -121,7 +121,7 @@
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <x-primary-button>{{ __('Opslaan') }}</x-primary-button>
+                            <x-primary-button dusk="save-button">{{ __('Opslaan') }}</x-primary-button>
                         </div>
                     </form>
                 </div>
