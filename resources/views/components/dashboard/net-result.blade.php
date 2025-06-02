@@ -59,6 +59,19 @@
                     aria-label=""
                     class="font-bold dark:text-white">
                 </span>
+            </div><br>
+            <!-- Legenda voor pie chart -->
+            <div class="mt-5 flex space-x-4 text-sm">
+                <!-- Zelf opgewekte elektriciteit -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-yellow-500 rounded-sm border border-yellow-600"></div>
+                    <span class="text-gray-700 dark:text-gray-300">Zelf opgewekt</span>
+                </div>
+                <!-- Restant -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-gray-300 rounded-sm border border-gray-400"></div>
+                    <span class="text-gray-700 dark:text-gray-300">Restant</span>
+                </div>
             </div>
         </div>
     </div>
