@@ -1,4 +1,5 @@
 @props(['title', 'currentData', 'budgetData', 'type', 'period', 'percentage', 'confidence', 'yearlyConsumptionToDate' => 0, 'dailyAverageConsumption' => 0, 'date' => null, 'currentMonthName' => null, 'monthlyBudgetValue' => null, 'isInFuture' => true, 'unit' => null, 'realMeterData' => [], 'dataKey' => null])
+
 {{-- Set default values for any missing props --}}
 @php
 use Carbon\Carbon;
@@ -10,6 +11,7 @@ $dataKey = $dataKey ?? ($type === 'electricity' ? 'energy_consumed' : 'gas_deliv
 
 // Use real meter data instead of prediction data for actual consumption
 $actualMeterData = $realMeterData[$dataKey] ?? [];
+
 // Calculate yearlyBudgetTarget if not provided
 $yearlyBudgetTarget = $yearlyBudgetTarget ?? $budgetData['target'] ?? 0;
 
@@ -112,11 +114,11 @@ if ($period === 'day') {
                     <span class="text-sm bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-100 text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-800 px-2 py-1 rounded ml-2 dark:bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-900/30 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-300">
                         {{ ucfirst($period) }}
                     </span>
-                    
-                    @if(isset($currentMonthName) && $period === 'month')
-                    <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded ml-2 dark:bg-gray-700 dark:text-gray-200">
-                        {{ $currentMonthName }}
-                    </span>
+
+                    @if (isset($currentMonthName) && $period === 'month')
+                        <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded ml-2 dark:bg-gray-700 dark:text-gray-200">
+                            {{ $currentMonthName }}
+                        </span>
                     @endif
                 </h3>
                 @if(isset($date))
@@ -133,9 +135,31 @@ if ($period === 'day') {
             </div>
             <x-dashboard.widget-navigation :showNext="true" />
         </div>
+
+        @if($showPredictions)
+            {{-- Confidence and Budget Status Section - Only show for predictions --}}
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
+                        <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
+                            <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
+                                style="width: {{ $confidence }}%"></div>
+                        </div>
+                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
+                    </div>
+                            
+                    <div class="text-sm text-{{ $percentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $percentage <= 100 ? 'green' : 'red' }}-400 font-medium">
+                        @if($period == 'year')
+                            Verbruik tot nu toe: {{ number_format($percentage, 1) }}%
+                        @else
+                            {{ $percentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($percentage - 100), 1) }}%
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
         
-    
-                
         {{-- Chart Canvas --}}
         <div class="relative" style="height: 350px;">
             <canvas id="{{ $chartId }}"></canvas>
@@ -157,8 +181,7 @@ if ($period === 'day') {
                 <span>Maandbudget: {{ number_format($yearlyBudgetTarget / 12, 0) }} {{ $unit }}/maand</span>
             @endif
         </div>
-        </div>
-        
+
         {{-- Energy Consumption Details Section --}}
         <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
@@ -184,7 +207,13 @@ if ($period === 'day') {
                     <p class="text-2xl font-bold text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-600 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-400">
                         {{ number_format($currentData['expected'], 2) }} {{ $unit }}
                     </p>
-                    
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        @if($isExceedingBudget)
+                            Overschrijding budget: {{ number_format($exceedingPercentage, 1) }}%
+                        @else
+                            Onder budget: {{ number_format($exceedingPercentage, 1) }}%
+                        @endif
+                    </p>
                 </div>
                 
                 {{-- Best Case Card --}}
@@ -193,7 +222,10 @@ if ($period === 'day') {
                     <p class="text-2xl font-bold text-green-600 dark:text-green-400">
                         {{ number_format($currentData['best_case'], 2) }} {{ $unit }}
                     </p>
-                    
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {{ $currentData['best_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
+                        {{ number_format(abs(($currentData['best_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
+                    </p>
                 </div>
                 
                 {{-- Worst Case Card --}}
@@ -202,7 +234,10 @@ if ($period === 'day') {
                     <p class="text-2xl font-bold text-red-600 dark:text-red-400">
                         {{ number_format($currentData['worst_case'], 2) }} {{ $unit }}
                     </p>
-                    
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {{ $currentData['worst_case'] > $yearlyBudgetTarget ? 'Overschrijding' : 'Onder' }} budget: 
+                        {{ number_format(abs(($currentData['worst_case'] / $yearlyBudgetTarget * 100) - 100), 1) }}%
+                    </p>
                 </div>
             </div>
             
@@ -331,24 +366,22 @@ if ($period === 'day') {
             };
             
             // Only add datasets if they exist in the data
-            // Actual data - always show this (keep null values as Chart.js handles them properly)
-           // Only add datasets if they exist in the data
-// Actual data - use REAL meter data, not prediction data
-const realMeterData = @json($actualMeterData);
-if (Array.isArray(realMeterData)) {
-    chartData.datasets.push({
-        label: 'Werkelijk verbruik',
-        data: realMeterData, // Use real meter data instead of currentData.actual
-        borderColor: mainColor,
-        backgroundColor: mainColorLight,
-        tension: 0.2,
-        fill: false,
-        pointRadius: 4,
-        pointBackgroundColor: mainColor,
-        borderWidth: 3,
-        order: 0 // Put actual data at the foreground
-    });
-}
+            // Actual data - use REAL meter data, not prediction data
+            const realMeterData = @json($actualMeterData);
+            if (Array.isArray(realMeterData)) {
+                chartData.datasets.push({
+                    label: 'Werkelijk verbruik',
+                    data: realMeterData, // Use real meter data instead of currentData.actual
+                    borderColor: mainColor,
+                    backgroundColor: mainColorLight,
+                    tension: 0.2,
+                    fill: false,
+                    pointRadius: 4,
+                    pointBackgroundColor: mainColor,
+                    borderWidth: 3,
+                    order: 0 // Put actual data at the foreground
+                });
+            }
             
             // Budget line - always show this
             const budgetLine = getPeriodBudgetLine(periodType, budgetData);
