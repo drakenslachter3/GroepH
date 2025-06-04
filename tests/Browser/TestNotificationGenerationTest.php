@@ -6,11 +6,13 @@ use App\Models\User;
 use App\Models\EnergyBudget;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class TestNotificationGenerationTest extends DuskTestCase
 {
     protected $user;
-
+    use DatabaseMigrations;
+    
     protected function setUp(): void
     {
         parent::setUp();

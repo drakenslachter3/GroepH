@@ -7,10 +7,13 @@ use App\Models\EnergyNotification;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class NotificationInboxTest extends DuskTestCase
 {
     protected $user;
+    
+    use DatabaseMigrations;
 
     protected function setUp(): void
     {
