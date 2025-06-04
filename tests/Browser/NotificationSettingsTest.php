@@ -5,11 +5,12 @@ namespace Tests\Browser;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class NotificationSettingsTest extends DuskTestCase
 {
     protected $user;
-
+    use DatabaseMigrations;
     protected function setUp(): void
     {
         parent::setUp();
