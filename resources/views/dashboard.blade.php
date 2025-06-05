@@ -251,6 +251,24 @@
                             continue;
                         }
 
+                        // Check if this is a valid widget type - if not, skip rendering entirely
+                        $validWidgets = [
+                            'switch-meter',
+                            'energy-status-electricity',
+                            'energy-status-gas',
+                            'energy-chart-electricity',
+                            'energy-chart-gas',
+                            'energy-suggestions',
+                            'energy-prediction-chart-electricity',
+                            'energy-prediction-chart-gas',
+                            'net-result',
+                            'budget-alert'
+                        ];
+
+                        if (!in_array($item, $validWidgets)) {
+                            continue;
+                        }
+
                         $widgetSize = match ($item) {
                             'usage-prediction' => 'large',
                             'energy-status-electricity', 'energy-status-gas' => 'small',
@@ -323,30 +341,30 @@
                                 @break
 
                                 @case('energy-prediction-chart-electricity')
-    <x-dashboard.energy-prediction-chart type="electricity" title="Voorspelling Elektriciteitsverbruik"
-        :period="$period" :date="$date" unit="kWh"
-        :currentData="$predictionData['electricity'] ?? []" 
-        :budgetData="$budgetData['electricity'] ?? []"
-        :percentage="$predictionPercentage['electricity'] ?? 0" 
-        :confidence="$predictionConfidence['electricity'] ?? 75"
-        :yearlyConsumptionToDate="$yearlyConsumptionToDate['electricity'] ?? 0" 
-        :dailyAverageConsumption="$dailyAverageConsumption['electricity'] ?? 0"
-        :realMeterData="$meterDataForPeriod['current_data'] ?? []"
-        :dataKey="'energy_consumed'" />
-@break
+                                    <x-dashboard.energy-prediction-chart type="electricity" title="Voorspelling Elektriciteitsverbruik"
+                                        :period="$period" :date="$date" unit="kWh"
+                                        :currentData="$predictionData['electricity'] ?? []" 
+                                        :budgetData="$budgetData['electricity'] ?? []"
+                                        :percentage="$predictionPercentage['electricity'] ?? 0" 
+                                        :confidence="$predictionConfidence['electricity'] ?? 75"
+                                        :yearlyConsumptionToDate="$yearlyConsumptionToDate['electricity'] ?? 0" 
+                                        :dailyAverageConsumption="$dailyAverageConsumption['electricity'] ?? 0"
+                                        :realMeterData="$meterDataForPeriod['current_data'] ?? []"
+                                        :dataKey="'energy_consumed'" />
+                                @break
 
-@case('energy-prediction-chart-gas')
-    <x-dashboard.energy-prediction-chart type="gas" title="Voorspelling Gasverbruik"
-        :period="$period" :date="$date" unit="m³"
-        :currentData="$predictionData['gas'] ?? []" 
-        :budgetData="$budgetData['gas'] ?? []" 
-        :percentage="$predictionPercentage['gas'] ?? 0" 
-        :confidence="$predictionConfidence['gas'] ?? 75" 
-        :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0" 
-        :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0"
-        :realMeterData="$meterDataForPeriod['current_data'] ?? []"
-        :dataKey="'gas_delivered'" />
-@break
+                                @case('energy-prediction-chart-gas')
+                                    <x-dashboard.energy-prediction-chart type="gas" title="Voorspelling Gasverbruik"
+                                        :period="$period" :date="$date" unit="m³"
+                                        :currentData="$predictionData['gas'] ?? []" 
+                                        :budgetData="$budgetData['gas'] ?? []" 
+                                        :percentage="$predictionPercentage['gas'] ?? 0" 
+                                        :confidence="$predictionConfidence['gas'] ?? 75" 
+                                        :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0" 
+                                        :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0"
+                                        :realMeterData="$meterDataForPeriod['current_data'] ?? []"
+                                        :dataKey="'gas_delivered'" />
+                                @break
 
                                 @case('net-result')
                                     <x-dashboard.net-result 
@@ -356,9 +374,6 @@
                                         :energyProduced="$meterDataForPeriod['current_data']['energy_produced'] ?? []"
                                     />
                                 @break
-
-                                @default
-                                    
                             @endswitch
                         </div>
                     </div>
