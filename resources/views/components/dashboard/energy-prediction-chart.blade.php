@@ -135,61 +135,36 @@ if ($period === 'year') {
 @endphp
 
 <section aria-labelledby="prediction-chart-title-{{ $type }}-{{ $period }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 dark:bg-gray-800">
-    <div class="p-6 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
+    <div class="p-2 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-800">
         {{-- Navigation and Heading Section --}}
-        <div class="flex justify-between items-center mb-4">
-            <x-dashboard.widget-navigation :showPrevious="true" />
-            <div class="text-center flex-1">
-                <h3 id="prediction-chart-title-{{ $type }}-{{ $period }}" class="text-lg font-semibold dark:text-white">
-                    {{ $type === 'electricity' ? 'Elektriciteit' : 'Gas' }} {{ $showPredictions ? 'Voorspelling' : 'Verbruik' }}
-                    <span class="text-sm bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-100 text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-800 px-2 py-1 rounded ml-2 dark:bg-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-900/30 dark:text-{{ $type === 'electricity' ? 'blue' : 'yellow' }}-300">
-                        {{ ucfirst($period) }}
-                    </span>
-
-                    @if (isset($currentMonthName) && $period === 'month')
-                        <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded ml-2 dark:bg-gray-700 dark:text-gray-200">
-                            {{ $currentMonthName }}
-                        </span>
-                    @endif
-                </h3>
-                @if(isset($date))
-                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                        @if($period === 'day')
-                            {{ $selectedDate->translatedFormat('l j F Y') }}
-                        @elseif($period === 'month')
-                            {{ $selectedDate->translatedFormat('F Y') }}
-                        @else
-                            {{ $selectedDate->format('Y') }}
-                        @endif
-                    </p>
-                @endif
-            </div>
-            <x-dashboard.widget-navigation :showNext="true" />
-        </div>
-
-        @if($showPredictions)
-            {{-- Confidence and Budget Status Section - Only show for predictions --}}
-            <div class="mb-4">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
-                        <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
-                            <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
-                                style="width: {{ $confidence }}%"></div>
+            <x-dashboard.widget-navigation :showPrevious="true" aria-label="{{ __('energy-chart-widget.previous_widget') }}" />
+            <x-dashboard.widget-heading :title="$title" :type="$type" :date="$date" :period="$period" />
+            <x-dashboard.widget-navigation :showNext="true" aria-label="{{ __('energy-chart-widget.next_widget') }}" />
+        <div class="py-6">
+            @if($showPredictions)
+                {{-- Confidence and Budget Status Section - Only show for predictions --}}
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Betrouwbaarheid: </span>
+                            <div class="w-24 h-4 bg-gray-200 rounded-full ml-2 dark:bg-gray-700">
+                                <div class="h-4 rounded-full {{ $confidence > 80 ? 'bg-green-500' : ($confidence > 60 ? 'bg-yellow-500' : 'bg-red-500') }}" 
+                                    style="width: {{ $confidence }}%"></div>
+                            </div>
+                            <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
                         </div>
-                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
-                    </div>
-                            
-                    <div class="text-sm text-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-400 font-medium">
-                        @if($period == 'year')
-                            Verbruik tot nu toe: {{ number_format($correctedPercentage, 1) }}%
-                        @else
-                            {{ $correctedPercentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($correctedPercentage - 100), 1) }}%
-                        @endif
+                                
+                        <div class="text-sm text-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-600 dark:text-{{ $correctedPercentage <= 100 ? 'green' : 'red' }}-400 font-medium">
+                            @if($period == 'year')
+                                Verbruik tot nu toe: {{ number_format($correctedPercentage, 1) }}%
+                            @else
+                                {{ $correctedPercentage > 100 ? 'Overschrijding' : 'Binnen budget' }}: {{ number_format(abs($correctedPercentage - 100), 1) }}%
+                            @endif
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endif
+            @endif
+        </div>
         
         {{-- Chart Canvas --}}
         <div class="relative" style="height: 350px;">
