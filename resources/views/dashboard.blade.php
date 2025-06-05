@@ -358,9 +358,7 @@
                                 @break
 
                                 @default
-                                    <?php
-                                    echo $item;
-                                    ?>
+                                    
                             @endswitch
                         </div>
                     </div>
