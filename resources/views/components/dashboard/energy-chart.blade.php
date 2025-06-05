@@ -138,6 +138,25 @@
                 $previousTotal += $value;
             }
         }
+        $colors = [
+            'yellow' => [
+                'bg' => 'bg-yellow-100',
+                'text' => 'text-yellow-700',
+                'hover' => 'hover:bg-yellow-200',
+                'darkBg' => 'dark:bg-yellow-800',
+                'darkText' => 'dark:text-yellow-100',
+                'darkHover' => 'dark:hover:bg-yellow-700',
+            ],
+            'blue' => [
+                'bg' => 'bg-blue-100',
+                'text' => 'text-blue-700',
+                'hover' => 'hover:bg-blue-200',
+                'darkBg' => 'dark:bg-blue-800',
+                'darkText' => 'dark:text-blue-100',
+                'darkHover' => 'dark:hover:bg-blue-700',
+            ],
+        ];
+        $c = $colors[$buttonColor] ?? $colors['blue'];
     @endphp
     
     <div class="mt-4 flex flex-col gap-2 text-sm text-gray-800 dark:text-gray-100">
@@ -153,7 +172,8 @@
 
     
     <div class="mt-4 flex justify-end">
-        <button id="toggle{{ ucfirst($type) }}Comparison" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100">
+        <button id="toggle{{ ucfirst($type) }}Comparison"
+            class="text-sm px-3 py-1 rounded {{ $c['bg'] }} {{ $c['text'] }} {{ $c['hover'] }} {{ $c['darkBg'] }} {{ $c['darkText'] }} {{ $c['darkHover'] }}">
             {{ $buttonLabel }}
         </button>
     </div>

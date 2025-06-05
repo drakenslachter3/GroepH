@@ -1,24 +1,24 @@
 <?php
 
 return [
-    'day' => 'Day',
-    'month' => 'Month',
-    'year' => 'Year',
+    'day' => 'Dag',
+    'month' => 'Maand',
+    'year' => 'Jaar',
 
-    'period_selection' => 'Period selection',
-    'select_date' => 'Select date',
-    'today' => 'Today',
-    'show_data_per' => 'Show data per :period :current',
-    'current_setting' => '(current setting)',
-    'date_navigation' => 'Date navigation',
+    'period_selection' => 'Periode selectie',
+    'select_date' => 'Selecteer datum',
+    'today' => 'Vandaag',
+    'show_data_per' => 'Toon gegevens per :period :current',
+    'current_setting' => '(huidige instelling)',
+    'date_navigation' => 'Datum navigatie',
     
-    'previous_period' => 'Previous :period',
-    'next_period' => 'Next :period',
+    'previous_period' => 'Vorige :period',
+    'next_period' => 'Volgende :period',
 
-    'go_to_previous' => 'Go to previous :period',
-    'go_to_next' => 'Go to next :period',
-    'go_to_today' => 'Go to today',
+    'go_to_previous' => 'Ga naar vorige :period',
+    'go_to_next' => 'Ga naar volgende :period',
+    'go_to_today' => 'Ga naar vandaag',
 
-    'previous_widget' => 'Previous widget',
-    'next_widget' => 'Next widget',
+    'previous_widget' => 'Vorige widget',
+    'next_widget' => 'Volgende widget',
 ];
