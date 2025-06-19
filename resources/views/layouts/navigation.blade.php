@@ -37,6 +37,10 @@
                         <x-etc.nav-link :href="route('admin.prediction-settings.index')" :active="request()->routeIs('admin.prediction-settings.*')">
                         {{ __('Voorspellingsinstellingen') }}
                         </x-etc.nav-link>
+
+                        <x-etc.nav-link :href="route('admin.refresh-settings.index')" :active="request()->routeIs('admin.refresh-settings.*')">
+                        {{ __('Verversinstellingen') }}
+                        </x-etc.nav-link>
                     @endif
                 </div>
             </div>
