@@ -8,6 +8,7 @@ use App\Http\Controllers\InfluxController;
 use App\Http\Controllers\InfluxDataController;
 use App\Http\Controllers\PredictionSettingsController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RefreshSettingsController;
 use App\Http\Controllers\SmartMeterController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckRole;
@@ -108,11 +109,15 @@ Route::middleware(['auth', CheckRole::class.':admin'])->prefix('testing')->group
 });
 
 // Prediction settings routes - match other admin routes pattern
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', CheckRole::class.':admin'])->group(function () {
     Route::get('/admin/prediction-settings', [PredictionSettingsController::class, 'index'])
         ->name('admin.prediction-settings.index');
     Route::post('/admin/prediction-settings', [PredictionSettingsController::class, 'update'])
         ->name('admin.prediction-settings.update');
+    Route::get('/admin/refresh-settings', [RefreshSettingsController::class, 'index'])
+        ->name('admin.refresh-settings.index');
+    Route::post('/admin/refresh-settings', [RefreshSettingsController::class, 'update'])
+        ->name('admin.refresh-settings.update');
 });
 
 require __DIR__ . '/auth.php';
