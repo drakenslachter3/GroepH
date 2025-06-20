@@ -11,7 +11,7 @@
     </div>
 
     <div class="bg-white shadow-md rounded-lg p-6">
-        <form action="{{ route('admin.influxdb-outages.update', $influxdbOutage) }}" method="POST">
+        <form action="{{ route('admin.influxdb-outages.edit', $influxdbOutage) }}" method="POST">
             @csrf
             @method('PUT')
             
@@ -23,7 +23,7 @@
                     <input type="datetime-local" 
                            id="start_time" 
                            name="start_time" 
-                           value="{{ old('start_time', $influxdbOutage->start_time->format('Y-m-d\TH:i')) }}" 
+                           value="{{ old('start_time', $influxdbOutage->start_time ? $influxdbOutage->start_time->format('Y-m-d\TH:i') : '') }}" 
                            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('start_time') border-red-500 @enderror"
                            required>
                     @error('start_time')
