@@ -103,13 +103,13 @@ Route::middleware('auth')->group(function () {
 });
 
 // Testroutes - apart van de productie routes
-Route::middleware(['auth', CheckRole::class.':admin'])->prefix('testing')->group(function () {
+Route::middleware(['auth', CheckRole::class . ':admin'])->prefix('testing')->group(function () {
     Route::get('/generate-notification', [App\Http\Controllers\TestNotificationController::class, 'generateTestNotification'])
         ->name('testing.notification');
 });
 
 // Prediction settings routes - match other admin routes pattern
-Route::middleware(['auth', CheckRole::class.':admin'])->group(function () {
+Route::middleware(['auth', CheckRole::class . ':admin'])->group(function () {
     Route::get('/admin/prediction-settings', [PredictionSettingsController::class, 'index'])
         ->name('admin.prediction-settings.index');
     Route::post('/admin/prediction-settings', [PredictionSettingsController::class, 'update'])
@@ -118,6 +118,19 @@ Route::middleware(['auth', CheckRole::class.':admin'])->group(function () {
         ->name('admin.refresh-settings.index');
     Route::post('/admin/refresh-settings', [RefreshSettingsController::class, 'update'])
         ->name('admin.refresh-settings.update');
+
+    Route::get('/influxdb-outages/index', [App\Http\Controllers\InfluxdbOutageController::class, 'index'])->name('admin.influxdb-outages.index');
+    Route::get('/influxdb-outages/create', [App\Http\Controllers\InfluxdbOutageController::class, 'create'])->name('admin.influxdb-outages.create');
+    Route::post('/influxdb-outages/create', [App\Http\Controllers\InfluxdbOutageController::class, 'store'])->name('admin.influxdb-outages.store');
+    Route::get('/influxdb-outages/edit', [App\Http\Controllers\InfluxdbOutageController::class, 'edit'])->name('admin.influxdb-outages.edit');
+    Route::delete('/influxdb-outages/{influxdbOutage}', [App\Http\Controllers\InfluxdbOutageController::class, 'destroy'])->name('admin.influxdb-outages.destroy');
+    Route::get('/influxdb-outages', [App\Http\Controllers\InfluxdbOutageController::class, 'index'])->name('admin.influxdb-outages.index');
+    Route::get('/influxdb-outages/create', [App\Http\Controllers\InfluxdbOutageController::class, 'create'])->name('admin.influxdb-outages.create');
+    Route::post('/influxdb-outages', [App\Http\Controllers\InfluxdbOutageController::class, 'store'])->name('admin.influxdb-outages.store');
+    Route::get('/influxdb-outages/{influxdbOutage}/edit', [App\Http\Controllers\InfluxdbOutageController::class, 'edit'])->name('admin.influxdb-outages.edit');
+    Route::put('/influxdb-outages/{influxdbOutage}/edit', [App\Http\Controllers\InfluxdbOutageController::class, 'update'])->name('admin.influxdb-outages.update');
+    Route::delete('/influxdb-outages/{influxdbOutage}', [App\Http\Controllers\InfluxdbOutageController::class, 'destroy'])->name('admin.influxdb-outages.destroy');
+
 });
 
 require __DIR__ . '/auth.php';
