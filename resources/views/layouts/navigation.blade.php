@@ -37,10 +37,13 @@
 
                         <x-etc.nav-link :href="route('admin.influxdb-outages.index')" :active="request()->routeIs('admin.influxdb-outages.*')">
                             {{ __('InfluxDB Uitval') }}
+<<<<<<< HEAD
                         </x-etc.nav-link>
 
                         <x-etc.nav-link :href="route('admin.refresh-settings.index')" :active="request()->routeIs('admin.refresh-settings.*')">
                         {{ __('Verversinstellingen') }}
+=======
+>>>>>>> a67667cda572d9aea827972e6634d656bbce5948
                         </x-etc.nav-link>
                     @endif
                 </div>

@@ -268,6 +268,7 @@ class DashboardController extends Controller
         $dailyAverageConsumption['electricity'] = $daysPassedThisPeriod > 0 ? $periodConsumptionToDate['electricity'] / $daysPassedThisPeriod : 0;
         $dailyAverageConsumption['gas']         = $daysPassedThisPeriod > 0 ? $periodConsumptionToDate['gas'] / $daysPassedThisPeriod : 0;
 
+
         $actualGas = $liveInfluxData['total']['gas_usage'] ?? 0;
 
         if ($period === 'month') {

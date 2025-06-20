@@ -118,6 +118,7 @@ Route::middleware(['auth', CheckRole::class.':admin'])->group(function () {
         ->name('admin.refresh-settings.index');
     Route::post('/admin/refresh-settings', [RefreshSettingsController::class, 'update'])
         ->name('admin.refresh-settings.update');
+
     Route::get('/influxdb-outages/index', [App\Http\Controllers\InfluxdbOutageController::class, 'index'])->name('admin.influxdb-outages.index');
     Route::get('/influxdb-outages/create', [App\Http\Controllers\InfluxdbOutageController::class, 'create'])->name('admin.influxdb-outages.create');
     Route::post('/influxdb-outages/create', [App\Http\Controllers\InfluxdbOutageController::class, 'store'])->name('admin.influxdb-outages.store');
