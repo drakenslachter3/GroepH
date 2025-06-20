@@ -316,15 +316,15 @@
                                 @break
 
                                 @case('energy-chart-electricity')
-                                    <x-dashboard.energy-chart type="electricity" title="Grafiek Elektriciteitsverbruik"
-                                        :period="$period" :date="$date" unit="kWh"
+                                    <x-dashboard.energy-chart type="electricity" title="Grafiek Elektriciteitsverbruik" 
+                                        :period="$period" :date="$date" unit="kWh" :outages="$outages"
                                         buttonLabel="Toon Vorig Jaar" buttonColor="blue" :chartData="$meterDataForPeriod['current_data'] ?? []"
                                         :previousYearData="$meterDataForPeriod['historical_data'] ?? []" />
                                 @break
 
                                 @case('energy-chart-gas')
                                     <x-dashboard.energy-chart type="gas" title="Grafiek Gasverbruik"
-                                        :period="$period" :date="$date" unit="m³"
+                                        :period="$period" :date="$date" unit="m³" :outages="$outages"
                                         buttonLabel="Toon Vorig Jaar" buttonColor="yellow" :chartData="$meterDataForPeriod['current_data'] ?? []"
                                         :previousYearData="$meterDataForPeriod['historical_data'] ?? []" />
                                 @break

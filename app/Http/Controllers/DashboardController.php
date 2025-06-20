@@ -122,20 +122,18 @@ class DashboardController extends Controller
 
         \Log::debug("Meter data structure: " . json_encode(array_keys($meterDataForPeriod)));
 
-
         // Check if selected date is in the future
         $selectedDate = Carbon::parse($date);
-        $now = Carbon::now();
-        $isInFuture = $this->isDateInFuture($selectedDate, $period, $now);
-        
+        $now          = Carbon::now();
+        $isInFuture   = $this->isDateInFuture($selectedDate, $period, $now);
 
         $hasValidInfluxData =
-            isset($meterDataForPeriod['current_data']) &&
+        isset($meterDataForPeriod['current_data']) &&
             (
 
-                (isset($meterDataForPeriod['current_data']['energy_consumed']) && ! empty($meterDataForPeriod['current_data']['energy_consumed'])) ||
-                (isset($meterDataForPeriod['current_data']['gas_delivered']) && ! empty($meterDataForPeriod['current_data']['gas_delivered']))
-            );
+            (isset($meterDataForPeriod['current_data']['energy_consumed']) && ! empty($meterDataForPeriod['current_data']['energy_consumed'])) ||
+            (isset($meterDataForPeriod['current_data']['gas_delivered']) && ! empty($meterDataForPeriod['current_data']['gas_delivered']))
+        );
 
         // Only generate predictions if the date is current or future and we have data
         if ($isInFuture && $hasValidInfluxData) {
@@ -164,25 +162,25 @@ class DashboardController extends Controller
 
             // No predictions for past dates - just show actual data and budget
             $predictionData['electricity'] = [
-                'actual' => $meterDataForPeriod['current_data']['energy_consumed'] ?? [],
-                'expected' => null,
-                'best_case' => null,
-                'worst_case' => null,
-                'prediction' => null,
-                'best_case_line' => null,
+                'actual'          => $meterDataForPeriod['current_data']['energy_consumed'] ?? [],
+                'expected'        => null,
+                'best_case'       => null,
+                'worst_case'      => null,
+                'prediction'      => null,
+                'best_case_line'  => null,
                 'worst_case_line' => null,
-                'confidence' => null
+                'confidence'      => null,
             ];
-            
+
             $predictionData['gas'] = [
-                'actual' => $meterDataForPeriod['current_data']['gas_delivered'] ?? [],
-                'expected' => null,
-                'best_case' => null,
-                'worst_case' => null,
-                'prediction' => null,
-                'best_case_line' => null,
+                'actual'          => $meterDataForPeriod['current_data']['gas_delivered'] ?? [],
+                'expected'        => null,
+                'best_case'       => null,
+                'worst_case'      => null,
+                'prediction'      => null,
+                'best_case_line'  => null,
                 'worst_case_line' => null,
-                'confidence' => null
+                'confidence'      => null,
             ];
 
             // Still need budget data for comparison
@@ -194,7 +192,7 @@ class DashboardController extends Controller
                 $meterDataForPeriod
             );
             $budgetData['electricity'] = $electricityBudgetResult['budgetData'];
-            
+
             $gasBudgetResult = $this->dashboardPredictionService->getDashboardPredictionDataWithRealData(
                 'gas',
                 $period,
@@ -202,9 +200,9 @@ class DashboardController extends Controller
                 $meterDataForPeriod
             );
             $budgetData['gas'] = $gasBudgetResult['budgetData'];
-            
+
             $predictionConfidence['electricity'] = null;
-            $predictionConfidence['gas'] = null;
+            $predictionConfidence['gas']         = null;
         }
 
         $currentMonth             = Carbon::parse($date)->month;
@@ -251,20 +249,18 @@ class DashboardController extends Controller
             $predictionPercentage['electricity'] = $proRatedBudget > 0 ? ($actualElectricity / $proRatedBudget) * 100 : 0;
         }
 
-
         // Get real consumption data based on period - NEW FEATURE
         $periodConsumptionToDate['electricity'] = $this->getRealConsumptionToDate($selectedMeterId, 'electricity', $period, $date);
-        $periodConsumptionToDate['gas'] = $this->getRealConsumptionToDate($selectedMeterId, 'gas', $period, $date);
-        
+        $periodConsumptionToDate['gas']         = $this->getRealConsumptionToDate($selectedMeterId, 'gas', $period, $date);
+
         // Also get yearly consumption for context (using 'year' period)
         $yearlyConsumptionToDate['electricity'] = $this->getRealConsumptionToDate($selectedMeterId, 'electricity', 'year', $date);
-        $yearlyConsumptionToDate['gas'] = $this->getRealConsumptionToDate($selectedMeterId, 'gas', 'year', $date);
-        
-        // Calculate averages based on real data - NEW FEATURE
-        $daysPassedThisPeriod = $this->getDaysPassedInPeriod($period, $date);
-        $dailyAverageConsumption['electricity'] = $daysPassedThisPeriod > 0 ? $periodConsumptionToDate['electricity'] / $daysPassedThisPeriod : 0;
-        $dailyAverageConsumption['gas'] = $daysPassedThisPeriod > 0 ? $periodConsumptionToDate['gas'] / $daysPassedThisPeriod : 0;
+        $yearlyConsumptionToDate['gas']         = $this->getRealConsumptionToDate($selectedMeterId, 'gas', 'year', $date);
 
+        // Calculate averages based on real data - NEW FEATURE
+        $daysPassedThisPeriod                   = $this->getDaysPassedInPeriod($period, $date);
+        $dailyAverageConsumption['electricity'] = $daysPassedThisPeriod > 0 ? $periodConsumptionToDate['electricity'] / $daysPassedThisPeriod : 0;
+        $dailyAverageConsumption['gas']         = $daysPassedThisPeriod > 0 ? $periodConsumptionToDate['gas'] / $daysPassedThisPeriod : 0;
 
         $actualGas = $liveInfluxData['total']['gas_usage'] ?? 0;
 
@@ -281,11 +277,11 @@ class DashboardController extends Controller
             $predictionPercentage['gas'] = $proRatedBudget > 0 ? ($actualGas / $proRatedBudget) * 100 : 0;
         }
 
+        $outages = $this->getOutagesForPeriod($period, $date);
 
         // Calculate targets for the selected period
         $electricityTarget = $this->calculateTargetForPeriod('electricity', $period, $date, $budgetData['electricity']);
         $gasTarget         = $this->calculateTargetForPeriod('gas', $period, $date, $budgetData['gas']);
-
 
         $electricityCost = $this->conversionService->kwhToEuro($actualElectricity);
         $gasCost         = $this->conversionService->m3ToEuro($actualGas);
@@ -339,6 +335,8 @@ class DashboardController extends Controller
         $energydashboard_data['totals']['electricity_percentage'] = $predictionPercentage['electricity'];
         $energydashboard_data['totals']['electricity_status']     = $electricityStatus;
 
+        $energydashboard_data['outages'] = $outages;
+
         $energydashboard_data['totals']['gas_m3']         = $actualGas;
         $energydashboard_data['totals']['gas_target']     = $gasTarget;
         $energydashboard_data['totals']['gas_euro']       = $gasCost;
@@ -384,6 +382,45 @@ class DashboardController extends Controller
         }
     }
 
+    public function getOutagesForPeriod($period, $date)
+    {
+        $dateObj = Carbon::parse($date);
+
+        switch ($period) {
+            case 'day':
+                $startTime = $dateObj->startOfDay();
+                $endTime   = $dateObj->copy()->endOfDay();
+                break;
+            case 'month':
+                $startTime = $dateObj->startOfMonth();
+                $endTime   = $dateObj->copy()->endOfMonth();
+                break;
+            case 'year':
+                $startTime = $dateObj->startOfYear();
+                $endTime   = $dateObj->copy()->endOfYear();
+                break;
+            default:
+                return [];
+        }
+
+        return \App\Models\InfluxdbOutage::where(function ($query) use ($startTime, $endTime) {
+            $query->where(function ($q) use ($startTime, $endTime) {
+                // Outage starts within period
+                $q->whereBetween('start_time', [$startTime, $endTime]);
+            })->orWhere(function ($q) use ($startTime, $endTime) {
+                // Outage ends within period
+                $q->whereBetween('end_time', [$startTime, $endTime]);
+            })->orWhere(function ($q) use ($startTime, $endTime) {
+                // Outage spans entire period
+                $q->where('start_time', '<=', $startTime)
+                    ->where(function ($subQ) use ($endTime) {
+                        $subQ->where('end_time', '>=', $endTime)
+                            ->orWhereNull('end_time'); // Still ongoing
+                    });
+            });
+        })->get();
+    }
+
     /**
      * NEW METHOD: Get real consumption data to date from InfluxDB
      */
@@ -391,54 +428,54 @@ class DashboardController extends Controller
     {
         try {
             $selectedDate = Carbon::parse($date);
-            $now = Carbon::now();
-            
+            $now          = Carbon::now();
+
             switch ($period) {
                 case 'day':
                     // For day view: consumption from start of day until now
                     if ($selectedDate->isToday()) {
                         $startDate = $selectedDate->startOfDay()->format('Y-m-d');
-                        $endDate = $now->format('Y-m-d');
+                        $endDate   = $now->format('Y-m-d');
                     } else {
                         // For past/future days, get the full day
                         $startDate = $selectedDate->format('Y-m-d');
-                        $endDate = $selectedDate->format('Y-m-d');
+                        $endDate   = $selectedDate->format('Y-m-d');
                     }
                     break;
-                    
+
                 case 'month':
                     // For month view: consumption from start of month until now
                     if ($selectedDate->isSameMonth($now)) {
                         $startDate = $selectedDate->startOfMonth()->format('Y-m-d');
-                        $endDate = $now->format('Y-m-d');
+                        $endDate   = $now->format('Y-m-d');
                     } else {
                         // For past/future months, get the full month
                         $startDate = $selectedDate->startOfMonth()->format('Y-m-d');
-                        $endDate = $selectedDate->endOfMonth()->format('Y-m-d');
+                        $endDate   = $selectedDate->endOfMonth()->format('Y-m-d');
                     }
                     break;
-                    
+
                 case 'year':
                 default:
                     // For year view: consumption from start of year until now
                     if ($selectedDate->isSameYear($now)) {
                         $startDate = $selectedDate->startOfYear()->format('Y-m-d');
-                        $endDate = $now->format('Y-m-d');
+                        $endDate   = $now->format('Y-m-d');
                     } else {
                         // For past/future years, get the full year
                         $startDate = $selectedDate->startOfYear()->format('Y-m-d');
-                        $endDate = $selectedDate->endOfYear()->format('Y-m-d');
+                        $endDate   = $selectedDate->endOfYear()->format('Y-m-d');
                     }
                     break;
             }
 
             // Get aggregated data from InfluxDB
             $usageData = $this->getAggregatedData($meterId, $startDate, $endDate);
-            
-            return $type === 'electricity' ? 
-                ($usageData['energy_consumed'] ?? 0) : 
-                ($usageData['gas_delivered'] ?? 0);
-                
+
+            return $type === 'electricity' ?
+            ($usageData['energy_consumed'] ?? 0) :
+            ($usageData['gas_delivered'] ?? 0);
+
         } catch (\Exception $e) {
             Log::error('Error getting real consumption data: ' . $e->getMessage());
             // Fallback to simulated data if real data fails
@@ -452,8 +489,8 @@ class DashboardController extends Controller
     private function getDaysPassedInPeriod(string $period, string $date): int
     {
         $selectedDate = Carbon::parse($date);
-        $now = Carbon::now();
-        
+        $now          = Carbon::now();
+
         switch ($period) {
             case 'day':
                 // For day view: hours passed / 24 (as fraction of day)
@@ -462,7 +499,7 @@ class DashboardController extends Controller
                 } else {
                     return 24; // Full day
                 }
-                
+
             case 'month':
                 // For month view: days passed in month
                 if ($selectedDate->isSameMonth($now)) {
@@ -470,7 +507,7 @@ class DashboardController extends Controller
                 } else {
                     return $selectedDate->daysInMonth;
                 }
-                
+
             case 'year':
             default:
                 // For year view: days passed in year

@@ -1,4 +1,6 @@
-@props(['title', 'type', 'unit', 'period', 'date' => null, 'buttonLabel', 'buttonColor', 'chartData', 'previousYearData'])
+{{-- resources/views/components/dashboard/energy-chart-widget.blade.php --}}
+
+@props(['title', 'type', 'unit', 'period', 'date' => null, 'buttonLabel', 'buttonColor', 'chartData', 'previousYearData', 'outages' => []])
 
 @php
     use Carbon\Carbon;
@@ -117,6 +119,22 @@
     <div class="relative" style="height: 300px;">
         <canvas id="{{ $type }}Chart"></canvas>
     </div>
+
+    {{-- InfluxDB Outage Legend --}}
+    @if($outages && count($outages) > 0)
+        <div class="mt-2 flex items-center justify-center">
+            <div class="flex items-center space-x-4 text-sm">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-{{ $buttonColor }}-500 opacity-60 rounded mr-2"></div>
+                    <span>Normaal Verbruik</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-orange-500 opacity-80 rounded mr-2"></div>
+                    <span>Moment van storing</span>
+                </div>
+            </div>
+        </div>
+    @endif
 
     @php
         $currentData = $chartData[$dataKey] ?? [];
@@ -419,12 +437,57 @@
         }
 
         const chartData = @json($chartData);
+        const outagesData = @json($outages);
+        const period = "{{ $period }}";
+        const chartDate = "{{ $date }}";
+
+        // Function to check if a time period has an outage
+        function hasOutage(index, period, date) {
+            if (!outagesData || outagesData.length === 0) return false;
+            
+            const currentDate = new Date(date);
+            let periodStart, periodEnd;
+            
+            switch(period) {
+                case 'day':
+                    // For hourly data (index 0-23)
+                    periodStart = new Date(currentDate);
+                    periodStart.setHours(index, 0, 0, 0);
+                    periodEnd = new Date(currentDate);
+                    periodEnd.setHours(index, 59, 59, 999);
+                    break;
+                    
+                case 'month':
+                    // For daily data (index 0-30)
+                    periodStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), index + 1, 0, 0, 0);
+                    periodEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), index + 1, 23, 59, 59);
+                    break;
+                    
+                case 'year':
+                    // For monthly data (index 0-11)
+                    periodStart = new Date(currentDate.getFullYear(), index, 1, 0, 0, 0);
+                    periodEnd = new Date(currentDate.getFullYear(), index + 1, 0, 23, 59, 59);
+                    break;
+                    
+                default:
+                    return false;
+            }
+            
+            // Check if any outage overlaps with this period
+            return outagesData.some(outage => {
+                const outageStart = new Date(outage.start_time);
+                const outageEnd = outage.end_time ? new Date(outage.end_time) : new Date(); // If no end time, use current time
+                
+                // Check for overlap: outage starts before period ends AND outage ends after period starts
+                return outageStart <= periodEnd && outageEnd >= periodStart;
+            });
+        }
 
         let periodTranslated;
         const labels = [];
         
         // Generate labels based on period
-        switch("{{ $period }}") {
+        switch(period) {
             case 'day':
                 // For day view - 24 hours (0-23)
                 for (let i = 0; i < 24; i++) {
@@ -448,7 +511,7 @@
                 periodTranslated = '{{ __("energy-chart-widget.months_label") }}';
                 break;
             default:
-                console.error("Unknown period:", "{{ $period }}");
+                console.error("Unknown period:", period);
         }
         
         const chartCanvas = document.getElementById('{{ $type }}Chart');
@@ -462,8 +525,20 @@
         const dataKey = "{{ $dataKey }}";
         const usageData = chartData[dataKey] || [];
         
-        // Keep null values as null for chart (Chart.js handles this properly)
-        const processedData = usageData;
+        // Keep normal bar colors
+        const normalBgColor = '{{ $backgroundColor }}';
+        const normalBorderColor = '{{ $borderColor }}';
+        
+        // Create outage zones for background
+        const outageZones = [];
+        for (let i = 0; i < usageData.length; i++) {
+            if (hasOutage(i, period, chartDate)) {
+                outageZones.push({
+                    index: i,
+                    hasOutage: true
+                });
+            }
+        }
         
         const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
@@ -478,9 +553,9 @@
                 labels: labels,
                 datasets: [{
                     label: '{{ $unitLabel }} {{ __("energy-chart-widget.consumption") }}',
-                    data: processedData,
-                    backgroundColor: '{{ $backgroundColor }}',
-                    borderColor: '{{ $borderColor }}',
+                    data: usageData,
+                    backgroundColor: normalBgColor, // Keep normal colors
+                    borderColor: normalBorderColor, // Keep normal colors
                     borderWidth: 1
                 }]
             },
@@ -491,6 +566,17 @@
                     legend: {
                         labels: {
                             color: titleColor,
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                // Add outage indicator to tooltip
+                                if (hasOutage(context.dataIndex, period, chartDate)) {
+                                    return '⚠️ InfluxDB Uitval Gedetecteerd';
+                                }
+                                return '';
+                            }
                         }
                     }
                 },
@@ -527,9 +613,67 @@
                             lineWidth: 1
                         }
                     }
+                },
+                onHover: function(event, activeElements) {
+                    // Optional: change cursor on hover
+                },
+                animation: {
+                    onComplete: function() {
+                        // Draw outage backgrounds after chart is rendered
+                        drawOutageBackgrounds();
+                    }
                 }
-            }
+            },
+            plugins: [{
+                id: 'outageBackground',
+                beforeDatasetsDraw: function(chart) {
+                    const ctx = chart.ctx;
+                    const chartArea = chart.chartArea;
+                    
+                    // Draw orange background for outage periods
+                    outageZones.forEach(zone => {
+                        if (zone.hasOutage) {
+                            const meta = chart.getDatasetMeta(0);
+                            const bar = meta.data[zone.index];
+                            
+                            if (bar) {
+                                const barWidth = bar.width;
+                                const x = bar.x - barWidth / 2;
+                                
+                                ctx.save();
+                                ctx.fillStyle = 'rgba(249, 115, 22, 0.2)'; // Light orange background
+                                ctx.fillRect(x, chartArea.top, barWidth, chartArea.bottom - chartArea.top);
+                                ctx.restore();
+                            }
+                        }
+                    });
+                }
+            }]
         });
+
+        // Function to draw outage backgrounds (alternative method)
+        function drawOutageBackgrounds() {
+            const ctx = chart.ctx;
+            const chartArea = chart.chartArea;
+            
+            outageZones.forEach(zone => {
+                if (zone.hasOutage) {
+                    const meta = chart.getDatasetMeta(0);
+                    const bar = meta.data[zone.index];
+                    
+                    if (bar) {
+                        const barWidth = bar.width;
+                        const x = bar.x - barWidth / 2;
+                        
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'destination-over';
+                        ctx.fillStyle = 'rgba(249, 115, 22, 0.2)'; // Light orange background
+                        ctx.fillRect(x, chartArea.top, barWidth, chartArea.bottom - chartArea.top);
+                        ctx.restore();
+                    }
+                }
+            });
+        }
 
         // Toggle comparison with last year - Updated version
         const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison');
