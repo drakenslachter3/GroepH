@@ -95,7 +95,7 @@
                                         <div class="flex">
                                             <input 
                                                 type="number" 
-                                                step="0.01" 
+                                                step="0.1" 
                                                 name="meters[{{ $meter->id }}][electricity_target_kwh]" 
                                                 id="electricity_input_{{ $meter->id }}" 
                                                 class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-300"
@@ -143,7 +143,7 @@
                                 <section class="md:col-span-2" aria-labelledby="monthly-budget-heading-{{ $meter->id }}">
                                     <div class="flex justify-between items-center mb-4">
                                         <h3 id="monthly-budget-heading-{{ $meter->id }}" class="font-semibold text-lg dark:text-gray-200">
-                                            {{ __('Maandelijks budget') }}
+                                            {{ __('Maandelijkse budgetten') }}
                                         </h3>
                                         
                                         @if($meter->measures_electricity && $meter->measures_gas)
@@ -162,8 +162,8 @@
                                     <!-- Budget Progress -->
                                     <div class="mb-4" role="status" aria-live="polite">
                                         <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
-                                            <span>Jaarlijks budget: <span class="yearly-total">{{ $meter->measures_electricity ? ($meterBudget->electricity_target_kwh ?? 1750) : ($meterBudget->gas_target_m3 ?? 600) }}</span> <span class="total-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span></span>
-                                            <span>Gebruikt: <span class="used-total">{{ $meter->measures_electricity ? ($meterBudget->electricity_target_kwh ?? 1750) : ($meterBudget->gas_target_m3 ?? 600) }}</span> <span class="used-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span> (<span class="used-percentage">100</span>%)</span>
+                                            <span>Jaarbudget: <span class="yearly-total">{{ $meter->measures_electricity ? ($meterBudget->electricity_target_kwh ?? 1750) : ($meterBudget->gas_target_m3 ?? 600) }}</span> <span class="total-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span></span>
+                                            <span>Verdeeld: <span class="used-total">{{ $meter->measures_electricity ? ($meterBudget->electricity_target_kwh ?? 1750) : ($meterBudget->gas_target_m3 ?? 600) }}</span> <span class="used-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span> (<span class="used-percentage">100</span>%)</span>
                                         </div>
                                         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
                                             <div class="budget-progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
@@ -195,6 +195,23 @@
                                                 {{ __('Dagelijkse budgetten') }}
                                             </h3>
                                             
+                                            @php 
+                                                $months = [
+                                                    1 => 'Januari',
+                                                    2 => 'Februari', 
+                                                    3 => 'Maart',
+                                                    4 => 'April',
+                                                    5 => 'Mei',
+                                                    6 => 'Juni',
+                                                    7 => 'Juli',
+                                                    8 => 'Augustus',
+                                                    9 => 'September',
+                                                    10 => 'Oktober',
+                                                    11 => 'November',
+                                                    12 => 'December'
+                                                ];
+                                            @endphp
+
                                             <!-- Month navigation -->
                                             <div class="flex flex-row gap-2">
                                                 <button class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md">
@@ -202,17 +219,33 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                                     </svg>                                        
                                                 </button>
-                                                <select class="month-select bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-md bg-none text-center px-4 py-2 border-0 min-w-32"
-                                                        data-meter-id="{{ $meter->id }}" onchange="handleMonthChange(this)">
-                                                    <option value="1">Januari</option>
-                                                    <option value="2">Februari</option>
-                                                    <option value="3">Maart</option> 
+                                                <select class="month-select bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-md bg-none text-center px-4 py-2 border-0 min-w-32" data-meter-id="{{ $meter->id }}" onchange="handleMonthChange(this)">
+                                                    @foreach($months as $value => $name)
+                                                        <option value="{{ $value }}">{{ $name }}</option>
+                                                    @endforeach
                                                 </select>
                                                 <button class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                                     </svg>
                                                 </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Budget Progress -->
+                                        <div class="mb-4" role="status" aria-live="polite">
+                                            <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
+                                                <span>Budget voor deze maand: <span class="yearly-total">{{ $meter->measures_electricity ? ($meterBudget->electricity_target_kwh ?? 1750) : ($meterBudget->gas_target_m3 ?? 600) }}</span> <span class="total-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span></span>
+                                                <span>Verdeeld: <span class="used-total">{{ $meter->measures_electricity ? ($meterBudget->electricity_target_kwh ?? 1750) : ($meterBudget->gas_target_m3 ?? 600) }}</span> <span class="used-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span> (<span class="used-percentage">100</span>%)</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
+                                                <div class="budget-progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
+                                            </div>
+                                            <div class="budget-warning text-sm text-yellow-500 dark:text-yellow-400 hidden" aria-live="assertive">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                De dagelijkse budgetten mogen opgeteld niet boven het maandbudget uitkomen.
                                             </div>
                                         </div>
 
@@ -249,6 +282,9 @@
                                                                         class="px-2 py-2 text-center border rounded-md flex-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                                                                         name="day-{{ $day_counter }}"
                                                                         value="{{ $budget_divided }}"
+                                                                        max = "1000"
+                                                                        min = "0"
+                                                                        required
                                                                     />
                                                                 </div>
                                                                 @php $day_counter++; @endphp
@@ -279,6 +315,9 @@
                                                                     class="px-2 py-2 text-center border rounded-md flex-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                                                                     name="day-{{ $day_counter }}"
                                                                     value="{{ $budget_divided }}"
+                                                                    max = "1000"
+                                                                    min = "0"
+                                                                    required
                                                                 />
                                                             </div>
                                                             @php $day_counter++; @endphp
