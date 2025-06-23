@@ -22,7 +22,7 @@
             <!-- No Smart Meters Available -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-14 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Geen slimme meters beschikbaar</h3>
@@ -121,7 +121,7 @@
                                         <div class="flex">
                                             <input 
                                                 type="number" 
-                                                step="0.01" 
+                                                step="0.1" 
                                                 name="meters[{{ $meter->id }}][gas_target_m3]" 
                                                 id="gas_input_{{ $meter->id }}" 
                                                 class="p-2 border dark:border-gray-600 rounded-l w-2/3 dark:bg-gray-700 dark:text-gray-300"
@@ -186,6 +186,115 @@
                                         <!-- Hidden fields will be populated by JavaScript -->
                                     </div>
                                 </section>
+
+                                <!-- Daily budget section -->
+                                <section class="md:col-span-4 h-full" aria-labelledby="monthly-budget-heading-{{ $meter->id }}">
+                                    <div class="flex flex-col h-full">
+                                        <div class="mb-6">
+                                            <h3 id="monthly-budget-heading-{{ $meter->id }}" class="font-semibold text-lg dark:text-gray-200 mb-4">
+                                                {{ __('Dagelijkse budgetten') }}
+                                            </h3>
+                                            
+                                            <!-- Month navigation -->
+                                            <div class="flex flex-row gap-2">
+                                                <button class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                                    </svg>                                        
+                                                </button>
+                                                <select class="month-select bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-md bg-none text-center px-4 py-2 border-0 min-w-32"
+                                                        data-meter-id="{{ $meter->id }}" onchange="handleMonthChange(this)">
+                                                    <option value="1">Januari</option>
+                                                    <option value="2">Februari</option>
+                                                    <option value="3">Maart</option> 
+                                                </select>
+                                                <button class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        @php 
+                                            $year = 2025;
+                                            $month = 1;
+                                            $days_in_current_month = \Carbon\Carbon::createFromDate($year, $month, 1)->daysInMonth;
+                                            $extra_days = $days_in_current_month - 28;
+                                            $day_counter = 1;
+                                            $budget_for_current_month = 1570;
+                                            $budget_divided = round($budget_for_current_month / $days_in_current_month, 1);
+                                        @endphp
+
+                                        <div class="flex-1 flex flex-col gap-6">
+
+                                        <!-- First 4 weeks + extra days grid -->
+                                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
+                                            @for($week = 1; $week <= 4; $week++)
+                                                <div class="week-container bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                                                    <div class="mb-4">
+                                                        <h4 class="font-semibold dark:text-gray-200">Week {{ $week }}</h4>
+                                                    </div>
+                                                    <div class="grid grid-cols-7 gap-2">
+                                                        @for($day = 1; $day <= 7; $day++)
+                                                            @if($day_counter <= $days_in_current_month)
+                                                                <div class="flex flex-col">
+                                                                    <label for="day-{{ $day_counter }}" class="text-xs mb-1 dark:text-gray-300">
+                                                                        {{ $day_counter < 10 ? '0' . $day_counter : $day_counter }}
+                                                                    </label>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        step="0.1" 
+                                                                        id="day-{{ $day_counter }}"
+                                                                        class="px-2 py-2 text-center border rounded-md flex-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                                                        name="day-{{ $day_counter }}"
+                                                                        value="{{ $budget_divided }}"
+                                                                    />
+                                                                </div>
+                                                                @php $day_counter++; @endphp
+                                                            @else
+                                                                <div class="w-full"></div>
+                                                            @endif
+                                                        @endfor
+                                                    </div>
+                                                </div>
+                                            @endfor
+
+                                            {{-- Extra days section als 5e grid item --}}
+                                            @if($extra_days > 0)
+                                                <div class="week-container bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                                                    <div class="mb-4">
+                                                        <h4 class="font-semibold dark:text-gray-200">Overige dagen</h4>
+                                                    </div>
+                                                    <div class="grid grid-cols-7 gap-2">
+                                                        @for($day = 1; $day <= $extra_days; $day++)
+                                                            <div class="flex flex-col">
+                                                                <label for="day-{{ $day_counter }}" class="text-xs mb-1 dark:text-gray-300">
+                                                                    {{ $day_counter < 10 ? '0' . $day_counter : $day_counter }}
+                                                                </label>
+                                                                <input 
+                                                                    type="number" 
+                                                                    step="0.1" 
+                                                                    id="day-{{ $day_counter }}"
+                                                                    class="px-2 py-2 text-center border rounded-md flex-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                                                    name="day-{{ $day_counter }}"
+                                                                    value="{{ $budget_divided }}"
+                                                                />
+                                                            </div>
+                                                            @php $day_counter++; @endphp
+                                                        @endfor
+                                                        
+                                                        {{-- Vul lege kolommen op om grid consistent te houden --}}
+                                                        @for($empty = $extra_days + 1; $empty <= 7; $empty++)
+                                                            <div class="w-full"></div>
+                                                        @endfor
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </section>
+
                             </div>
                         </div>
                     </div>
