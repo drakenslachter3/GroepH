@@ -35,7 +35,6 @@
     $unitLabel = $type === 'electricity' ? 'kWh' : 'm³';
     $backgroundColor = $type === 'electricity' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)';
     $borderColor = $type === 'electricity' ? 'rgb(37, 99, 235)' : 'rgb(217, 119, 6)';
-
     // Dynamic labels based on period
     $currentPeriodLabel = match($period) {
         'day' => $currentDate->isToday() ? 'Totaal vandaag' : 'Totaal op ' . $currentDate->translatedFormat('j F'),
@@ -43,7 +42,6 @@
         'year' => $currentDate->isSameYear(Carbon::now()) ? 'Totaal dit jaar' : 'Totaal in ' . $currentDate->format('Y'),
         default => 'Totaal'
     };
-
     $previousPeriodLabel = match($period) {
         'day' => 'Vorige dag',
         'month' => 'Vorige maand',
@@ -146,14 +144,12 @@
         // Use the same calculation method as the dashboard controller for consistency
         $currentTotal = 0;
         $previousTotal = 0;
-
         // Calculate totals by filtering out null values and only including actual data
         foreach ($currentData as $index => $value) {
             if ($value !== null && is_numeric($value)) {
                 $currentTotal += $value;
             }
         }
-
         foreach ($previousData as $index => $value) {
             if ($value !== null && is_numeric($value)) {
                 $previousTotal += $value;
@@ -327,7 +323,6 @@
                             if ($value !== null && is_numeric($value)) {
                                 $totalCurrent += $value;
                             }
-
                             $prevValue = $previousData[$index] ?? null;
                             if ($prevValue !== null && is_numeric($prevValue)) {
                                 $totalPrevious += $prevValue;
@@ -513,13 +508,11 @@
                     periodEnd = new Date(currentDate);
                     periodEnd.setHours(index, 59, 59, 999);
                     break;
-
                 case 'month':
                     // For daily data (index 0-30)
                     periodStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), index + 1, 0, 0, 0);
                     periodEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), index + 1, 23, 59, 59);
                     break;
-
                 case 'year':
                     // For monthly data (index 0-11)
                     periodStart = new Date(currentDate.getFullYear(), index, 1, 0, 0, 0);
@@ -534,7 +527,6 @@
             return outagesData.some(outage => {
                 const outageStart = new Date(outage.start_time);
                 const outageEnd = outage.end_time ? new Date(outage.end_time) : new Date(); // If no end time, use current time
-
                 // Check for overlap: outage starts before period ends AND outage ends after period starts
                 return outageStart <= periodEnd && outageEnd >= periodStart;
             });
@@ -596,7 +588,6 @@
                 });
             }
         }
-
         const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
         // Use a more subtle axis color with opacity for better blending
@@ -686,7 +677,6 @@
                 beforeDatasetsDraw: function(chart) {
                     const ctx = chart.ctx;
                     const chartArea = chart.chartArea;
-
                     // Draw orange background for outage periods
                     outageZones.forEach(zone => {
                         if (zone.hasOutage) {
@@ -712,7 +702,6 @@
         function drawOutageBackgrounds() {
             const ctx = chart.ctx;
             const chartArea = chart.chartArea;
-
             outageZones.forEach(zone => {
                 if (zone.hasOutage) {
                     const meta = chart.getDatasetMeta(0);
@@ -792,24 +781,21 @@
 
         if (toggleButton) {
             toggleButton.addEventListener('click', function () {
-                const isVisible = chart.data.datasets.length > 1;
-
+                // Always get the wrapper by id, in case there are multiple charts
                 const formWrapper = document.getElementById('comparison-date-form-wrapper-{{ $type }}');
-                console.log(formWrapper);
+                // Determine if comparison is currently shown for this chart
+                const isVisible = !formWrapper.classList.contains('hidden');
                 if (isVisible) {
                     hideComparison();
-                    formWrapper.style.display = 'none';
+                    formWrapper.classList.add('hidden');
                 } else {
                     showComparison();
-                    formWrapper.style.display = '';
+                    formWrapper.classList.remove('hidden');
                 }
-
                 // Announce the change to screen readers
                 const announcement = isVisible ?
                     '{{ __("energy-chart-widget.comparison_hidden") }}' :
                     '{{ __("energy-chart-widget.comparison_shown") }}';
-
-                // Create temporary announcement for screen readers
                 const announcer = document.createElement('div');
                 announcer.setAttribute('aria-live', 'polite');
                 announcer.setAttribute('aria-atomic', 'true');
