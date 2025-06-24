@@ -188,10 +188,10 @@
                                 </section>
 
                                 <!-- Daily budget section -->
-                                <section class="md:col-span-4 h-full" aria-labelledby="monthly-budget-heading-{{ $meter->id }}">
+                                <section id="daily-budget-section-{{ $meter->id }}" class="md:col-span-4 h-full" aria-labelledby="daily-budget-heading-{{ $meter->id }}" data-month="1" data-budget-for-month="0">
                                     <div class="flex flex-col h-full">
                                         <div class="mb-6">
-                                            <h3 id="monthly-budget-heading-{{ $meter->id }}" class="font-semibold text-lg dark:text-gray-200 mb-4">
+                                            <h3 class="font-semibold text-lg dark:text-gray-200 mb-4">
                                                 {{ __('Dagelijkse budgetten') }}
                                             </h3>
                                             
@@ -214,17 +214,17 @@
 
                                             <!-- Month navigation -->
                                             <div class="flex flex-row gap-2">
-                                                <button class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md">
+                                                <button id="left-button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md disabled">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                                     </svg>                                        
                                                 </button>
-                                                <select class="month-select bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-md bg-none text-center px-4 py-2 border-0 min-w-32" data-meter-id="{{ $meter->id }}" onchange="handleMonthChange(this)">
+                                                <select class="month-select bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-md bg-none text-center px-4 py-2 border-0 min-w-32" data-meter-id="{{ $meter->id }}" onchange="handleMonthChange(this.dataset.meterId, this.value)">
                                                     @foreach($months as $value => $name)
                                                         <option value="{{ $value }}">{{ $name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <button class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md">
+                                                <button id="right-button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-md">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                                     </svg>
@@ -255,8 +255,8 @@
                                             $days_in_current_month = \Carbon\Carbon::createFromDate($year, $month, 1)->daysInMonth;
                                             $extra_days = $days_in_current_month - 28;
                                             $day_counter = 1;
-                                            $budget_for_current_month = 1570;
-                                            $budget_divided = round($budget_for_current_month / $days_in_current_month, 1);
+                                            $budget_for_current_month = 1500;
+                                            $budget_divided = floor($budget_for_current_month / $days_in_current_month);
                                         @endphp
 
                                         <div class="flex-1 flex flex-col gap-6">
@@ -278,12 +278,12 @@
                                                                     <input 
                                                                         type="number" 
                                                                         step="0.1" 
-                                                                        id="day-{{ $day_counter }}"
                                                                         class="px-2 py-2 text-center border rounded-md flex-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                                                                         name="day-{{ $day_counter }}"
                                                                         value="{{ $budget_divided }}"
                                                                         max = "1000"
                                                                         min = "0"
+                                                                        data-meter-id="{{ $meter->id }}"
                                                                         required
                                                                     />
                                                                 </div>
@@ -311,12 +311,12 @@
                                                                 <input 
                                                                     type="number" 
                                                                     step="0.1" 
-                                                                    id="day-{{ $day_counter }}"
                                                                     class="px-2 py-2 text-center border rounded-md flex-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                                                                     name="day-{{ $day_counter }}"
                                                                     value="{{ $budget_divided }}"
                                                                     max = "1000"
                                                                     min = "0"
+                                                                    data-meter-id="{{ $meter->id }}"
                                                                     required
                                                                 />
                                                             </div>
@@ -504,6 +504,8 @@
             meterBudgetData.forEach((data, meterId) => {
                 renderMonthlySliders(meterId);
                 updateBudgetDisplay(meterId);
+
+                updateProgressBarDailyBudgets(meterId);
                 
                 // Add event listeners for yearly budget changes
                 if (data.measures_electricity) {
@@ -667,6 +669,7 @@
                     valueInput.step = '0.1';
                     valueInput.value = monthlyValues[index].toFixed(1);
                     valueInput.className = 'text-sm dark:text-gray-300 mt-1 p-1 border dark:border-gray-600 rounded w-full text-center dark:bg-gray-700';
+                    valueInput.setAttribute('data-month', index + 1);
                     
                     valueInput.addEventListener('change', function() {
                         const newValue = parseFloat(this.value) || 0;
@@ -751,6 +754,110 @@
                     progressBar.classList.add('bg-yellow-500');
                 } else {
                     progressBar.classList.add('bg-blue-600');
+                }
+            }
+
+            // SECTIE VOOR DAGELIJKSE BUDGETTEN BEGIN
+
+            window.handleMonthChange = function(meter_id, month_number) {
+                
+                // Data attributen in sectie goed zetten
+                const meterSection = document.getElementById(`daily-budget-section-${meter_id}`);
+                meterSection.setAttribute('data-month', month_number);
+                meterSection.setAttribute('data-budget-for-month', getBudgetForMonth(meter_id, month_number));
+                
+                // Knoppen goed zetten
+                const leftButton = document.getElementById('left-button');
+                const rightButton = document.getElementById('right-button');
+
+                if (month_number == 1) {
+                   leftButton.disabled = true;
+                   rightButton.disabled = false;
+                } else if (month_number == 12) {
+                    rightButton.disabled = true;
+                    leftButton.disabled = false;
+                } else {
+                    leftButton.disabled = false;
+                    rightButton.disabled = false;
+                }
+            };
+
+            function getBudgetForMonth(meter_id, month_number){
+
+                const slidersContainer = document.querySelector(`.monthly-sliders-container[data-meter-id="${meter_id}"]`);
+                const input = slidersContainer.querySelector(`input[data-month="${month_number}"]`);
+                return input.value || 0;
+            }
+
+            // Daily budget input fields listener
+            const dayInputs = document.querySelectorAll('input[name^="day-"]');
+            let old_input_value;
+
+            //TODO !!
+            dayInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const meter_id = this.getAttribute('data-meter-id');
+                    if (meter_id) {
+                       if(addingNewValueExeedsMonthlyBudget(input.value, meter_id)) {
+                            input.value = 999;
+                       } else {
+                            updateProgressBarDailyBudgets(meter_id);
+                       }
+                    }
+                });
+            });
+
+            function calculateDailyBudgetSum(meter_id) {
+                let total = 0;
+                const meterSection = document.getElementById(`daily-budget-section-${meter_id}`);
+                
+                const dayInputs = meterSection.querySelectorAll('input[name^="day-"]');
+                
+                dayInputs.forEach(input => {
+                    const value = parseFloat(input.value) || 0;
+                    total += value;
+                });
+                
+                return total;
+            }
+
+            function addingNewValueExeedsMonthlyBudget(value, meter_id){
+                const meterSection = document.getElementById(`daily-budget-section-${meter_id}`);
+                const budget = meterSection.getAttribute('data-budget-for-month');
+
+                return parseFloat(value) + calculateDailyBudgetSum(meter_id) > parseFloat(budget);
+            }
+
+            // TODO !!
+            function updateProgressBarDailyBudgets(meter_id) {
+                const meterSection = document.getElementById(`daily-budget-section-${meter_id}`);
+                const bar = meterSection.querySelector('.budget-progress-bar');
+                const usedTotalSpan = meterSection.querySelector('.used-total');
+                const usedPercentageSpan = meterSection.querySelector('.used-percentage');
+                const yearlyTotalSpan = meterSection.querySelector('.yearly-total');
+                const budgetWarning = meterSection.querySelector('.budget-warning');
+                
+                const totalDailyBudget = calculateDailyBudgetSum(meter_id);
+                const availableBudget = parseFloat(yearlyTotalSpan.textContent) || 100;
+                
+                const percentage = (totalDailyBudget / availableBudget) * 100;
+                
+                usedTotalSpan.textContent = totalDailyBudget;
+                usedPercentageSpan.textContent = Math.round(percentage);
+                
+                bar.style.width = Math.min(percentage, 100) + '%';
+                
+                bar.classList.remove('bg-red-500', 'bg-yellow-500', 'bg-blue-600');
+                
+                if (percentage > 100) {
+                    bar.classList.add('bg-red-500');
+                    budgetWarning.classList.remove('hidden');
+                } else if (percentage > 95) {
+                    bar.classList.add('bg-yellow-500');
+                    budgetWarning.classList.add('hidden');
+                } else {
+                    bar.classList.add('bg-blue-600');
+                    budgetWarning.classList.add('hidden');
                 }
             }
         });
