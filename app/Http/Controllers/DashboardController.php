@@ -912,6 +912,16 @@ class DashboardController extends Controller
         return redirect()->route('dashboard')->with('status', 'Dashboard layout is gereset!');
     }
 
+    public function saveComparisonToggle(Request $request)
+    {
+        $type = $request->input('type');
+        $value = $request->input('value') ? true : false;
+        if ($type) {
+            session(['energy_chart_comparison_' . $type => $value]);
+        }
+        return response()->json(['success' => true]);
+    }
+
     private function getDefaultLayout()
     {
         return [

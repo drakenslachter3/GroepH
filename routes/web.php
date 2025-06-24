@@ -66,6 +66,8 @@ Route::middleware('auth', 'budget.check')->group(function () {
     Route::post('/dashboard', [DashboardController::class, 'saveSelectedMeter'])->name('dashboard.saveSelectedMeter');
     Route::post('/dashboard/refresh', [DashboardController::class, 'refreshData'])->name('dashboard.refresh');
 
+    Route::post('/dashboard/comparison-toggle', [DashboardController::class, 'saveComparisonToggle'])->name('dashboard.comparison-toggle');
+
     Route::post('/energy/store-data', [InfluxDataController::class, 'storeEnergyData'])
         ->name('energy.store-data');
 });

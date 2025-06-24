@@ -50,6 +50,9 @@
         'year' => 'Vorig jaar',
         default => 'Vorige periode'
     };
+
+    $sessionComparisonKey = 'energy_chart_comparison_' . $type;
+    $comparisonActive = session($sessionComparisonKey, false) || request('comparison_date');
 @endphp
 
 <section class="p-2" aria-labelledby="chart-widget-title">
@@ -190,52 +193,62 @@
 
 
     <div class="mt-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-        <form id="comparison-date-form-{{ $type }}" method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2 m-0 p-0" style="display: block;">
-            <input type="hidden" name="period" value="{{ $period }}">
-            <input type="hidden" name="date" value="{{ $date }}">
-            <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
-            <label for="comparison-date-{{ $type }}" class="text-sm font-medium text-gray-700 dark:text-gray-200 mr-2">
-                {{ __('energy-chart-widget.select_comparison_date') }}
-            </label>
-            @php
-                $maxDate = match($period) {
-                    'day' => Carbon::parse($date)->subDay()->format('Y-m-d'),
-                    'month' => Carbon::parse($date)->subMonthNoOverflow()->format('Y-m'),
-                    'year' => Carbon::parse($date)->subYear()->format('Y'),
-                    default => Carbon::now()->subDay()->format('Y-m-d')
-                };
-                $minDate = '2020-01-01';
-                $inputType = match($period) {
-                    'day' => 'date',
-                    'month' => 'month',
-                    'year' => 'number',
-                    default => 'date'
-                };
-                $defaultComparison = request('comparison_date') ?: match($period) {
-                    'day' => Carbon::parse($date)->subYear()->format('Y-m-d'),
-                    'month' => Carbon::parse($date)->subYear()->format('Y-m'),
-                    'year' => Carbon::parse($date)->subYear()->format('Y'),
-                    default => Carbon::parse($date)->subYear()->format('Y-m-d')
-                };
-            @endphp
-                <input
-                id="comparison-date-{{ $type }}"
-                name="comparison_date"
-                type="{{ $inputType }}"
-                min="{{ $period === 'year' ? '2020' : $minDate }}"
-                max="{{ $period === 'year' ? now()->year - 1 : $maxDate }}"
-                step="1"
-                class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm focus:ring-2 focus:ring-{{ $buttonColor }}-500 focus:border-{{ $buttonColor }}-500 transition-colors"
-                style="min-width: 110px;"
-                value="{{ $defaultComparison }}"
-                aria-label="{{ __('energy-chart-widget.select_comparison_date_label') }}"
-                onchange="this.form.submit()"
-            >
-        </form>
+        <!-- Button on the left -->
         <button id="toggle{{ ucfirst($type) }}Comparison"
             class="text-sm px-3 py-1 rounded {{ $c['bg'] }} {{ $c['text'] }} {{ $c['hover'] }} {{ $c['darkBg'] }} {{ $c['darkText'] }} {{ $c['darkHover'] }}">
             {{ __('energy-chart-widget.show_comparison') }}
         </button>
+
+        <!-- Date form on the right -->
+        <div id="comparison-date-form-wrapper-{{ $type }}" class="{{ $comparisonActive ? '' : 'hidden' }}">
+            <form id="comparison-date-form-{{ $type }}" method="GET" action="{{ route('dashboard') }}"
+                  class="flex items-center gap-2 m-0 p-0">
+                <input type="hidden" name="period" value="{{ $period }}">
+                <input type="hidden" name="date" value="{{ $date }}">
+                <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
+
+                <label for="comparison-date-{{ $type }}"
+                       class="text-sm font-medium text-gray-700 dark:text-gray-200 mr-2">
+                    {{ __('energy-chart-widget.select_comparison_date') }}
+                </label>
+
+                @php
+                    $maxDate = match($period) {
+                        'day' => Carbon::parse($date)->subDay()->format('Y-m-d'),
+                        'month' => Carbon::parse($date)->subMonthNoOverflow()->format('Y-m'),
+                        'year' => Carbon::parse($date)->subYear()->format('Y'),
+                        default => Carbon::now()->subDay()->format('Y-m-d')
+                    };
+                    $minDate = '2020-01-01';
+                    $inputType = match($period) {
+                        'day' => 'date',
+                        'month' => 'month',
+                        'year' => 'number',
+                        default => 'date'
+                    };
+                    $defaultComparison = request('comparison_date') ?: match($period) {
+                        'day' => Carbon::parse($date)->subYear()->format('Y-m-d'),
+                        'month' => Carbon::parse($date)->subYear()->format('Y-m'),
+                        'year' => Carbon::parse($date)->subYear()->format('Y'),
+                        default => Carbon::parse($date)->subYear()->format('Y-m-d')
+                    };
+                @endphp
+
+                <input
+                    id="comparison-date-{{ $type }}"
+                    name="comparison_date"
+                    type="{{ $inputType }}"
+                    min="{{ $period === 'year' ? '2020' : $minDate }}"
+                    max="{{ $period === 'year' ? now()->year - 1 : $maxDate }}"
+                    step="1"
+                    class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm focus:ring-2 focus:ring-{{ $buttonColor }}-500 focus:border-{{ $buttonColor }}-500 transition-colors"
+                    style="min-width: 110px;"
+                    value="{{ $defaultComparison }}"
+                    aria-label="{{ __('energy-chart-widget.select_comparison_date_label') }}"
+                    onchange="this.form.submit()"
+                >
+            </form>
+        </div>
     </div>
 
     {{-- Accessible table for screen reader --}}
@@ -719,10 +732,23 @@
             });
         }
 
-        // Toggle comparison with last year - Updated version
         const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison');
         const previousTotalEl = document.getElementById('previous-year-total-{{$type}}');
         const previousYearComparisons = document.querySelectorAll('.previous-year-comparison-{{$type}}');
+
+        function saveComparisonState(isVisible) {
+            fetch('/dashboard/comparison-toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    type: '{{ $type }}',
+                    value: isVisible ? 1 : 0
+                })
+            });
+        }
 
         function showComparison() {
             if (chart.data.datasets.length < 2) {
@@ -743,6 +769,7 @@
                 });
                 toggleButton.textContent = '{{ __("energy-chart-widget.hide_comparison") }}';
                 chart.update();
+                saveComparisonState(true);
             }
         }
 
@@ -759,19 +786,22 @@
                 });
                 toggleButton.textContent = '{{ __("energy-chart-widget.show_comparison") }}';
                 chart.update();
+                saveComparisonState(false);
             }
         }
 
         if (toggleButton) {
             toggleButton.addEventListener('click', function () {
                 const isVisible = chart.data.datasets.length > 1;
-                const previousTotalEl = document.getElementById('previous-year-total-{{$type}}');
-                const previousYearComparisons = document.querySelectorAll('.previous-year-comparison-{{$type}}');
 
+                const formWrapper = document.getElementById('comparison-date-form-wrapper-{{ $type }}');
+                console.log(formWrapper);
                 if (isVisible) {
                     hideComparison();
+                    formWrapper.style.display = 'none';
                 } else {
                     showComparison();
+                    formWrapper.style.display = '';
                 }
 
                 // Announce the change to screen readers
@@ -792,35 +822,9 @@
             });
         }
 
-        // Auto-show comparison if comparison_date is set
-        if (comparisonDate) {
+        // Auto-show comparison if session or comparison_date is set
+        if (@json($comparisonActive)) {
             showComparison();
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison');
-        const comparisonForm = document.getElementById('comparison-date-form-{{ $type }}');
-        const comparisonDate = '{{ request('comparison_date', '') }}';
-        function showComparisonForm() {
-            if (comparisonForm) comparisonForm.style.display = '';
-        }
-        function hideComparisonForm() {
-            if (comparisonForm) comparisonForm.style.display = 'none';
-        }
-        if (toggleButton) {
-            toggleButton.addEventListener('click', function () {
-                const isVisible = chart.data.datasets.length > 1;
-                if (!isVisible) {
-                    showComparisonForm();
-                } else {
-                    hideComparisonForm();
-                }
-            });
-        }
-        // Show form if comparison is active or comparison_date is set
-        if (comparisonDate) {
-            showComparisonForm();
         }
     });
 </script>
