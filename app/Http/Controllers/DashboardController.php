@@ -121,6 +121,15 @@ class DashboardController extends Controller
 
         $meterDataForPeriod = $this->getEnergyData($selectedMeterId, $period, $date);
 
+        // If a comparison_date is set, fetch historical data for that date (same period type)
+        $comparisonDate = $request->input('comparison_date');
+        // dd($comparisonDate);
+        if ($comparisonDate) {
+            $historicalData = $this->getEnergyData($selectedMeterId, $period, $comparisonDate);
+            $meterDataForPeriod['historical_data'] = $historicalData['current_data'] ?? $historicalData;
+        }
+
+        // Log the meter data for debugging
         \Log::debug("Meter data structure: " . json_encode(array_keys($meterDataForPeriod)));
 
         // Check if selected date is in the future
@@ -901,6 +910,16 @@ class DashboardController extends Controller
         );
 
         return redirect()->route('dashboard')->with('status', 'Dashboard layout is gereset!');
+    }
+
+    public function saveComparisonToggle(Request $request)
+    {
+        $type = $request->input('type');
+        $value = $request->input('value') ? true : false;
+        if ($type) {
+            session(['energy_chart_comparison_' . $type => $value]);
+        }
+        return response()->json(['success' => true]);
     }
 
     private function getDefaultLayout()

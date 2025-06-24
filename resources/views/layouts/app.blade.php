@@ -34,7 +34,7 @@
             <!-- Page Content -->
             <main tabindex="0" id="main-content">
                 @yield('content')
-                {{ $slot ?? '' }}   
+                {{ $slot ?? '' }}
             </main>
         </div>
     </body>

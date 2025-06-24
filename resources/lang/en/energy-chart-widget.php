@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'select_comparison_date' => 'Vergelijk met datum',
     'navigation_label' => 'Dashboard navigatie en periode selectie',
     'table_view_sr' => ' - tabelweergave voor schermlezers',
     'consumption' => 'Verbruik',
@@ -23,7 +24,7 @@ return [
     'months_label' => 'Maanden',
     'electricity_kwh' => 'Elektriciteit (kWh)',
     'gas_m3' => 'Gas (m³)',
-    'consumption_last_year' => 'Verbruik Vorig Jaar',
+    'consumption_last_year' => 'Verbruik Vorige Periode',
     'months' => [
         'january' => 'Januari',
         'february' => 'Februari',
