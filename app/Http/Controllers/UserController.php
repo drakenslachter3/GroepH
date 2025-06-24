@@ -108,4 +108,45 @@ class UserController extends Controller
         return redirect()->route('users.index')
             ->with('status', 'Gebruiker succesvol verwijderd!');
     }
+
+    /**
+     * Show form to add suggestion for user
+     */
+    public function createSuggestion(User $user)
+    {
+        return view('users.create-suggestion', compact('user'));
+    }
+
+    /**
+     * Store a new suggestion for user
+     */
+    public function storeSuggestion(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'suggestion' => 'required|string|max:1000',
+        ]);
+
+        UserSuggestion::create([
+            'user_id' => $user->id,
+            'created_by' => auth()->id(),
+            'title' => $validated['title'],
+            'suggestion' => $validated['suggestion'],
+        ]);
+
+        return redirect()->route('users.show', $user)
+            ->with('status', 'Energietip toegevoegd voor ' . $user->name);
+    }
+
+    /**
+     * Delete a suggestion
+     */
+    public function deleteSuggestion(UserSuggestion $suggestion)
+    {
+        $user = $suggestion->user;
+        $suggestion->delete();
+
+        return redirect()->route('users.show', $user)
+            ->with('status', 'Energietip verwijderd');
+    }
 }

@@ -159,6 +159,6 @@ class User extends Authenticatable
 
     public function activeSuggestions()
     {
-        return $this->hasMany(UserSuggestion::class)->active();
+        return $this->hasMany(UserSuggestion::class)->where('status', 'active');
     }
 }

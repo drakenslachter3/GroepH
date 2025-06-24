@@ -13,7 +13,6 @@ use App\Http\Controllers\SmartMeterController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\UserManagementController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -132,43 +131,20 @@ Route::middleware(['auth', CheckRole::class . ':admin'])->group(function () {
     Route::put('/influxdb-outages/{influxdbOutage}/edit', [App\Http\Controllers\InfluxdbOutageController::class, 'update'])->name('admin.influxdb-outages.update');
     Route::delete('/influxdb-outages/{influxdbOutage}', [App\Http\Controllers\InfluxdbOutageController::class, 'destroy'])->name('admin.influxdb-outages.destroy');
 
+    Route::get('/users/{user}/suggestions/create', [UserController::class, 'createSuggestion'])
+        ->name('users.create-suggestion');
+    Route::post('/users/{user}/suggestions', [UserController::class, 'storeSuggestion'])
+        ->name('users.store-suggestion');
+    Route::delete('/suggestions/{suggestion}', [UserController::class, 'deleteSuggestion'])
+        ->name('users.delete-suggestion');
 });
 
-// Profile routes (for authenticated users)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-
-    // Suggestion actions for users
     Route::post('/profile/suggestions/{suggestion}/dismiss', [ProfileController::class, 'dismissSuggestion'])
         ->name('profile.suggestions.dismiss');
     Route::post('/profile/suggestions/{suggestion}/complete', [ProfileController::class, 'completeSuggestion'])
         ->name('profile.suggestions.complete');
 });
-
-// Admin routes
-Route::middleware(['auth', CheckRole::class . ':admin'])->prefix('admin')->group(function () {
-    // User management
-    Route::get('/users', [UserManagementController::class, 'index'])
-        ->name('admin.users.index');
-    Route::get('/users/{user}', [UserManagementController::class, 'show'])
-        ->name('admin.users.show');
-
-    // Suggestion management
-    Route::get('/users/{user}/suggestions/create', [UserManagementController::class, 'createSuggestion'])
-        ->name('admin.users.create-suggestion');
-    Route::post('/users/{user}/suggestions', [UserManagementController::class, 'storeSuggestion'])
-        ->name('admin.users.store-suggestion');
-    Route::patch('/suggestions/{suggestion}', [UserManagementController::class, 'updateSuggestion'])
-        ->name('admin.users.update-suggestion');
-    Route::delete('/suggestions/{suggestion}', [UserManagementController::class, 'deleteSuggestion'])
-        ->name('admin.users.delete-suggestion');
-
-    // Suggestions overview
-    Route::get('/suggestions', [UserManagementController::class, 'suggestionsOverview'])
-        ->name('admin.suggestions.overview');
-});
-
 require __DIR__ . '/auth.php';
 
 Route::get('/influx', [InfluxDataController::class, 'index'])->name('influx.index');

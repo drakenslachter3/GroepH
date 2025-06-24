@@ -2,85 +2,41 @@
 
 namespace App\Services;
 
-use App\Models\EnergyNotification;
 use App\Models\User;
-use App\Services\EnergyPredictionService;
+use App\Models\EnergyNotification;
 use Carbon\Carbon;
 
 class EnergyNotificationService
 {
-    protected $predictionService;
-
-    public function __construct(EnergyPredictionService $predictionService = null)
-    {
-        $this->predictionService = $predictionService;
-    }
-
     /**
-     * Generate notifications for a user based on their energy usage predictions
+     * Check if a user should receive a notification based on their prediction data
      */
-    public function generateNotificationsForUser(User $user, array $electricityData, array $gasData, string $period)
+    public function checkAndCreateNotification(User $user, array $predictionData, string $period = 'month')
     {
-        // Don't generate notifications if the user has opted out
-        if ($user->getNotificationFrequency() === 'never') {
-            return;
+        // Only create notification if user exceeds their budget
+        if ($predictionData['predicted_percentage'] <= 100) {
+            return false;
         }
 
-        // Check the last time we generated notifications
-        $lastNotification = EnergyNotification::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+        // Check if user already has a recent notification for this type and period
+        $recentNotification = EnergyNotification::where('user_id', $user->id)
+            ->where('type', $predictionData['type'])
+            ->where('status', '!=', 'dismissed')
+            ->where('created_at', '>', now()->subDays($this->getNotificationCooldown($period)))
             ->first();
 
-        // Check if we should generate based on user's preferred frequency
-        if ($lastNotification) {
-            $shouldGenerate = $this->shouldGenerateNotification(
-                $lastNotification->created_at,
-                $user->getNotificationFrequency()
-            );
-
-            if (!$shouldGenerate) {
-                return;
-            }
+        if ($recentNotification) {
+            return false;
         }
 
-        // Check if the user is on track for their electricity usage
-        $electricityThreshold = $user->electricity_threshold ?? 10;
-        if ($electricityData && $this->isOverThreshold($electricityData, $electricityThreshold)) {
-            $this->createElectricityNotification($user, $electricityData, $period);
+        // Create appropriate notification based on energy type
+        if ($predictionData['type'] === 'electricity') {
+            $this->createElectricityNotification($user, $predictionData, $period);
+        } else {
+            $this->createGasNotification($user, $predictionData, $period);
         }
 
-        // Check if the user is on track for their gas usage
-        $gasThreshold = $user->gas_threshold ?? 10;
-        if ($gasData && $this->isOverThreshold($gasData, $gasThreshold)) {
-            $this->createGasNotification($user, $gasData, $period);
-        }
-    }
-
-    /**
-     * Determine if we should generate a new notification based on frequency
-     */
-    private function shouldGenerateNotification(Carbon $lastCreated, string $frequency): bool
-    {
-        switch ($frequency) {
-            case 'daily':
-                return $lastCreated->diffInDays(now()) >= 1;
-            case 'weekly':
-                return $lastCreated->diffInWeeks(now()) >= 1;
-            case 'monthly':
-                return $lastCreated->diffInMonths(now()) >= 1;
-            default:
-                return false;
-        }
-    }
-
-    /**
-     * Check if the predicted usage is over the threshold percentage
-     */
-    private function isOverThreshold(array $data, int $thresholdPercentage): bool
-    {
-        // If predicted usage is over the threshold percentage (e.g., 110% of target)
-        return isset($data['predicted_percentage']) &&
-            ($data['predicted_percentage'] - 100) >= $thresholdPercentage;
+        return true;
     }
 
     /**
@@ -89,7 +45,7 @@ class EnergyNotificationService
     private function createElectricityNotification(User $user, array $data, string $period)
     {
         $severity = $this->getSeverityLevel($data['predicted_percentage'] - 100);
-        $suggestions = $this->getElectricitySavingSuggestions($period);
+        $suggestions = $this->getCombinedSuggestions($user, 'electricity', $period);
 
         EnergyNotification::create([
             'user_id' => $user->id,
@@ -110,7 +66,7 @@ class EnergyNotificationService
     private function createGasNotification(User $user, array $data, string $period)
     {
         $severity = $this->getSeverityLevel($data['predicted_percentage'] - 100);
-        $suggestions = $this->getGasSavingSuggestions($period);
+        $suggestions = $this->getCombinedSuggestions($user, 'gas', $period);
 
         EnergyNotification::create([
             'user_id' => $user->id,
@@ -123,6 +79,50 @@ class EnergyNotificationService
             'status' => 'unread',
             'expires_at' => $this->getExpirationDate($user->getNotificationFrequency()),
         ]);
+    }
+
+    /**
+     * Combineer standaard suggestions met gepersonaliseerde custom suggestions
+     */
+    private function getCombinedSuggestions(User $user, string $energyType, string $period): array
+    {
+        $suggestions = [];
+
+        // Voeg custom suggestions toe (prioriteit)
+        $customSuggestions = $this->getCustomSuggestions($user);
+        $suggestions = array_merge($suggestions, $customSuggestions);
+
+        // Voeg standaard suggestions toe
+        if ($energyType === 'electricity') {
+            $standardSuggestions = $this->getElectricitySavingSuggestions($period);
+        } else {
+            $standardSuggestions = $this->getGasSavingSuggestions($period);
+        }
+
+        $suggestions = array_merge($suggestions, $standardSuggestions);
+
+        // Limiteer tot maximaal 5 suggestions voor leesbaarheid
+        return array_slice($suggestions, 0, 5);
+    }
+
+    /**
+     * Haal actieve custom suggestions op voor een gebruiker
+     */
+    private function getCustomSuggestions(User $user): array
+    {
+        $customSuggestions = $user->activeSuggestions()
+            ->latest()
+            ->limit(3) // Maximaal 3 custom suggestions
+            ->get();
+
+        return $customSuggestions->map(function ($suggestion) {
+            return [
+                'title' => $suggestion->title,
+                'description' => $suggestion->suggestion,
+                'saving' => 'Persoonlijke tip', // Aangepaste indicator
+                'type' => 'custom' // Om onderscheid te maken
+            ];
+        })->toArray();
     }
 
     /**
@@ -205,11 +205,13 @@ class EnergyNotificationService
                 'title' => 'Verlichting efficiënt gebruiken',
                 'description' => 'Vervang gloeilampen door LED en schakel lichten uit in ruimtes waar je niet bent.',
                 'saving' => 'tot 5 kWh per week',
+                'type' => 'standard'
             ],
             [
                 'title' => 'Apparaten volledig uitschakelen',
                 'description' => 'Apparaten in stand-by modus verbruiken nog steeds stroom. Gebruik een stekkerdoos met schakelaar.',
                 'saving' => 'tot 3 kWh per week',
+                'type' => 'standard'
             ],
         ];
 
@@ -219,12 +221,14 @@ class EnergyNotificationService
                 'title' => 'Verwarm efficiënt',
                 'description' => 'Gebruik een elektrische deken in plaats van de hele slaapkamer te verwarmen.',
                 'saving' => 'tot 10 kWh per week',
+                'type' => 'standard'
             ];
         } elseif ($season === 'summer') {
             $suggestions[] = [
                 'title' => 'Koel efficiënt',
                 'description' => 'Gebruik een ventilator in plaats van airconditioning, of stel je airco 2 graden hoger in.',
                 'saving' => 'tot 15 kWh per week',
+                'type' => 'standard'
             ];
         }
 
@@ -243,26 +247,23 @@ class EnergyNotificationService
                 'title' => 'Verwarm slim',
                 'description' => 'Zet de thermostaat 1 graad lager en draag een extra laag kleding.',
                 'saving' => 'tot 5% op je gasverbruik',
+                'type' => 'standard'
             ],
             [
                 'title' => 'Douche korter',
                 'description' => 'Verkort je douchetijd met 2 minuten en bespaar warm water.',
                 'saving' => 'tot 3 m³ gas per maand',
+                'type' => 'standard'
             ],
         ];
 
         // Add seasonal suggestions
         if ($season === 'winter') {
             $suggestions[] = [
-                'title' => 'Voorkom warmteverlies',
-                'description' => 'Plaats radiatorfolie achter je radiatoren en gebruik tochtstrips.',
-                'saving' => 'tot 5% op je gasverbruik',
-            ];
-        } elseif ($season === 'summer') {
-            $suggestions[] = [
-                'title' => 'Zet de CV-ketel uit',
-                'description' => 'In de zomer heb je vaak geen verwarming nodig. Zet je CV-ketel in zomerstand.',
-                'saving' => 'tot 7% op je gasverbruik',
+                'title' => 'Isolatie controleren',
+                'description' => 'Controleer of ramen en deuren goed sluiten. Plaats tochtstrips waar nodig.',
+                'saving' => 'tot 10% op je gasverbruik',
+                'type' => 'standard'
             ];
         }
 
@@ -270,25 +271,42 @@ class EnergyNotificationService
     }
 
     /**
-     * Get current season
+     * Get current season for seasonal suggestions
      */
     private function getCurrentSeason(): string
     {
-        $month = date('n');
+        $month = Carbon::now()->month;
 
-        if ($month >= 3 && $month <= 5) {
-            return 'spring';
-        } elseif ($month >= 6 && $month <= 8) {
-            return 'summer';
-        } elseif ($month >= 9 && $month <= 11) {
-            return 'autumn';
-        } else {
+        if (in_array($month, [12, 1, 2])) {
             return 'winter';
+        } elseif (in_array($month, [3, 4, 5])) {
+            return 'spring';
+        } elseif (in_array($month, [6, 7, 8])) {
+            return 'summer';
+        } else {
+            return 'autumn';
         }
     }
 
     /**
-     * Get expiration date based on frequency
+     * Get notification cooldown period in days
+     */
+    private function getNotificationCooldown(string $period): int
+    {
+        switch ($period) {
+            case 'day':
+                return 1; // Daily notifications can be sent once per day
+            case 'month':
+                return 7; // Monthly notifications have a 1-week cooldown
+            case 'year':
+                return 30; // Yearly notifications have a 1-month cooldown
+            default:
+                return 7;
+        }
+    }
+
+    /**
+     * Get expiration date for notifications
      */
     private function getExpirationDate(string $frequency): Carbon
     {
@@ -296,11 +314,11 @@ class EnergyNotificationService
             case 'daily':
                 return now()->addDays(2);
             case 'weekly':
-                return now()->addWeeks(2);
+                return now()->addWeek();
             case 'monthly':
-                return now()->addMonths(2);
+                return now()->addMonth();
             default:
-                return now()->addWeeks(1);
+                return now()->addWeek();
         }
     }
 }
