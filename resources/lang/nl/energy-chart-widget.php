@@ -24,7 +24,7 @@ return [
     'months_label' => 'Maanden',
     'electricity_kwh' => 'Elektriciteit (kWh)',
     'gas_m3' => 'Gas (m³)',
-    'consumption_last_year' => 'Verbruik Vorig Jaar',
+    'consumption_last_year' => 'Verbruik Vorige Periode',
     'months' => [
         'january' => 'Januari',
         'february' => 'Februari',
