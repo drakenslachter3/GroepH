@@ -107,6 +107,14 @@ class DashboardController extends Controller
         // Get the complete meter data for the period (for charts and predictions)
         $meterDataForPeriod = $this->getEnergyData($selectedMeterId, $period, $date);
 
+        // If a comparison_date is set, fetch historical data for that date (same period type)
+        $comparisonDate = $request->input('comparison_date');
+        // dd($comparisonDate);
+        if ($comparisonDate) {
+            $historicalData = $this->getEnergyData($selectedMeterId, $period, $comparisonDate);
+            $meterDataForPeriod['historical_data'] = $historicalData['current_data'] ?? $historicalData;
+        }
+
         // Log the meter data for debugging
         \Log::debug("Meter data structure: " . json_encode(array_keys($meterDataForPeriod)));
 

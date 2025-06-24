@@ -4,7 +4,7 @@
     use Carbon\Carbon;
 
     $currentDate = Carbon::parse($date);
-    
+
     $formattedDate = $date;
     if ($period == 'month' && $date) {
         $dateObj = Carbon::parse($date);
@@ -27,7 +27,7 @@
         'year' => $currentDate->copy()->addYear(),
         default => $currentDate
     };
-    
+
     $dataKey = $type === 'electricity' ? 'energy_consumed' : 'gas_delivered';
     $previousYearKey = $dataKey . '_previous_year';
     $unitLabel = $type === 'electricity' ? 'kWh' : 'm³';
@@ -41,21 +41,21 @@
         <x-dashboard.widget-heading :title="$title . ' (' . $unit . ')'" :type="$type" :date="$date" :period="$period" />
         <span tabindex="0" class="sr-only">{{ __('energy-chart-widget.table_view_sr') }}</span>
         <x-dashboard.widget-navigation :showNext="true" aria-label="{{ __('energy-chart-widget.next_widget') }}" />
-        
+
         <div role="group" aria-label="{{ __('energy-chart-widget.period_selection') }}" class="flex w-full sm:w-auto mt-2 sm:mt-0 overflow-hidden rounded-md">
             @foreach (['day' => __('general.day'), 'month' => __('general.month'), 'year' => __('general.year')] as $key => $label)
                 <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
                     <input type="hidden" name="period" value="{{ $key }}">
                     <input type="hidden" name="date" value="{{ $date }}">
                     <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
-                    <button 
+                    <button
                         type="submit"
                         class="
                             px-3 py-1 text-sm transition-colors
                             {{ $loop->first ? 'rounded-l-md' : '' }}
                             {{ $loop->last ? 'rounded-r-md' : '' }}
-                            {{ $period === $key 
-                                ? 'bg-' . $buttonColor . '-500 text-white' 
+                            {{ $period === $key
+                                ? 'bg-' . $buttonColor . '-500 text-white'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}"
                         aria-pressed="{{ $period === $key ? 'true' : 'false' }}"
                         aria-label="{{ __('general.show_data_per', ['period' => $label, 'current' => $period === $key ? __('general.current_setting') : '']) }}"
@@ -66,7 +66,7 @@
             @endforeach
         </div>
     </div>
-    
+
     <div class="flex justify-between items-center mb-4">
         {{-- Previous Button --}}
         <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
@@ -79,12 +79,12 @@
                 </svg>
             </button>
         </form>
-    
+
         {{-- Label --}}
         <span class="px-3 py-1 text-sm bg-{{ $buttonColor }}-500 text-white dark:bg-{{ $buttonColor }}-600 dark:text-white rounded-md" aria-live="polite" aria-atomic="true">
             {{ $unitLabel }} {{ __('energy-chart-widget.consumption') }}
         </span>
-    
+
         {{-- Next Button --}}
         <form method="GET" action="{{ route('dashboard') }}" class="m-0 p-0">
             <input type="hidden" name="period" value="{{ $period }}">
@@ -97,8 +97,8 @@
             </button>
         </form>
     </div>
-    
-    
+
+
     <div class="relative" style="height: 300px;">
         <canvas id="{{ $type }}Chart"></canvas>
     </div>
@@ -110,7 +110,7 @@
         $currentTotal = array_sum($currentData);
         $previousTotal = array_sum($previousData);
     @endphp
-    
+
     <div class="mt-4 flex flex-col gap-2 text-sm text-gray-800 dark:text-gray-100">
         <div class="flex items-center justify-between">
             <span class="font-medium">{{ __('energy-chart-widget.current_year_total') }}:</span>
@@ -122,8 +122,44 @@
         </div>
     </div>
 
-    
-    <div class="mt-4 flex justify-end">
+
+    <div class="mt-4 flex flex-col sm:flex-row justify-end items-center gap-2">
+        <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2 m-0 p-0">
+            <input type="hidden" name="period" value="{{ $period }}">
+            <input type="hidden" name="date" value="{{ $date }}">
+            <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
+            <label for="comparison-date-{{ $type }}" class="text-sm font-medium text-gray-700 dark:text-gray-200 mr-2">
+                {{ __('energy-chart-widget.select_comparison_date') }}
+            </label>
+            @php
+                $maxDate = match($period) {
+                    'day' => Carbon::parse($date)->subDay()->format('Y-m-d'),
+                    'month' => Carbon::parse($date)->subMonthNoOverflow()->format('Y-m'),
+                    'year' => Carbon::parse($date)->subYear()->format('Y'),
+                    default => Carbon::now()->subDay()->format('Y-m-d')
+                };
+                $inputType = match($period) {
+                    'day' => 'date',
+                    'month' => 'month',
+                    'year' => 'number',
+                    default => 'date'
+                };
+                $inputStep = $period === 'year' ? 1 : null;
+            @endphp
+            <input
+                id="comparison-date-{{ $type }}"
+                name="comparison_date"
+                type="{{ $inputType }}"
+                @if($period === 'year') min="2000" max="{{ date('Y', strtotime($maxDate)) }}" step="1" @else max="{{ $maxDate }}" @endif
+                class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm focus:ring-2 focus:ring-{{ $buttonColor }}-500 focus:border-{{ $buttonColor }}-500 transition-colors"
+                style="min-width: 110px;"
+                value="{{ request('comparison_date', '') }}"
+                aria-label="{{ __('energy-chart-widget.select_comparison_date') }}"
+            >
+            <button type="submit" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100">
+                {{ __('energy-chart-widget.compare_with_selected') }}
+            </button>
+        </form>
         <button id="toggle{{ ucfirst($type) }}Comparison" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100">
             {{ $buttonLabel }}
         </button>
@@ -142,53 +178,53 @@
             @endphp
             {{ $title }} - {{ __('energy-chart-widget.consumption_overview', ['period' => $formattedPeriodDate]) }}
         </h2>
-        
+
         <div class="overflow-x-auto">
-            <table class="w-full border-collapse table-auto" 
-                role="table" 
+            <table class="w-full border-collapse table-auto"
+                role="table"
                 aria-labelledby="{{ $type }}TableCaption"
                 aria-describedby="{{ $type }}TableDescription">
-                
+
                 <!-- Table description for context -->
                 <caption class="sr-only" id="{{ $type }}TableDescription">
                     {{ __('energy-chart-widget.table_description', [
-                        'type' => $type, 
+                        'type' => $type,
                         'period' => $formattedPeriodDate,
                         'unit' => $unit
                     ]) }}
                 </caption>
-                
+
                 <thead>
                     <tr role="row">
-                        <th scope="col" 
-                            role="columnheader" 
+                        <th scope="col"
+                            role="columnheader"
                             tabindex="0"
                             class="border p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-left font-semibold">
                             {{ __('energy-chart-widget.period_column') }}
                         </th>
-                        <th scope="col" 
-                            role="columnheader" 
+                        <th scope="col"
+                            role="columnheader"
                             tabindex="0"
                             class="border p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-left font-semibold">
                             {{ __('energy-chart-widget.consumption_column') }} ({{ $unit }})
                         </th>
-                        <th scope="col" 
-                            role="columnheader" 
+                        <th scope="col"
+                            role="columnheader"
                             tabindex="0"
-                            class="border p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-left font-semibold previous-year-comparison-{{$type}}" 
+                            class="border p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-left font-semibold previous-year-comparison-{{$type}}"
                             style="display: none;">
                             {{ __('energy-chart-widget.previous_year_column') }} ({{ $unit }})
                         </th>
-                        <th scope="col" 
-                            role="columnheader" 
+                        <th scope="col"
+                            role="columnheader"
                             tabindex="0"
-                            class="border p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-left font-semibold previous-year-comparison-{{$type}}" 
+                            class="border p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-left font-semibold previous-year-comparison-{{$type}}"
                             style="display: none;">
                             {{ __('energy-chart-widget.difference_column') }}
                         </th>
                     </tr>
                 </thead>
-                
+
                 <tbody role="rowgroup">
                     @php
                         $totalCurrent = 0;
@@ -208,7 +244,7 @@
                             }
                             $diff = $prevValue !== null ? $value - $prevValue : null;
                             $percentChange = $prevValue && $prevValue != 0 ? (($value - $prevValue) / $prevValue) * 100 : null;
-                            
+
                             switch($period) {
                                 case 'day':
                                     $hour = str_pad($index, 2, '0', STR_PAD_LEFT);
@@ -225,9 +261,9 @@
 
                                 case 'year':
                                     $months = [
-                                        __('energy-chart-widget.months.january'), __('energy-chart-widget.months.february'), __('energy-chart-widget.months.march'), 
-                                        __('energy-chart-widget.months.april'), __('energy-chart-widget.months.may'), __('energy-chart-widget.months.june'), 
-                                        __('energy-chart-widget.months.july'), __('energy-chart-widget.months.august'), __('energy-chart-widget.months.september'), 
+                                        __('energy-chart-widget.months.january'), __('energy-chart-widget.months.february'), __('energy-chart-widget.months.march'),
+                                        __('energy-chart-widget.months.april'), __('energy-chart-widget.months.may'), __('energy-chart-widget.months.june'),
+                                        __('energy-chart-widget.months.july'), __('energy-chart-widget.months.august'), __('energy-chart-widget.months.september'),
                                         __('energy-chart-widget.months.october'), __('energy-chart-widget.months.november'), __('energy-chart-widget.months.december')
                                     ];
                                     $monthName = $months[$index] ?? __('energy-chart-widget.month_number', ['number' => $index + 1]);
@@ -240,21 +276,21 @@
                             }
                         @endphp
                         <tr role="row">
-                            <td role="gridcell" 
+                            <td role="gridcell"
                                 tabindex="0"
                                 class="border p-2 dark:border-gray-700"
                                 aria-describedby="{{ $type }}TableDescription">
                                 {{ $dateFormat }}
                             </td>
-                            <td role="gridcell" 
+                            <td role="gridcell"
                                 tabindex="0"
                                 class="border p-2 dark:border-gray-700 font-mono"
                                 aria-label="{{ __('energy-chart-widget.consumption_amount', ['amount' => number_format($value, 2, ',', '.'), 'unit' => $unit]) }}">
                                 {{ number_format($value, 2, ',', '.') }}
                             </td>
-                            <td role="gridcell" 
+                            <td role="gridcell"
                                 tabindex="0"
-                                class="border p-2 dark:border-gray-700 font-mono previous-year-comparison-{{$type}}" 
+                                class="border p-2 dark:border-gray-700 font-mono previous-year-comparison-{{$type}}"
                                 style="display: none;"
                                 aria-label="{{ $prevValue !== null ? __('energy-chart-widget.previous_year_amount', ['amount' => number_format($prevValue, 2, ',', '.'), 'unit' => $unit]) : __('energy-chart-widget.no_data') }}">
                                 @if($prevValue !== null)
@@ -263,9 +299,9 @@
                                     {{ __('energy-chart-widget.no_data') }}
                                 @endif
                             </td>
-                            <td role="gridcell" 
+                            <td role="gridcell"
                                 tabindex="0"
-                                class="border p-2 dark:border-gray-700 previous-year-comparison-{{$type}}" 
+                                class="border p-2 dark:border-gray-700 previous-year-comparison-{{$type}}"
                                 style="display: none;"
                                 aria-label="{{ $diff !== null ? ($diff < 0 ? __('energy-chart-widget.saved') : __('energy-chart-widget.used_more')) . ' ' . number_format(abs($diff), 2, ',', '.') . ' ' . $unit : __('energy-chart-widget.no_comparison') }}">
                                 @if($diff !== null)
@@ -279,23 +315,23 @@
                         </tr>
                     @endforeach
                 </tbody>
-                
+
                 <tfoot role="rowgroup">
                     <tr role="row" class="bg-gray-50 dark:bg-gray-800">
-                        <th scope="row" 
+                        <th scope="row"
                             tabindex="0"
                             class="border p-2 font-bold dark:border-gray-700 text-left">
                             {{ __('energy-chart-widget.total') }}
                         </th>
-                        <td role="gridcell" 
+                        <td role="gridcell"
                             tabindex="0"
                             class="border p-2 font-bold dark:border-gray-700 font-mono"
                             aria-label="{{ __('energy-chart-widget.total_consumption_amount', ['amount' => number_format($totalCurrent, 2, ',', '.'), 'unit' => $unit]) }}">
                             {{ number_format($totalCurrent, 2, ',', '.') }}
                         </td>
-                        <td role="gridcell" 
+                        <td role="gridcell"
                             tabindex="0"
-                            class="border p-2 font-bold dark:border-gray-700 font-mono previous-year-comparison-{{$type}}" 
+                            class="border p-2 font-bold dark:border-gray-700 font-mono previous-year-comparison-{{$type}}"
                             style="display: none;"
                             aria-label="{{ $hasPreviousYearData ? __('energy-chart-widget.total_previous_year_amount', ['amount' => number_format($totalPrevious, 2, ',', '.'), 'unit' => $unit]) : __('energy-chart-widget.no_data') }}">
                             @if($hasPreviousYearData)
@@ -304,9 +340,9 @@
                                 {{ __('energy-chart-widget.no_data') }}
                             @endif
                         </td>
-                        <td role="gridcell" 
+                        <td role="gridcell"
                             tabindex="0"
-                            class="border p-2 font-bold dark:border-gray-700 previous-year-comparison-{{$type}}" 
+                            class="border p-2 font-bold dark:border-gray-700 previous-year-comparison-{{$type}}"
                             style="display: none;"
                             aria-label="{{ $hasPreviousYearData ? (($totalCurrent - $totalPrevious) < 0 ? __('energy-chart-widget.total_saved') : __('energy-chart-widget.total_used_more')) . ' ' . number_format(abs($totalCurrent - $totalPrevious), 2, ',', '.') . ' ' . $unit : __('energy-chart-widget.no_comparison') }}">
                             @if($hasPreviousYearData)
@@ -322,7 +358,7 @@
                 </tfoot>
             </table>
         </div>
-        
+
         <div class="mt-4 not-sr-only">
             <button type="button"
                     onclick="scrollAndFocus('{{ $type }}TableCaption')"
@@ -365,10 +401,11 @@
         }
 
         const chartData = @json($chartData);
-
+        const previousData = @json($previousYearData[$dataKey] ?? []);
+        const comparisonDate = '{{ request('comparison_date', '') }}';
         let periodTranslated;
         const labels = [];
-        
+
         // Generate labels based on period
         switch("{{ $period }}") {
             case 'day':
@@ -387,32 +424,32 @@
                 periodTranslated = '{{ __("energy-chart-widget.days") }}';
                 break;
             case 'year':
-                labels.push("{{ __('energy-chart-widget.months.january') }}", "{{ __('energy-chart-widget.months.february') }}", "{{ __('energy-chart-widget.months.march') }}", 
-                           "{{ __('energy-chart-widget.months.april') }}", "{{ __('energy-chart-widget.months.may') }}", "{{ __('energy-chart-widget.months.june') }}", 
-                           "{{ __('energy-chart-widget.months.july') }}", "{{ __('energy-chart-widget.months.august') }}", "{{ __('energy-chart-widget.months.september') }}", 
+                labels.push("{{ __('energy-chart-widget.months.january') }}", "{{ __('energy-chart-widget.months.february') }}", "{{ __('energy-chart-widget.months.march') }}",
+                           "{{ __('energy-chart-widget.months.april') }}", "{{ __('energy-chart-widget.months.may') }}", "{{ __('energy-chart-widget.months.june') }}",
+                           "{{ __('energy-chart-widget.months.july') }}", "{{ __('energy-chart-widget.months.august') }}", "{{ __('energy-chart-widget.months.september') }}",
                            "{{ __('energy-chart-widget.months.october') }}", "{{ __('energy-chart-widget.months.november') }}", "{{ __('energy-chart-widget.months.december') }}");
                 periodTranslated = '{{ __("energy-chart-widget.months_label") }}';
                 break;
             default:
                 console.error("Unknown period:", "{{ $period }}");
         }
-        
+
         const chartCanvas = document.getElementById('{{ $type }}Chart');
-        
+
         if (!chartCanvas) {
             console.error('Canvas element not found: {{ $type }}Chart');
             return;
         }
-        
+
         // Get the correct data key based on the type
         const dataKey = "{{ $dataKey }}";
         const usageData = chartData[dataKey] || [];
         const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
+
         // Use a more subtle axis color with opacity for better blending
         const axisColor = isDarkMode ? 'rgba(209, 213, 219, 0.3)' : 'rgba(75, 85, 99, 0.15)';
         const titleColor = isDarkMode ? '#F9FAFB' : '#000000';
-        
+
         // Create chart instance as a variable to access it later for toggles
         const chart = new Chart(chartCanvas, {
             type: 'bar',
@@ -474,69 +511,79 @@
         });
 
         // Toggle comparison with last year - Updated version
-const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison');
-if (toggleButton) {
-    toggleButton.addEventListener('click', function () {
-        const isVisible = chart.data.datasets.length > 1;
+        const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison');
         const previousTotalEl = document.getElementById('previous-year-total-{{$type}}');
         const previousYearComparisons = document.querySelectorAll('.previous-year-comparison-{{$type}}');
 
-        if (isVisible) {
-            // Hide comparison
-            chart.data.datasets.pop();
-            if (previousTotalEl) {
-                previousTotalEl.classList.remove('opacity-100');
-                previousTotalEl.classList.add('opacity-0', 'pointer-events-none');
+        function showComparison() {
+            if (chart.data.datasets.length < 2) {
+                chart.data.datasets.push({
+                    label: '{{$unit}} {{ __("energy-chart-widget.consumption_last_year") }}',
+                    data: previousData,
+                    backgroundColor: '{{ $type === "electricity" ? "rgba(139, 92, 246, 0.6)" : "rgba(251, 191, 36, 0.6)" }}',
+                    borderColor: '{{ $type === "electricity" ? "rgb(124, 58, 237)" : "rgb(202, 138, 4)" }}',
+                    borderWidth: 1
+                });
+                if (previousTotalEl) {
+                    previousTotalEl.classList.remove('opacity-0', 'pointer-events-none');
+                    previousTotalEl.classList.add('opacity-100');
+                }
+                previousYearComparisons.forEach(element => {
+                    element.style.display = '';
+                    element.setAttribute('tabindex', '0');
+                });
+                toggleButton.textContent = '{{ __("energy-chart-widget.hide_comparison") }}';
+                chart.update();
             }
-            // Hide previous year comparison columns in table
-            previousYearComparisons.forEach(element => {
-                element.style.display = 'none';
-                // Remove from tab order when hidden
-                element.setAttribute('tabindex', '-1');
-            });
-            toggleButton.textContent = '{{ __("energy-chart-widget.show_comparison") }}';
-        } else {
-            // Show comparison
-            chart.data.datasets.push({
-                label: '{{$unit}} {{ __("energy-chart-widget.consumption_last_year") }}',
-                data: @json($previousData),
-                backgroundColor: '{{ $type === "electricity" ? "rgba(139, 92, 246, 0.6)" : "rgba(251, 191, 36, 0.6)" }}',
-                borderColor: '{{ $type === "electricity" ? "rgb(124, 58, 237)" : "rgb(202, 138, 4)" }}',
-                borderWidth: 1
-            });
-            if (previousTotalEl) {
-                previousTotalEl.classList.remove('opacity-0', 'pointer-events-none');
-                previousTotalEl.classList.add('opacity-100');
-            }
-            // Show previous year comparison columns in table
-            previousYearComparisons.forEach(element => {
-                element.style.display = '';
-                // Add back to tab order when visible
-                element.setAttribute('tabindex', '0');
-            });
-            toggleButton.textContent = '{{ __("energy-chart-widget.hide_comparison") }}';
         }
 
-        chart.update();
-        
-        // Announce the change to screen readers
-        const announcement = isVisible ? 
-            '{{ __("energy-chart-widget.comparison_hidden") }}' : 
-            '{{ __("energy-chart-widget.comparison_shown") }}';
-            
-        // Create temporary announcement for screen readers
-        const announcer = document.createElement('div');
-        announcer.setAttribute('aria-live', 'polite');
-        announcer.setAttribute('aria-atomic', 'true');
-        announcer.className = 'sr-only';
-        announcer.textContent = announcement;
-        document.body.appendChild(announcer);
-        
-        setTimeout(() => {
-            document.body.removeChild(announcer);
-        }, 1000);
-    });
-}
+        function hideComparison() {
+            if (chart.data.datasets.length > 1) {
+                chart.data.datasets.pop();
+                if (previousTotalEl) {
+                    previousTotalEl.classList.remove('opacity-100');
+                    previousTotalEl.classList.add('opacity-0', 'pointer-events-none');
+                }
+                previousYearComparisons.forEach(element => {
+                    element.style.display = 'none';
+                    element.setAttribute('tabindex', '-1');
+                });
+                toggleButton.textContent = '{{ __("energy-chart-widget.show_comparison") }}';
+                chart.update();
+            }
+        }
+
+        if (toggleButton) {
+            toggleButton.addEventListener('click', function () {
+                const isVisible = chart.data.datasets.length > 1;
+                if (isVisible) {
+                    hideComparison();
+                } else {
+                    showComparison();
+                }
+                // Announce the change to screen readers
+                const announcement = isVisible ?
+                    '{{ __("energy-chart-widget.comparison_hidden") }}' :
+                    '{{ __("energy-chart-widget.comparison_shown") }}';
+
+                // Create temporary announcement for screen readers
+                const announcer = document.createElement('div');
+                announcer.setAttribute('aria-live', 'polite');
+                announcer.setAttribute('aria-atomic', 'true');
+                announcer.className = 'sr-only';
+                announcer.textContent = announcement;
+                document.body.appendChild(announcer);
+
+                setTimeout(() => {
+                    document.body.removeChild(announcer);
+                }, 1000);
+            });
+        }
+
+        // Auto-show comparison if comparison_date is set
+        if (comparisonDate) {
+            showComparison();
+        }
     });
 </script>
 @endpush
