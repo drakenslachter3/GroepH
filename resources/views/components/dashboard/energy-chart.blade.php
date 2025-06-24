@@ -123,8 +123,8 @@
     </div>
 
 
-    <div class="mt-4 flex flex-col sm:flex-row justify-end items-center gap-2">
-        <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2 m-0 p-0">
+    <div class="mt-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <form id="comparison-date-form-{{ $type }}" method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2 m-0 p-0" style="display: block;">
             <input type="hidden" name="period" value="{{ $period }}">
             <input type="hidden" name="date" value="{{ $date }}">
             <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
@@ -138,28 +138,35 @@
                     'year' => Carbon::parse($date)->subYear()->format('Y'),
                     default => Carbon::now()->subDay()->format('Y-m-d')
                 };
+                $minDate = '2020-01-01';
                 $inputType = match($period) {
                     'day' => 'date',
                     'month' => 'month',
                     'year' => 'number',
                     default => 'date'
                 };
-                $inputStep = $period === 'year' ? 1 : null;
+                $defaultComparison = request('comparison_date') ?: match($period) {
+                    'day' => Carbon::parse($date)->subYear()->format('Y-m-d'),
+                    'month' => Carbon::parse($date)->subYear()->format('Y-m'),
+                    'year' => Carbon::parse($date)->subYear()->format('Y'),
+                    default => Carbon::parse($date)->subYear()->format('Y-m-d')
+                };
             @endphp
             <input
-                id="comparison-date-{{ $type }}"
-                name="comparison_date"
-                type="{{ $inputType }}"
-                @if($period === 'year') min="2000" max="{{ date('Y', strtotime($maxDate)) }}" step="1" @else max="{{ $maxDate }}" @endif
-                class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm focus:ring-2 focus:ring-{{ $buttonColor }}-500 focus:border-{{ $buttonColor }}-500 transition-colors"
-                style="min-width: 110px;"
-                value="{{ request('comparison_date', '') }}"
-                aria-label="{{ __('energy-chart-widget.select_comparison_date') }}"
-            >
-            <button type="submit" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100">
-                {{ __('energy-chart-widget.compare_with_selected') }}
-            </button>
+            id="comparison-date-{{ $type }}"
+            name="comparison_date"
+            type="{{ $inputType }}"
+            min="{{ $period === 'year' ? '2020' : $minDate }}"
+            max="{{ $period === 'year' ? now()->year - 1 : $maxDate }}"
+            step="1"
+            class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm focus:ring-2 focus:ring-{{ $buttonColor }}-500 focus:border-{{ $buttonColor }}-500 transition-colors"
+            style="min-width: 110px;"
+            value="{{ $defaultComparison }}"
+            aria-label="{{ __('energy-chart-widget.select_comparison_date_label') }}"
+            onchange="this.form.submit()"
+        >
         </form>
+
         <button id="toggle{{ ucfirst($type) }}Comparison" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100">
             {{ $buttonLabel }}
         </button>
@@ -583,6 +590,32 @@
         // Auto-show comparison if comparison_date is set
         if (comparisonDate) {
             showComparison();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison');
+        const comparisonForm = document.getElementById('comparison-date-form-{{ $type }}');
+        const comparisonDate = '{{ request('comparison_date', '') }}';
+        function showComparisonForm() {
+            if (comparisonForm) comparisonForm.style.display = '';
+        }
+        function hideComparisonForm() {
+            if (comparisonForm) comparisonForm.style.display = 'none';
+        }
+        if (toggleButton) {
+            toggleButton.addEventListener('click', function () {
+                const isVisible = chart.data.datasets.length > 1;
+                if (!isVisible) {
+                    showComparisonForm();
+                } else {
+                    hideComparisonForm();
+                }
+            });
+        }
+        // Show form if comparison is active or comparison_date is set
+        if (comparisonDate) {
+            showComparisonForm();
         }
     });
 </script>

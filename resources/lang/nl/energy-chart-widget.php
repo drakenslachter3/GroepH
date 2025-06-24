@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'select_comparison_date' => 'Vergelijk met datum',
     'navigation_label' => 'Dashboard navigatie en periode selectie',
     'table_view_sr' => ' - tabelweergave voor schermlezers',
     'consumption' => 'Verbruik',
