@@ -36,6 +36,8 @@ class CreateSmartMeterTest extends DuskTestCase
 
     public function testCreateSmartMeter()
     {
+        $this->setTestName('test_create_smart_meter');
+
         $this->browse(function (Browser $browser) {
             $meterId = 'TEST-' . uniqid();
             $this->loginAsAdmin($browser);
@@ -70,6 +72,8 @@ class CreateSmartMeterTest extends DuskTestCase
 
     public function testCreateSmartMeterWithUser()
     {
+        $this->setTestName('test_create_smart_meter_with_user');
+
         $user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'user@example.com',

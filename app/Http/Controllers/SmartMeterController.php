@@ -139,6 +139,7 @@ class SmartMeterController extends Controller
 
         $validated = $request->validate([
             'meter_id' => ['required', 'string', 'max:255', Rule::unique('smart_meters')->ignore($smartmeter->id)],
+            'name' => ['nullable', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
             'measures_electricity' => ['boolean'],
             'measures_gas' => ['boolean'],

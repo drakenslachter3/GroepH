@@ -42,8 +42,8 @@
                                                 @endif
                                             </div>
                                             <p class="font-medium text-gray-900 dark:text-white mt-2">{{ $notification->message }}</p>
-                                            
-                                            @if(count($notification->suggestions) > 0)
+
+                                            @if(!empty($notification->suggestions))
                                                 <div class="mt-3">
                                                     <p class="font-medium text-gray-700 dark:text-gray-300">Suggesties:</p>
                                                     <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 mt-1 space-y-1">
@@ -59,17 +59,17 @@
                                                 </div>
                                             @endif
                                         </div>
-                                        
+
                                         <div class="flex space-x-2">
                                             @if($notification->status === 'unread')
-                                                <button 
+                                                <button
                                                     data-notification-id="{{ $notification->id }}"
                                                     class="mark-as-read text-xs px-3 py-1 bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-500 transition">
                                                     Markeer als gelezen
                                                 </button>
                                             @endif
                                             @if($notification->status !== 'dismissed')
-                                                <button 
+                                                <button
                                                     data-notification-id="{{ $notification->id }}"
                                                     class="dismiss-notification text-xs px-3 py-1 bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-700/30 transition">
                                                     Verwijderen
@@ -102,7 +102,7 @@
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const notificationId = this.dataset.notificationId;
-                    
+
                     fetch(`/notifications/${notificationId}/mark-as-read`, {
                         method: 'POST',
                         headers: {
@@ -125,7 +125,7 @@
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const notificationId = this.dataset.notificationId;
-                    
+
                     fetch(`/notifications/${notificationId}/dismiss`, {
                         method: 'POST',
                         headers: {

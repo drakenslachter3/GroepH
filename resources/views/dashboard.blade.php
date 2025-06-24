@@ -13,13 +13,9 @@
                     {{ session('status') }}
                 </div>
             @endif
-
             <div class="bg-white shadow-lg rounded-lg mb-8 dark:bg-gray-800">
-                <!-- Toggle button for the entire config section -->
                 <div class="p-4">
-                    <!-- Dropdown button, last update info & refresh button in one row -->
                     <div class="flex justify-between items-center">
-                        <!-- Dropdown button with title and icon -->
                         <button id="toggleConfigSection"
                             class="flex items-center text-left dark:text-white">
                             <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Dashboard Configuratie</h2>
@@ -88,6 +84,9 @@
                                             <option value="energy-suggestions" {{ old('widget_type') == 'energy-suggestions' ? 'selected' : '' }}>
                                                 Energiebesparingstips
                                             </option>
+                                            <option value="net-result" {{ old('widget_type') == 'net-result' ? 'selected' : '' }}>
+                                                Netto resultante
+                                            </option>
                                             <option value="energy-prediction-chart-electricity" {{ old('widget_type') == 'energy-prediction-chart-electricity' ? 'selected' : '' }}>
                                                 Elektriciteit Voorspelling
                                             </option>
@@ -138,11 +137,11 @@
                                         <input type="hidden" name="period" value="{{ $key }}">
                                         <input type="hidden" name="date" value="{{ $date }}">
                                         <input type="hidden" name="housing_type" value="{{ request('housing_type', 'tussenwoning') }}">
-                                        <button 
+                                        <button
                                             type="submit"
                                             class="flex items-center justify-center px-4 py-2 rounded-md mx-1 transition-colors
-                                                {{ $period === $key 
-                                                    ? 'bg-blue-500 text-white' 
+                                                {{ $period === $key
+                                                    ? 'bg-blue-500 text-white'
                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600' }}"
                                             aria-pressed="{{ $period === $key ? 'true' : 'false' }}"
                                             aria-label="{{ __('general.show_data_per', ['period' => $label, 'current' => $period === $key ? __('general.current_setting') : '']) }}">
@@ -165,27 +164,27 @@
 
                                 @switch($period)
                                     @case('day')
-                                        <input type="date" 
-                                            id="datePicker" 
-                                            name="date" 
+                                        <input type="date"
+                                            id="datePicker"
+                                            name="date"
                                             class="{{ $DatePickerClass }}"
                                             value="{{ $date }}"
                                             aria-label="{{ __('general.select_date') }}">
                                         @break
 
                                     @case('month')
-                                        <input type="month" 
-                                            id="datePicker" 
-                                            name="date" 
+                                        <input type="month"
+                                            id="datePicker"
+                                            name="date"
                                             class="{{ $DatePickerClass }}"
                                             value="{{ \Carbon\Carbon::parse($date)->format('Y-m') }}"
                                             aria-label="{{ __('general.select_month') }}">
                                         @break
 
                                     @case('year')
-                                        <input type="number" 
-                                            id="datePicker" 
-                                            name="date" 
+                                        <input type="number"
+                                            id="datePicker"
+                                            name="date"
                                             class="{{ $DatePickerClass }}"
                                             value="{{ \Carbon\Carbon::parse($date)->format('Y') }}"
                                             min="2000" max="2050"
@@ -252,6 +251,24 @@
                             continue;
                         }
 
+                        // Check if this is a valid widget type - if not, skip rendering entirely
+                        $validWidgets = [
+                            'switch-meter',
+                            'energy-status-electricity',
+                            'energy-status-gas',
+                            'energy-chart-electricity',
+                            'energy-chart-gas',
+                            'energy-suggestions',
+                            'energy-prediction-chart-electricity',
+                            'energy-prediction-chart-gas',
+                            'net-result',
+                            'budget-alert'
+                        ];
+
+                        if (!in_array($item, $validWidgets)) {
+                            continue;
+                        }
+
                         $widgetSize = match ($item) {
                             'usage-prediction' => 'large',
                             'energy-status-electricity', 'energy-status-gas' => 'small',
@@ -259,6 +276,7 @@
                             'energy-suggestions' => 'large',
                             'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
                             'switch-meter' => 'full',
+                            'net-result' => 'large',
                             default => 'full',
                         };
 
@@ -275,7 +293,7 @@
                             @switch($item)
                                 @case('switch-meter')
                                     <x-dashboard.switch-meter title="Selecteer een meter"
-                                    :meters="\App\Models\SmartMeter::getAllSmartMetersForCurrentUser()" 
+                                    :meters="\App\Models\SmartMeter::getAllSmartMetersForCurrentUser()"
                                     :selectedMeterId="\App\Models\UserGridLayout::getSelectedSmartMeterForCurrentUser()" />
                                 @break
 
@@ -283,7 +301,7 @@
                                     <x-dashboard.energy-status type="electricity" title="Status Elektriciteitsverbruik"
                                         :period="$period" :date="$date" unit="kWh"
                                         :usage="$liveData['electricity']['usage'] ?? 0" :target="$liveData['electricity']['target'] ?? 0"
-                                        :cost="$liveData['electricity']['cost'] ?? 0" :percentage="$liveData['electricity']['percentage'] ?? 0" 
+                                        :cost="$liveData['electricity']['cost'] ?? 0" :percentage="$liveData['electricity']['percentage'] ?? 0"
                                         :status="$liveData['electricity']['status'] ?? 'goed'"
                                         :liveData="$liveData['electricity'] ?? null" />
                                 @break
@@ -292,22 +310,22 @@
                                     <x-dashboard.energy-status type="gas" title="Status Gasverbruik"
                                         :period="$period" :date="$date" unit="m³"
                                         :usage="$liveData['gas']['usage'] ?? 0" :target="$liveData['gas']['target'] ?? 0"
-                                        :cost="$liveData['gas']['cost'] ?? 0" :percentage="$liveData['gas']['percentage'] ?? 0" 
+                                        :cost="$liveData['gas']['cost'] ?? 0" :percentage="$liveData['gas']['percentage'] ?? 0"
                                         :status="$liveData['gas']['status'] ?? 'goed'"
                                         :liveData="$liveData['gas'] ?? null" />
                                 @break
 
                                 @case('energy-chart-electricity')
                                     <x-dashboard.energy-chart type="electricity" title="Grafiek Elektriciteitsverbruik"
-                                        :period="$period" :date="$date" unit="kWh"
-                                        buttonLabel="Toon Vorig Jaar" buttonColor="blue" :chartData="$meterDataForPeriod['current_data'] ?? []"
+                                        :period="$period" :date="$date" unit="kWh" :outages="$outages"
+                                        buttonColor="blue" :chartData="$meterDataForPeriod['current_data'] ?? []"
                                         :previousYearData="$meterDataForPeriod['historical_data'] ?? []" />
                                 @break
 
                                 @case('energy-chart-gas')
                                     <x-dashboard.energy-chart type="gas" title="Grafiek Gasverbruik"
-                                        :period="$period" :date="$date" unit="m³"
-                                        buttonLabel="Toon Vorig Jaar" buttonColor="yellow" :chartData="$meterDataForPeriod['current_data'] ?? []"
+                                        :period="$period" :date="$date" unit="m³" :outages="$outages"
+                                        buttonColor="yellow" :chartData="$meterDataForPeriod['current_data'] ?? []"
                                         :previousYearData="$meterDataForPeriod['historical_data'] ?? []" />
                                 @break
 
@@ -325,23 +343,37 @@
                                 @case('energy-prediction-chart-electricity')
                                     <x-dashboard.energy-prediction-chart type="electricity" title="Voorspelling Elektriciteitsverbruik"
                                         :period="$period" :date="$date" unit="kWh"
-                                        :currentData="$predictionData['electricity'] ?? []" :budgetData="$budgetData['electricity'] ?? []"
-                                        :percentage="$predictionPercentage['electricity'] ?? 0" :confidence="$predictionConfidence['electricity'] ?? 75"
-                                        :yearlyConsumptionToDate="$yearlyConsumptionToDate['electricity'] ?? 0" :dailyAverageConsumption="$dailyAverageConsumption['electricity'] ?? 0" />
+                                        :currentData="$predictionData['electricity'] ?? []"
+                                        :budgetData="$budgetData['electricity'] ?? []"
+                                        :percentage="$predictionPercentage['electricity'] ?? 0"
+                                        :confidence="$predictionConfidence['electricity'] ?? 75"
+                                        :yearlyConsumptionToDate="$yearlyConsumptionToDate['electricity'] ?? 0"
+                                        :dailyAverageConsumption="$dailyAverageConsumption['electricity'] ?? 0"
+                                        :realMeterData="$meterDataForPeriod['current_data'] ?? []"
+                                        :dataKey="'energy_consumed'" />
                                 @break
 
                                 @case('energy-prediction-chart-gas')
                                     <x-dashboard.energy-prediction-chart type="gas" title="Voorspelling Gasverbruik"
                                         :period="$period" :date="$date" unit="m³"
-                                        :currentData="$predictionData['gas'] ?? []" :budgetData="$budgetData['gas'] ?? []" 
-                                        :percentage="$predictionPercentage['gas'] ?? 0" :confidence="$predictionConfidence['gas'] ?? 75" 
-                                        :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0" :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0" />
+                                        :currentData="$predictionData['gas'] ?? []"
+                                        :budgetData="$budgetData['gas'] ?? []"
+                                        :percentage="$predictionPercentage['gas'] ?? 0"
+                                        :confidence="$predictionConfidence['gas'] ?? 75"
+                                        :yearlyConsumptionToDate="$yearlyConsumptionToDate['gas'] ?? 0"
+                                        :dailyAverageConsumption="$dailyAverageConsumption['gas'] ?? 0"
+                                        :realMeterData="$meterDataForPeriod['current_data'] ?? []"
+                                        :dataKey="'gas_delivered'" />
                                 @break
 
-                                @default
-                                    <?php
-                                    echo $item;
-                                    ?>
+                                @case('net-result')
+                                    <x-dashboard.net-result
+                                        :date="$date"
+                                        :period="$period"
+                                        :energyConsumed="$meterDataForPeriod['current_data']['energy_consumed'] ?? []"
+                                        :energyProduced="$meterDataForPeriod['current_data']['energy_produced'] ?? []"
+                                    />
+                                @break
                             @endswitch
                         </div>
                     </div>
@@ -363,7 +395,7 @@
             if (toggleBtn && content && icon) {
                 // Check saved state
                 const isOpen = localStorage.getItem('configSectionOpen') === 'true';
-                
+
                 if (isOpen) {
                     content.classList.remove('hidden');
                     icon.classList.add('rotate-180');
@@ -371,10 +403,10 @@
 
                 toggleBtn.addEventListener('click', function() {
                     const isHidden = content.classList.contains('hidden');
-                    
+
                     content.classList.toggle('hidden');
                     icon.classList.toggle('rotate-180');
-                    
+
                     localStorage.setItem('configSectionOpen', isHidden);
                 });
             }
@@ -395,13 +427,13 @@
                     const form = document.createElement('form');
                     form.method = 'GET';
                     form.action = '{{ route("dashboard") }}';
-                    
+
                     const inputs = [
                         { name: 'period', value: '{{ $period }}' },
                         { name: 'date', value: this.value },
                         { name: 'housing_type', value: '{{ request("housing_type", "tussenwoning") }}' }
                     ];
-                    
+
                     inputs.forEach(input => {
                         const hiddenInput = document.createElement('input');
                         hiddenInput.type = 'hidden';
@@ -409,10 +441,92 @@
                         hiddenInput.value = input.value;
                         form.appendChild(hiddenInput);
                     });
-                    
+
                     document.body.appendChild(form);
                     form.submit();
                 });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuration section toggle
+            const toggleBtn = document.getElementById('toggleConfigSection');
+            const content = document.getElementById('configSectionContent');
+            const icon = document.getElementById('configSectionIcon');
+
+            if (toggleBtn && content && icon) {
+                // Check saved state
+                const isOpen = localStorage.getItem('configSectionOpen') === 'true';
+
+                if (isOpen) {
+                    content.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                }
+
+                toggleBtn.addEventListener('click', function() {
+                    const isHidden = content.classList.contains('hidden');
+
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+
+                    localStorage.setItem('configSectionOpen', isHidden);
+                });
+            }
+
+            // Auto-hide status message
+            const statusMsg = document.getElementById('status-message');
+            if (statusMsg) {
+                setTimeout(() => {
+                    statusMsg.classList.add('opacity-0');
+                    setTimeout(() => statusMsg.remove(), 1000);
+                }, 5000);
+            }
+
+            // Date picker change handler
+            const datePicker = document.getElementById('datePicker');
+            if (datePicker) {
+                datePicker.addEventListener('change', function() {
+                    const form = document.createElement('form');
+                    form.method = 'GET';
+                    form.action = '{{ route("dashboard") }}';
+
+                    const inputs = [
+                        { name: 'period', value: '{{ $period }}' },
+                        { name: 'date', value: this.value },
+                        { name: 'housing_type', value: '{{ request("housing_type", "tussenwoning") }}' }
+                    ];
+
+                    inputs.forEach(input => {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = input.name;
+                        hiddenInput.value = input.value;
+                        form.appendChild(hiddenInput);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+            }
+
+            // Auto-refresh functionality
+            const refreshInterval = {{ $refresh_settings ?? 0 }};
+            if (refreshInterval > 0) {
+                setInterval(function() {
+                    // Create and submit refresh form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("dashboard.refresh") }}';
+
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }, refreshInterval * 1000);
             }
         });
     </script>

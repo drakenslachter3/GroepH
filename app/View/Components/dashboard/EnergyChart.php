@@ -40,7 +40,6 @@ class EnergyChart extends Component
         $unit,
         $period,
         $date,
-        $buttonLabel,
         $buttonColor,
         $chartData
     ) {
@@ -49,7 +48,6 @@ class EnergyChart extends Component
         $this->unit = $unit;
         $this->period = $period;
         $this->date = $date;
-        $this->buttonLabel = $buttonLabel;
         $this->buttonColor = $buttonColor;
         $this->chartData = $chartData;
     }

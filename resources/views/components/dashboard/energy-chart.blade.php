@@ -1,4 +1,6 @@
-@props(['title', 'type', 'unit', 'period', 'date' => null, 'buttonLabel', 'buttonColor', 'chartData', 'previousYearData'])
+{{-- resources/views/components/dashboard/energy-chart-widget.blade.php --}}
+
+@props(['title', 'type', 'unit', 'period', 'date' => null, 'buttonColor', 'chartData', 'previousYearData', 'outages' => []])
 
 @php
     use Carbon\Carbon;
@@ -33,6 +35,21 @@
     $unitLabel = $type === 'electricity' ? 'kWh' : 'm³';
     $backgroundColor = $type === 'electricity' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)';
     $borderColor = $type === 'electricity' ? 'rgb(37, 99, 235)' : 'rgb(217, 119, 6)';
+
+    // Dynamic labels based on period
+    $currentPeriodLabel = match($period) {
+        'day' => $currentDate->isToday() ? 'Totaal vandaag' : 'Totaal op ' . $currentDate->translatedFormat('j F'),
+        'month' => $currentDate->isSameMonth(Carbon::now()) ? 'Totaal deze maand' : 'Totaal in ' . $currentDate->translatedFormat('F Y'),
+        'year' => $currentDate->isSameYear(Carbon::now()) ? 'Totaal dit jaar' : 'Totaal in ' . $currentDate->format('Y'),
+        default => 'Totaal'
+    };
+
+    $previousPeriodLabel = match($period) {
+        'day' => 'Vorige dag',
+        'month' => 'Vorige maand',
+        'year' => 'Vorig jaar',
+        default => 'Vorige periode'
+    };
 @endphp
 
 <section class="p-2" aria-labelledby="chart-widget-title">
@@ -103,21 +120,70 @@
         <canvas id="{{ $type }}Chart"></canvas>
     </div>
 
+    {{-- InfluxDB Outage Legend --}}
+    @if($outages && count($outages) > 0)
+        <div class="mt-2 flex items-center justify-center">
+            <div class="flex items-center space-x-4 text-sm">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-{{ $buttonColor }}-500 opacity-60 rounded mr-2"></div>
+                    <span>Normaal Verbruik</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-orange-500 opacity-80 rounded mr-2"></div>
+                    <span>Moment van storing</span>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @php
         $currentData = $chartData[$dataKey] ?? [];
         $previousData = $previousYearData[$dataKey] ?? [];
 
-        $currentTotal = array_sum($currentData);
-        $previousTotal = array_sum($previousData);
+        // Use the same calculation method as the dashboard controller for consistency
+        $currentTotal = 0;
+        $previousTotal = 0;
+
+        // Calculate totals by filtering out null values and only including actual data
+        foreach ($currentData as $index => $value) {
+            if ($value !== null && is_numeric($value)) {
+                $currentTotal += $value;
+            }
+        }
+
+        foreach ($previousData as $index => $value) {
+            if ($value !== null && is_numeric($value)) {
+                $previousTotal += $value;
+            }
+        }
+        $colors = [
+            'yellow' => [
+                'bg' => 'bg-yellow-100',
+                'text' => 'text-yellow-700',
+                'hover' => 'hover:bg-yellow-200',
+                'darkBg' => 'dark:bg-yellow-800',
+                'darkText' => 'dark:text-yellow-100',
+                'darkHover' => 'dark:hover:bg-yellow-700',
+            ],
+            'blue' => [
+                'bg' => 'bg-blue-100',
+                'text' => 'text-blue-700',
+                'hover' => 'hover:bg-blue-200',
+                'darkBg' => 'dark:bg-blue-800',
+                'darkText' => 'dark:text-blue-100',
+                'darkHover' => 'dark:hover:bg-blue-700',
+            ],
+        ];
+        $c = $colors[$buttonColor] ?? $colors['blue'];
     @endphp
 
     <div class="mt-4 flex flex-col gap-2 text-sm text-gray-800 dark:text-gray-100">
         <div class="flex items-center justify-between">
-            <span class="font-medium">{{ __('energy-chart-widget.current_year_total') }}:</span>
+            <span class="font-medium">{{ $currentPeriodLabel }}:</span>
             <span>{{ number_format($currentTotal, 2, ',', '.') }} {{ $unit }}</span>
         </div>
         <div id="previous-year-total-{{$type}}" class="flex items-center justify-between transition-all duration-300 opacity-0 h-6 pointer-events-none">
-            <span class="font-medium">{{ __('energy-chart-widget.previous_year_total') }}:</span>
+            <span class="font-medium">{{ $previousPeriodLabel }}:</span>
             <span>{{ number_format($previousTotal, 2, ',', '.') }} {{ $unit }}</span>
         </div>
     </div>
@@ -152,23 +218,23 @@
                     default => Carbon::parse($date)->subYear()->format('Y-m-d')
                 };
             @endphp
-            <input
-            id="comparison-date-{{ $type }}"
-            name="comparison_date"
-            type="{{ $inputType }}"
-            min="{{ $period === 'year' ? '2020' : $minDate }}"
-            max="{{ $period === 'year' ? now()->year - 1 : $maxDate }}"
-            step="1"
-            class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm focus:ring-2 focus:ring-{{ $buttonColor }}-500 focus:border-{{ $buttonColor }}-500 transition-colors"
-            style="min-width: 110px;"
-            value="{{ $defaultComparison }}"
-            aria-label="{{ __('energy-chart-widget.select_comparison_date_label') }}"
-            onchange="this.form.submit()"
-        >
+                <input
+                id="comparison-date-{{ $type }}"
+                name="comparison_date"
+                type="{{ $inputType }}"
+                min="{{ $period === 'year' ? '2020' : $minDate }}"
+                max="{{ $period === 'year' ? now()->year - 1 : $maxDate }}"
+                step="1"
+                class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm focus:ring-2 focus:ring-{{ $buttonColor }}-500 focus:border-{{ $buttonColor }}-500 transition-colors"
+                style="min-width: 110px;"
+                value="{{ $defaultComparison }}"
+                aria-label="{{ __('energy-chart-widget.select_comparison_date_label') }}"
+                onchange="this.form.submit()"
+            >
         </form>
-
-        <button id="toggle{{ ucfirst($type) }}Comparison" class="text-sm px-3 py-1 bg-{{ $buttonColor }}-100 text-{{ $buttonColor }}-700 rounded hover:bg-{{ $buttonColor }}-200 dark:bg-{{ $buttonColor }}-800 dark:text-{{ $buttonColor }}-100">
-            {{ $buttonLabel }}
+        <button id="toggle{{ ucfirst($type) }}Comparison"
+            class="text-sm px-3 py-1 rounded {{ $c['bg'] }} {{ $c['text'] }} {{ $c['hover'] }} {{ $c['darkBg'] }} {{ $c['darkText'] }} {{ $c['darkHover'] }}">
+            {{ __('energy-chart-widget.show_comparison') }}
         </button>
     </div>
 
@@ -220,7 +286,7 @@
                             tabindex="0"
                             class="border p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-left font-semibold previous-year-comparison-{{$type}}"
                             style="display: none;">
-                            {{ __('energy-chart-widget.previous_year_column') }} ({{ $unit }})
+                            {{ $previousPeriodLabel }} ({{ $unit }})
                         </th>
                         <th scope="col"
                             role="columnheader"
@@ -244,13 +310,18 @@
 
                     @foreach($currentData as $index => $value)
                         @php
-                            $totalCurrent += $value;
+                            // Only add to total if value is not null and numeric
+                            if ($value !== null && is_numeric($value)) {
+                                $totalCurrent += $value;
+                            }
+
                             $prevValue = $previousData[$index] ?? null;
-                            if ($prevValue !== null) {
+                            if ($prevValue !== null && is_numeric($prevValue)) {
                                 $totalPrevious += $prevValue;
                             }
-                            $diff = $prevValue !== null ? $value - $prevValue : null;
-                            $percentChange = $prevValue && $prevValue != 0 ? (($value - $prevValue) / $prevValue) * 100 : null;
+
+                            $diff = ($prevValue !== null && $value !== null) ? $value - $prevValue : null;
+                            $percentChange = ($prevValue && $prevValue != 0) ? (($value - $prevValue) / $prevValue) * 100 : null;
 
                             switch($period) {
                                 case 'day':
@@ -292,8 +363,8 @@
                             <td role="gridcell"
                                 tabindex="0"
                                 class="border p-2 dark:border-gray-700 font-mono"
-                                aria-label="{{ __('energy-chart-widget.consumption_amount', ['amount' => number_format($value, 2, ',', '.'), 'unit' => $unit]) }}">
-                                {{ number_format($value, 2, ',', '.') }}
+                                aria-label="{{ __('energy-chart-widget.consumption_amount', ['amount' => number_format($value ?? 0, 2, ',', '.'), 'unit' => $unit]) }}">
+                                {{ $value !== null ? number_format($value, 2, ',', '.') : '-' }}
                             </td>
                             <td role="gridcell"
                                 tabindex="0"
@@ -410,11 +481,57 @@
         const chartData = @json($chartData);
         const previousData = @json($previousYearData[$dataKey] ?? []);
         const comparisonDate = '{{ request('comparison_date', '') }}';
+        const outagesData = @json($outages);
+        const period = "{{ $period }}";
+        const chartDate = "{{ $date }}";
+
+        // Function to check if a time period has an outage
+        function hasOutage(index, period, date) {
+            if (!outagesData || outagesData.length === 0) return false;
+
+            const currentDate = new Date(date);
+            let periodStart, periodEnd;
+
+            switch(period) {
+                case 'day':
+                    // For hourly data (index 0-23)
+                    periodStart = new Date(currentDate);
+                    periodStart.setHours(index, 0, 0, 0);
+                    periodEnd = new Date(currentDate);
+                    periodEnd.setHours(index, 59, 59, 999);
+                    break;
+
+                case 'month':
+                    // For daily data (index 0-30)
+                    periodStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), index + 1, 0, 0, 0);
+                    periodEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), index + 1, 23, 59, 59);
+                    break;
+
+                case 'year':
+                    // For monthly data (index 0-11)
+                    periodStart = new Date(currentDate.getFullYear(), index, 1, 0, 0, 0);
+                    periodEnd = new Date(currentDate.getFullYear(), index + 1, 0, 23, 59, 59);
+                    break;
+
+                default:
+                    return false;
+            }
+
+            // Check if any outage overlaps with this period
+            return outagesData.some(outage => {
+                const outageStart = new Date(outage.start_time);
+                const outageEnd = outage.end_time ? new Date(outage.end_time) : new Date(); // If no end time, use current time
+
+                // Check for overlap: outage starts before period ends AND outage ends after period starts
+                return outageStart <= periodEnd && outageEnd >= periodStart;
+            });
+        }
+
         let periodTranslated;
         const labels = [];
 
         // Generate labels based on period
-        switch("{{ $period }}") {
+        switch(period) {
             case 'day':
                 // For day view - 24 hours (0-23)
                 for (let i = 0; i < 24; i++) {
@@ -438,7 +555,7 @@
                 periodTranslated = '{{ __("energy-chart-widget.months_label") }}';
                 break;
             default:
-                console.error("Unknown period:", "{{ $period }}");
+                console.error("Unknown period:", period);
         }
 
         const chartCanvas = document.getElementById('{{ $type }}Chart');
@@ -451,6 +568,22 @@
         // Get the correct data key based on the type
         const dataKey = "{{ $dataKey }}";
         const usageData = chartData[dataKey] || [];
+
+        // Keep normal bar colors
+        const normalBgColor = '{{ $backgroundColor }}';
+        const normalBorderColor = '{{ $borderColor }}';
+
+        // Create outage zones for background
+        const outageZones = [];
+        for (let i = 0; i < usageData.length; i++) {
+            if (hasOutage(i, period, chartDate)) {
+                outageZones.push({
+                    index: i,
+                    hasOutage: true
+                });
+            }
+        }
+
         const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
         // Use a more subtle axis color with opacity for better blending
@@ -465,8 +598,8 @@
                 datasets: [{
                     label: '{{ $unitLabel }} {{ __("energy-chart-widget.consumption") }}',
                     data: usageData,
-                    backgroundColor: '{{ $backgroundColor }}',
-                    borderColor: '{{ $borderColor }}',
+                    backgroundColor: normalBgColor, // Keep normal colors
+                    borderColor: normalBorderColor, // Keep normal colors
                     borderWidth: 1
                 }]
             },
@@ -477,6 +610,17 @@
                     legend: {
                         labels: {
                             color: titleColor,
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                // Add outage indicator to tooltip
+                                if (hasOutage(context.dataIndex, period, chartDate)) {
+                                    return '⚠️ InfluxDB Uitval Gedetecteerd';
+                                }
+                                return '';
+                            }
                         }
                     }
                 },
@@ -513,9 +657,67 @@
                             lineWidth: 1
                         }
                     }
+                },
+                onHover: function(event, activeElements) {
+                    // Optional: change cursor on hover
+                },
+                animation: {
+                    onComplete: function() {
+                        // Draw outage backgrounds after chart is rendered
+                        drawOutageBackgrounds();
+                    }
                 }
-            }
+            },
+            plugins: [{
+                id: 'outageBackground',
+                beforeDatasetsDraw: function(chart) {
+                    const ctx = chart.ctx;
+                    const chartArea = chart.chartArea;
+
+                    // Draw orange background for outage periods
+                    outageZones.forEach(zone => {
+                        if (zone.hasOutage) {
+                            const meta = chart.getDatasetMeta(0);
+                            const bar = meta.data[zone.index];
+
+                            if (bar) {
+                                const barWidth = bar.width;
+                                const x = bar.x - barWidth / 2;
+
+                                ctx.save();
+                                ctx.fillStyle = 'rgba(249, 115, 22, 0.2)'; // Light orange background
+                                ctx.fillRect(x, chartArea.top, barWidth, chartArea.bottom - chartArea.top);
+                                ctx.restore();
+                            }
+                        }
+                    });
+                }
+            }]
         });
+
+        // Function to draw outage backgrounds (alternative method)
+        function drawOutageBackgrounds() {
+            const ctx = chart.ctx;
+            const chartArea = chart.chartArea;
+
+            outageZones.forEach(zone => {
+                if (zone.hasOutage) {
+                    const meta = chart.getDatasetMeta(0);
+                    const bar = meta.data[zone.index];
+
+                    if (bar) {
+                        const barWidth = bar.width;
+                        const x = bar.x - barWidth / 2;
+
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'destination-over';
+                        ctx.fillStyle = 'rgba(249, 115, 22, 0.2)'; // Light orange background
+                        ctx.fillRect(x, chartArea.top, barWidth, chartArea.bottom - chartArea.top);
+                        ctx.restore();
+                    }
+                }
+            });
+        }
 
         // Toggle comparison with last year - Updated version
         const toggleButton = document.getElementById('toggle{{ ucfirst($type) }}Comparison');
@@ -563,11 +765,15 @@
         if (toggleButton) {
             toggleButton.addEventListener('click', function () {
                 const isVisible = chart.data.datasets.length > 1;
+                const previousTotalEl = document.getElementById('previous-year-total-{{$type}}');
+                const previousYearComparisons = document.querySelectorAll('.previous-year-comparison-{{$type}}');
+
                 if (isVisible) {
                     hideComparison();
                 } else {
                     showComparison();
                 }
+
                 // Announce the change to screen readers
                 const announcement = isVisible ?
                     '{{ __("energy-chart-widget.comparison_hidden") }}' :
@@ -580,7 +786,6 @@
                 announcer.className = 'sr-only';
                 announcer.textContent = announcement;
                 document.body.appendChild(announcer);
-
                 setTimeout(() => {
                     document.body.removeChild(announcer);
                 }, 1000);
