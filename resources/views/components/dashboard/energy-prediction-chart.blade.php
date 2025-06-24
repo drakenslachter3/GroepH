@@ -772,19 +772,23 @@ if (Array.isArray(realMeterData)) {
                 }
             }
             
-            // Helper functions for chart labels
-            function getLabels(period) {
-                switch(period) {
-                    case 'day':
-                        return Array.from({length: 24}, (_, i) => `${i}:00`);
-                    case 'month':
-                        const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-                        return Array.from({length: daysInMonth}, (_, i) => `${i + 1}`);
-                    case 'year':
-                    default:
-                        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                }
-            }
+           // Helper functions for chart labels
+function getLabels(period) {
+    switch(period) {
+        case 'day':
+            return Array.from({length: 24}, (_, i) => `${i}:00`);
+        case 'month':
+            // *** FIX: Gebruik de geselecteerde datum in plaats van huidige datum ***
+            const selectedDate = new Date(@json($selectedDate->format('Y-m-d')));
+            const selectedYear = selectedDate.getFullYear();
+            const selectedMonth = selectedDate.getMonth(); // 0-based (januari = 0)
+            const daysInSelectedMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+            return Array.from({length: daysInSelectedMonth}, (_, i) => `${i + 1}`);
+        case 'year':
+        default:
+            return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    }
+}
             
             function getPeriodLabel(period) {
                 switch(period) {
