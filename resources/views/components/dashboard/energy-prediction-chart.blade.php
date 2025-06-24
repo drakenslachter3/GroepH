@@ -376,21 +376,109 @@ if ($period === 'year') {
             
             // Only add datasets if they exist in the data
             // Actual data - use REAL meter data, not prediction data
-            const realMeterData = @json($actualMeterData);
-            if (Array.isArray(realMeterData)) {
-                chartData.datasets.push({
-                    label: 'Werkelijk verbruik',
-                    data: realMeterData, // Use real meter data instead of currentData.actual
-                    borderColor: mainColor,
-                    backgroundColor: mainColorLight,
-                    tension: 0.2,
-                    fill: false,
-                    pointRadius: 4,
-                    pointBackgroundColor: mainColor,
-                    borderWidth: 3,
-                    order: 0 // Put actual data at the foreground
-                });
+           const realMeterData = @json($actualMeterData);
+console.log('Original realMeterData:', realMeterData);
+
+if (Array.isArray(realMeterData)) {
+    // Krijg de geselecteerde datum van PHP
+    const selectedDate = new Date(@json($selectedDate)); // PHP Carbon datum
+    const currentDate = new Date();
+    
+    let needsCutoff = false;
+    let currentPosition = -1;
+    
+    // Bepaal of we een cutoff nodig hebben (alleen voor huidige periode)
+    if (periodType === 'day') {
+        // Alleen cutoff als het vandaag is
+        needsCutoff = selectedDate.toDateString() === currentDate.toDateString();
+        if (needsCutoff) {
+            currentPosition = currentDate.getHours();
+        }
+    } else if (periodType === 'month') {
+        // Alleen cutoff als het de huidige maand is
+        needsCutoff = selectedDate.getFullYear() === currentDate.getFullYear() && 
+                     selectedDate.getMonth() === currentDate.getMonth();
+        if (needsCutoff) {
+            currentPosition = currentDate.getDate() - 1; // 0-indexed
+        }
+    } else { // year
+        // Alleen cutoff als het het huidige jaar is
+        needsCutoff = selectedDate.getFullYear() === currentDate.getFullYear();
+        if (needsCutoff) {
+            currentPosition = currentDate.getMonth(); // 0-indexed
+        }
+    }
+    
+    console.log(`Period: ${periodType}, needs cutoff: ${needsCutoff}, position: ${currentPosition}`);
+    
+    let processedData;
+    let lastValidIndex = -1;
+    
+    if (needsCutoff) {
+        // Voor huidige periode: knip af bij huidige positie
+        processedData = realMeterData
+            .slice(0, currentPosition + 1)
+            .map(value => {
+                if (value === null || value === undefined || isNaN(value)) {
+                    return null;
+                }
+                return Number(value);
+            });
+    } else {
+        // Voor andere periodes: toon alle beschikbare data
+        processedData = realMeterData.map(value => {
+            if (value === null || value === undefined || isNaN(value)) {
+                return null;
             }
+            return Number(value);
+        });
+    }
+    
+    console.log('Processed data:', processedData);
+    
+    // Vind het laatste geldige datapunt (inclusief 0)
+    for (let i = processedData.length - 1; i >= 0; i--) {
+        if (processedData[i] !== null && processedData[i] !== undefined) {
+            lastValidIndex = i;
+            break;
+        }
+    }
+    
+    console.log('Last valid index:', lastValidIndex);
+    
+    // Alleen voeg dataset toe als er werkelijke data is
+    if (lastValidIndex >= 0) {
+        // Sla de laatste geldige index en waarde op voor voorspellingslijnen
+        window.lastDataPoint = {
+            index: lastValidIndex,
+            value: processedData[lastValidIndex]
+        };
+        
+        chartData.datasets.push({
+            label: 'Werkelijk verbruik',
+            data: processedData,
+            borderColor: mainColor,
+            backgroundColor: mainColorLight,
+            tension: 0.2,
+            fill: false,
+            pointRadius: function(context) {
+                const value = context.parsed.y;
+                return (value === null || value === undefined) ? 0 : 4;
+            },
+            pointHoverRadius: function(context) {
+                const value = context.parsed.y;
+                return (value === null || value === undefined) ? 0 : 6;
+            },
+            pointBackgroundColor: function(context) {
+                const value = context.parsed.y;
+                return (value === null || value === undefined) ? 'transparent' : mainColor;
+            },
+            borderWidth: 3,
+            order: 0,
+            spanGaps: false
+        });
+    }
+}
             
             // Budget line - always show this
             const budgetLine = getPeriodBudgetLine(periodType, budgetData);
