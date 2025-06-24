@@ -23,6 +23,7 @@ class User extends Authenticatable
         'phone',
         'description',
         'role',
+        'additional_info',
         'active',
         'notification_frequency',
         'electricity_threshold',
@@ -149,5 +150,15 @@ class User extends Authenticatable
     public function getNotificationFrequency(): string
     {
         return $this->notification_frequency ?? 'weekly';
+    }
+
+    public function suggestions()
+    {
+        return $this->hasMany(UserSuggestion::class);
+    }
+
+    public function activeSuggestions()
+    {
+        return $this->hasMany(UserSuggestion::class)->active();
     }
 }
