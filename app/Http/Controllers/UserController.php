@@ -8,6 +8,7 @@ use App\Models\SmartMeter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Models\UserSuggestion;
 
 class UserController extends Controller
 {

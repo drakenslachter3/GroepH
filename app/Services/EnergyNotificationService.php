@@ -14,7 +14,7 @@ class EnergyNotificationService
     public function checkAndCreateNotification(User $user, array $predictionData, string $period = 'month')
     {
         // Only create notification if user exceeds their budget
-        if ($predictionData['predicted_percentage'] <= 100) {
+        if (!isset($predictionData['predicted_percentage']) || $predictionData['predicted_percentage'] <= 100) {
             return false;
         }
 
@@ -37,6 +37,27 @@ class EnergyNotificationService
         }
 
         return true;
+    }
+
+    /**
+     * Generate notifications for a user based on prediction data
+     */
+    public function generateNotificationsForUser(User $user, array $electricityPrediction = [], array $gasPrediction = [], string $period = 'month')
+    {
+        try {
+            // Check electricity prediction
+            if (!empty($electricityPrediction) && isset($electricityPrediction['predicted_percentage'])) {
+                $this->checkAndCreateNotification($user, array_merge($electricityPrediction, ['type' => 'electricity']), $period);
+            }
+
+            // Check gas prediction  
+            if (!empty($gasPrediction) && isset($gasPrediction['predicted_percentage'])) {
+                $this->checkAndCreateNotification($user, array_merge($gasPrediction, ['type' => 'gas']), $period);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't break the dashboard
+            \Log::error('Error generating notifications for user ' . $user->id . ': ' . $e->getMessage());
+        }
     }
 
     /**
@@ -181,16 +202,13 @@ class EnergyNotificationService
      */
     private function getPeriodLabel(string $period): string
     {
-        switch ($period) {
-            case 'day':
-                return 'deze dag';
-            case 'month':
-                return 'deze maand';
-            case 'year':
-                return 'dit jaar';
-            default:
-                return $period;
-        }
+        return match ($period) {
+            'day' => 'vandaag',
+            'week' => 'deze week',
+            'month' => 'deze maand',
+            'year' => 'dit jaar',
+            default => 'deze periode'
+        };
     }
 
     /**
@@ -293,16 +311,13 @@ class EnergyNotificationService
      */
     private function getNotificationCooldown(string $period): int
     {
-        switch ($period) {
-            case 'day':
-                return 1; // Daily notifications can be sent once per day
-            case 'month':
-                return 7; // Monthly notifications have a 1-week cooldown
-            case 'year':
-                return 30; // Yearly notifications have a 1-month cooldown
-            default:
-                return 7;
-        }
+        return match ($period) {
+            'day' => 1,
+            'week' => 3,
+            'month' => 7,
+            'year' => 30,
+            default => 7
+        };
     }
 
     /**
@@ -310,15 +325,11 @@ class EnergyNotificationService
      */
     private function getExpirationDate(string $frequency): Carbon
     {
-        switch ($frequency) {
-            case 'daily':
-                return now()->addDays(2);
-            case 'weekly':
-                return now()->addWeek();
-            case 'monthly':
-                return now()->addMonth();
-            default:
-                return now()->addWeek();
-        }
+        return match ($frequency) {
+            'daily' => now()->addDay(),
+            'weekly' => now()->addWeek(),
+            'monthly' => now()->addMonth(),
+            default => now()->addWeek()
+        };
     }
 }
