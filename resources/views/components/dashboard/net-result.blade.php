@@ -10,11 +10,18 @@
     $formattedEnergyConsumed = number_format($sumConsumed, 2);
     $formattedEnergyProduced = number_format($sumProduced, 2);
 
-    $percentageProduced = $sumConsumed > 0
-        ? number_format(($sumProduced / $sumConsumed) * 100, 2)
+    // Bereken percentages met limiet op 100%
+    $rawPercentageProduced = $sumConsumed > 0
+        ? ($sumProduced / $sumConsumed) * 100
         : 0;
 
-    $percentageConsumed = 100 - $percentageProduced;
+    $percentageProduced = number_format(min(100, $rawPercentageProduced), 2);
+    $percentageConsumed = number_format(100 - $percentageProduced, 2);
+
+    // Detecteer overschot
+    $hasSurplus = $sumProduced > $sumConsumed;
+    $surplusEnergy = $hasSurplus ? $sumProduced - $sumConsumed : 0;
+    $formattedSurplus = number_format($surplusEnergy, 2);
 @endphp
 
 <div class="w-full p-2">
@@ -32,37 +39,35 @@
                 </span>
             </div>
         </div>
+
         <!-- Metrics -->
         <div class="space-y-2 mt-2">
-            <!-- Target value -->
+            <!-- Verbruikte elektriciteit -->
             <div class="flex justify-between items-center">
                 <span class="text-gray-700 dark:text-gray-300">Verbruikte elektriciteit:</span>
-                <span tabindex="0"
-                    aria-label=""
-                    class="font-bold dark:text-white">
-                    {{ $formattedEnergyConsumed }} kWh
-                </span>
+                <span class="font-bold dark:text-white">{{ $formattedEnergyConsumed }} kWh</span>
             </div>
-            <!-- Generated value -->
+            <!-- Opgewekte elektriciteit -->
             <div class="flex justify-between items-center">
                 <span class="text-gray-700 dark:text-gray-300">Opgewekte elektriciteit:</span>
-                <span tabindex="0"
-                    aria-label=""
-                    class="font-bold dark:text-white">
-                    {{ $formattedEnergyProduced }} kWh
-                </span>
+                <span class="font-bold dark:text-white">{{ $formattedEnergyProduced }} kWh</span>
             </div>
-            <!-- Generated value -->
+            <!-- Percentage zelf opgewekt -->
             <div class="flex justify-between items-center">
                 <span class="text-gray-700 dark:text-gray-300">U heeft <span class="font-bold">{{ $percentageProduced }}%</span> van uw stroomverbruik zelf opgewekt!</span>
-                <span tabindex="0"
-                    aria-label=""
-                    class="font-bold dark:text-white">
-                </span>
-            </div><br>
-            <!-- Legenda voor pie chart -->
+                <span class="font-bold dark:text-white"></span>
+            </div>
+            <!-- Overschot -->
+            @if ($hasSurplus)
+            <div class="flex justify-between items-center">
+                <span class="text-gray-700 dark:text-gray-300">Overschot opgewekte energie:</span>
+                <span class="font-bold dark:text-white">{{ $formattedSurplus }} kWh</span>
+            </div>
+            @endif
+
+            <!-- Legenda -->
             <div class="mt-5 flex space-x-4 text-sm">
-                <!-- Zelf opgewekte elektriciteit -->
+                <!-- Zelf opgewekt -->
                 <div class="flex items-center space-x-2">
                     <div class="w-4 h-4 bg-yellow-500 rounded-sm border border-yellow-600"></div>
                     <span class="text-gray-700 dark:text-gray-300">Zelf opgewekt</span>
@@ -72,16 +77,24 @@
                     <div class="w-4 h-4 bg-gray-300 rounded-sm border border-gray-400"></div>
                     <span class="text-gray-700 dark:text-gray-300">Restant</span>
                 </div>
+                <!-- Overschot (optioneel) -->
+                @if ($hasSurplus)
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-blue-200 rounded-sm border border-blue-400"></div>
+                    <span class="text-gray-700 dark:text-gray-300">Overschot (buiten grafiek)</span>
+                </div>
+                @endif
             </div>
         </div>
     </div>
-     <!-- Canvas for pie chart -->
+
+    <!-- Canvas voor pie chart -->
     <div class="mt-6 w-56 flex justify-center">
         <canvas id="nettoPieChart" class="max-w-xs"></canvas>
     </div>
 </div>
 
-<!-- Load chartJS -->
+<!-- Chart.js laden -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const percentageConsumed = @json($percentageConsumed);
