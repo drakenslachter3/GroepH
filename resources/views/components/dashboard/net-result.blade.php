@@ -94,7 +94,7 @@
             labels: ['Zelf opgewekte elektriciteit', 'Restant'],
             datasets: [{
                 data: [percentageProduced, percentageConsumed],
-                backgroundColor: ['#EAB308', '#E5E7EB'],
+                backgroundColor: ['#0079ff', '#E5E7EB'],
                 borderWidth: 1
             }]
         };
