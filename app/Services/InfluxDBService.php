@@ -22,15 +22,14 @@ class InfluxDBService
      * @return array
      */
     public function queryAndSave(string $query): array
-    {
-        $queryApi = $this->client->createQueryApi();
-        $result   = $queryApi->query($query);
+{
+    $queryApi = $this->client->createQueryApi();
+    $savedData = [];
 
-        $savedData = [];
+    try {
+        $result = $queryApi->query($query);
 
-        // Handle different result structures
         if (is_array($result) && ! empty($result)) {
-            // Process each table in the result
             foreach ($result as $table) {
                 if (! isset($table->records) || ! is_array($table->records)) {
                     continue;
@@ -41,12 +40,10 @@ class InfluxDBService
                     $fields      = [];
                     $tags        = [];
 
-                    // Extract field values
                     foreach ($record->values as $key => $value) {
                         if (! in_array($key, ['_time', '_measurement', '_start', '_stop'])) {
-                            // Check if it's a tag or field
                             if (strpos($key, '_') === 0) {
-                                $tagKey        = substr($key, 1); // Remove the leading underscore
+                                $tagKey        = substr($key, 1);
                                 $tags[$tagKey] = $value;
                             } else {
                                 $fields[$key] = $value;
@@ -54,10 +51,8 @@ class InfluxDBService
                         }
                     }
 
-                    // Extract time
                     $time = Carbon::parse($record->values['_time'] ?? now());
 
-                    // Save to MySQL
                     $influxData = InfluxData::create([
                         'measurement' => $measurement,
                         'tags'        => $tags,
@@ -71,7 +66,19 @@ class InfluxDBService
         }
 
         return $savedData;
+    } catch (\Exception $e) {
+        Log::error('InfluxDB query failed: ' . $e->getMessage());
+
+        // Als je specifiek wilt kijken naar de foutinhoud:
+        if (str_contains($e->getMessage(), 'invalid duration literal')) {
+            // Gooi desgewenst een eigen exception of return een nette foutmelding
+            throw new \RuntimeException('Ongeldige tijdsduur in InfluxDB query (bijv. -15m is niet toegestaan).');
+        }
+
+        throw $e; // Of een algemene fallback
     }
+}
+
 
     /**
      * Test the connection to InfluxDB
@@ -509,6 +516,7 @@ class InfluxDBService
      */
     public function storeEnergyDashboardData(string $meterId, string $period, string $date): array
     {
+        
         // Haal data op
         $dashboardData = $this->getEnergyDashboardData($meterId, $period, $date);
 
