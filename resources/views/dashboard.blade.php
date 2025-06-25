@@ -509,10 +509,23 @@
                 });
             }
 
-            // Auto-refresh functionality
+            /** Auto-refresh functionality **/
             const refreshInterval = {{ $refresh_settings ?? 0 }};
+
+            function isWithinBlockedHours() {
+                const now = new Date();
+                const amsterdamTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Amsterdam"}));
+                const hours = amsterdamTime.getHours();
+                return hours >= 18 && hours < 19;
+            }
+
             if (refreshInterval > 0) {
                 setInterval(function() {
+                    if (isWithinBlockedHours()) {
+                        console.log('Auto-refresh skipped: blocked during 18:00-19:00 Amsterdam time');
+                        return;
+                    }
+
                     // Create and submit refresh form
                     const form = document.createElement('form');
                     form.method = 'POST';
