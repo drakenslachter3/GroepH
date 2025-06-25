@@ -45,8 +45,9 @@ class InfluxDataController extends Controller
             return redirect()->route('influx.index')
                 ->with('success', 'Query executed successfully. ' . count($results) . ' records saved.');
         } catch (\Exception $e) {
-            return back()->withInput()
+            return redirect()->route('influx.error')
                 ->with('error', 'Error executing query: ' . $e->getMessage());
+
         }
     }
 
@@ -91,8 +92,9 @@ class InfluxDataController extends Controller
             return redirect()->route('dashboard')
                 ->with('success', 'Energiegegevens succesvol opgeslagen.');
         } catch (\Exception $e) {
-            return back()->withInput()
-                ->with('error', 'Fout bij opslaan energiegegevens: ' . $e->getMessage());
+            return redirect()->route('influx.error')
+                 ->with('error', 'Fout bij opslaan energiegegevens: ' . $e->getMessage());
+
         }
     }
 }

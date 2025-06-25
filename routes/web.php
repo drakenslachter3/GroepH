@@ -18,6 +18,12 @@ Route::get('/', function () {
 // Behouden van beide routes uit de verschillende branches
 Route::get('/influx/explore', [InfluxController::class, 'explore']);
 
+// Route afvangen gefaalde API call
+Route::get('/influx/error', function () {
+    return view('influx.error');
+})->name('influx.error');
+
+
 // Toegevoegd vanuit dev branch
 Route::get('/energy/data-form', [InfluxDataController::class, 'showEnergyForm'])
     ->name('energy.form');

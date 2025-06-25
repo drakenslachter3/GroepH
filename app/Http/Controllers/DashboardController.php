@@ -38,6 +38,7 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
+        try{
         $user = Auth::user();
 
         $defaultPeriod  = 'day';
@@ -298,6 +299,11 @@ class DashboardController extends Controller
                 $energydashboard_data['totals']['gas_prediction'] ?? [],
                 $period
             );
+        }
+    } catch (\Exception $e) {
+            return redirect()->route('influx.error')
+                ->with('error', 'Error executing query: ' . $e->getMessage());
+
         }
 
         return view('dashboard', $energydashboard_data);
