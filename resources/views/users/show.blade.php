@@ -116,6 +116,59 @@
                             </div>
                         </div>
                     </div>
+                        {{-- Extra Informatie Sectie --}}
+                        <div class="mb-4">
+                            <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
+                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aanvullende informatie:</span>
+                                <div class="mt-1">
+                                    @if($user->additional_info)
+                                        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mt-2">
+                                            <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{{ $user->additional_info }}</p>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-500 dark:text-gray-400 italic text-sm">Geen aanvullende informatie gedeeld</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Suggestion Management Sectie (optioneel) --}}
+                        @if($user->role !== 'admin' && $user->role !== 'owner')
+                            <div class="mb-4">
+                                <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 pb-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Energietips:</span>
+                                        <a href="{{ route('users.create-suggestion', $user) }}" 
+                                           class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded-md">
+                                            + Tip toevoegen
+                                        </a>
+                                    </div>
+                                    <div class="mt-1">
+                                        @if($user->activeSuggestions && $user->activeSuggestions->count() > 0)
+                                            <div class="space-y-2 mt-2">
+                                                @foreach($user->activeSuggestions as $suggestion)
+                                                    <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 text-sm">
+                                                        <div class="font-medium text-gray-800 dark:text-gray-200">{{ $suggestion->title }}</div>
+                                                        <div class="text-gray-600 dark:text-gray-400 mt-1">{{ Str::limit($suggestion->suggestion, 100) }}</div>
+                                                        <div class="text-xs text-gray-500 mt-1">
+                                                            Status: 
+                                                            <span class="
+                                                                @if($suggestion->status === 'active') text-green-600
+                                                                @elseif($suggestion->status === 'completed') text-blue-600  
+                                                                @else text-gray-600 @endif">
+                                                                {{ ucfirst($suggestion->status) }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-gray-500 dark:text-gray-400 italic text-sm">Nog geen energietips toegevoegd</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
                     <!-- Slimme Meters Sectie -->
                     <div class="mt-8">

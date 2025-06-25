@@ -133,8 +133,20 @@ Route::middleware(['auth', CheckRole::class . ':admin'])->group(function () {
     Route::put('/influxdb-outages/{influxdbOutage}/edit', [App\Http\Controllers\InfluxdbOutageController::class, 'update'])->name('admin.influxdb-outages.update');
     Route::delete('/influxdb-outages/{influxdbOutage}', [App\Http\Controllers\InfluxdbOutageController::class, 'destroy'])->name('admin.influxdb-outages.destroy');
 
+    Route::get('/users/{user}/suggestions/create', [UserController::class, 'createSuggestion'])
+        ->name('users.create-suggestion');
+    Route::post('/users/{user}/suggestions', [UserController::class, 'storeSuggestion'])
+        ->name('users.store-suggestion');
+    Route::delete('/suggestions/{suggestion}', [UserController::class, 'deleteSuggestion'])
+        ->name('users.delete-suggestion');
 });
 
+Route::middleware('auth')->group(function () {
+    Route::post('/profile/suggestions/{suggestion}/dismiss', [ProfileController::class, 'dismissSuggestion'])
+        ->name('profile.suggestions.dismiss');
+    Route::post('/profile/suggestions/{suggestion}/complete', [ProfileController::class, 'completeSuggestion'])
+        ->name('profile.suggestions.complete');
+});
 require __DIR__ . '/auth.php';
 
 Route::get('/influx', [InfluxDataController::class, 'index'])->name('influx.index');
