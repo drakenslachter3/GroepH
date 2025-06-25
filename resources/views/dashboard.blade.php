@@ -516,7 +516,7 @@
                 const now = new Date();
                 const amsterdamTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Amsterdam"}));
                 const hours = amsterdamTime.getHours();
-                return hours >= 18 && hours < 19;
+                return hours >= 18 && hours < 22;
             }
 
             if (refreshInterval > 0) {
