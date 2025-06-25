@@ -235,8 +235,8 @@
                                         <!-- Budget Progress -->
                                         <div class="mb-4" role="status" aria-live="polite">
                                             <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
-                                                <span>Budget voor deze maand: <span class="yearly-total">{{ $meter->measures_electricity ? ($meterBudget->electricity_target_kwh ?? 1750) : ($meterBudget->gas_target_m3 ?? 600) }}</span> <span class="total-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span></span>
-                                                <span>Verdeeld: <span class="used-total">{{ $meter->measures_electricity ? ($meterBudget->electricity_target_kwh ?? 1750) : ($meterBudget->gas_target_m3 ?? 600) }}</span> <span class="used-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span> (<span class="used-percentage">100</span>%)</span>
+                                                <span>Budget voor deze maand: <span class="monthly-total"></span> <span class="total-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span></span>
+                                                <span>Verdeeld: <span class="used-total"></span> <span class="used-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span> (<span class="used-percentage">100</span>%)</span>
                                             </div>
                                             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
                                                 <div class="budget-progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
@@ -655,7 +655,11 @@
                     slider.className = 'range-vertical';
                     
                     slider.addEventListener('input', function() {
-                        handleSliderChange(meterId, index, parseFloat(this.value));
+                         const new_value = parseFloat(this.value);
+                         handleSliderChange(meterId, index, new_value);
+                         valueInput.value = new_value.toFixed(1);
+
+                         updateMonthlyBudgetDailyBudgetSection(meterId);
                     });
                     
                     sliderDiv.appendChild(slider);
@@ -672,9 +676,11 @@
                     valueInput.setAttribute('data-month', index + 1);
                     
                     valueInput.addEventListener('change', function() {
-                        const newValue = parseFloat(this.value) || 0;
-                        handleSliderChange(meterId, index, newValue);
-                        slider.value = Math.min(newValue, maxSliderValue);
+                        const new_value = parseFloat(this.value) || 0;
+                        handleSliderChange(meterId, index, new_value);
+                        slider.value = Math.min(new_value, maxSliderValue);
+
+                        updateMonthlyBudgetDailyBudgetSection(meterId);
                     });
                     
                     monthDiv.appendChild(valueInput);
@@ -757,7 +763,11 @@
                 }
             }
 
-            // SECTIE VOOR DAGELIJKSE BUDGETTEN BEGIN
+            //#section Daily budgets
+
+            document.addEventListener('DOMContentLoaded', () => {
+                
+            });
 
             window.handleMonthChange = function(meter_id, month_number) {
                 
@@ -791,21 +801,30 @@
 
             // Daily budget input fields listener
             const dayInputs = document.querySelectorAll('input[name^="day-"]');
+
+            dayInputs.forEach(input => {
+
             let old_input_value;
 
-            //TODO !!
-            dayInputs.forEach(input => {
-                input.addEventListener('change', function() {
-                    const meter_id = this.getAttribute('data-meter-id');
-                    if (meter_id) {
-                       if(addingNewValueExeedsMonthlyBudget(input.value, meter_id)) {
-                            input.value = 999;
-                       } else {
+            input.addEventListener('focus', function() {
+                old_input_value = parseFloat(this.value) || 0; 
+            });
+
+            input.addEventListener('change', function() {
+                const meter_id = this.getAttribute('data-meter-id');
+                const new_value = parseFloat(this.value) || 0;
+
+                if (meter_id) {
+                        if(addingNewValueExceedsMonthlyBudget(old_input_value, new_value, meter_id)) {
+                            this.value = old_input_value.toFixed(1);
+                        } else {
+                            old_input_value = new_value;
                             updateProgressBarDailyBudgets(meter_id);
-                       }
+                        }
                     }
                 });
             });
+
 
             function calculateDailyBudgetSum(meter_id) {
                 let total = 0;
@@ -821,11 +840,15 @@
                 return total;
             }
 
-            function addingNewValueExeedsMonthlyBudget(value, meter_id){
+           function addingNewValueExceedsMonthlyBudget(old_value, new_value, meter_id) {
                 const meterSection = document.getElementById(`daily-budget-section-${meter_id}`);
-                const budget = meterSection.getAttribute('data-budget-for-month');
+                const budget = parseFloat(meterSection.getAttribute('data-budget-for-month'));
+                
+                const totalSum = parseFloat(calculateDailyBudgetSum(meter_id)).toFixed(1);
 
-                return parseFloat(value) + calculateDailyBudgetSum(meter_id) > parseFloat(budget);
+                const adjustedSum = (totalSum - parseFloat(old_value) + parseFloat(new_value)).toFixed(1);
+                
+                return adjustedSum > budget;
             }
 
             // TODO !!
@@ -834,16 +857,20 @@
                 const bar = meterSection.querySelector('.budget-progress-bar');
                 const usedTotalSpan = meterSection.querySelector('.used-total');
                 const usedPercentageSpan = meterSection.querySelector('.used-percentage');
-                const yearlyTotalSpan = meterSection.querySelector('.yearly-total');
+                const monthlyTotalSpan = meterSection.querySelector('.monthly-total');
                 const budgetWarning = meterSection.querySelector('.budget-warning');
                 
                 const totalDailyBudget = calculateDailyBudgetSum(meter_id);
-                const availableBudget = parseFloat(yearlyTotalSpan.textContent) || 100;
+
+                const budget = parseFloat(meterSection.getAttribute('data-budget-for-month'));
+                monthlyTotalSpan.textContent = budget.toFixed(1);
+
+                const availableBudget = (parseFloat(monthlyTotalSpan.textContent) || 100).toFixed(1);
                 
                 const percentage = (totalDailyBudget / availableBudget) * 100;
                 
-                usedTotalSpan.textContent = totalDailyBudget;
-                usedPercentageSpan.textContent = Math.round(percentage);
+                usedTotalSpan.textContent = totalDailyBudget.toFixed(1);
+                usedPercentageSpan.textContent = percentage.toFixed(1);
                 
                 bar.style.width = Math.min(percentage, 100) + '%';
                 
@@ -860,6 +887,34 @@
                     budgetWarning.classList.add('hidden');
                 }
             }
+
+            function updateMonthlyBudgetDailyBudgetSection(meter_id){
+                const meterSection = document.getElementById(`daily-budget-section-${meter_id}`);
+                const month_number = meterSection.getAttribute('data-month');               
+                meterSection.setAttribute('data-budget-for-month', getBudgetForMonth(meter_id, month_number));
+
+                divideNewMonthlyBudgetOverInputFields(meter_id);
+            }
+
+            function divideNewMonthlyBudgetOverInputFields(meter_id) {
+                const meterSection = document.getElementById(`daily-budget-section-${meter_id}`);
+                const dayInputs = Array.from(meterSection.querySelectorAll('input[name^="day-"]'));
+                const monthlyBudget = parseFloat(meterSection.getAttribute('data-budget-for-month'));
+                const amountOfInputFields = dayInputs.length;
+
+                const precise = monthlyBudget / amountOfInputFields;
+
+                const rounded = Math.floor(precise * 10) / 10;
+
+                const adjustedTotal = rounded * amountOfInputFields;
+
+                dayInputs.forEach(input => {
+                    input.value = rounded.toFixed(1);
+                });
+            }
+
         });
+
+        //#endsection
     </script>
 </x-app-layout>
