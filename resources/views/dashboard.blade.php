@@ -511,8 +511,14 @@
 
             /** Auto-refresh functionality **/
             const refreshInterval = {{ $refresh_settings ?? 0 }};
+            const allowPeakHoursRefresh = {{ $allow_peak_hours_refresh ?? 0 }};
 
             function isWithinBlockedHours() {
+                // If peak hours refresh is allowed, never block
+                if (allowPeakHoursRefresh) {
+                    return false;
+                }
+
                 const now = new Date();
                 const amsterdamTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Amsterdam"}));
                 const hours = amsterdamTime.getHours();
@@ -522,7 +528,7 @@
             if (refreshInterval > 0) {
                 setInterval(function() {
                     if (isWithinBlockedHours()) {
-                        console.log('Auto-refresh skipped: blocked during 18:00-19:00 Amsterdam time');
+                        console.log('Auto-refresh skipped: blocked during 18:00-22:00 Amsterdam time');
                         return;
                     }
 
