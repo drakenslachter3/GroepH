@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">
-            {{ __('Voorspellingsinstellingen') }}
+            {{ __('Voorspellings Instellingen') }}
         </h2>
     </x-slot>
 

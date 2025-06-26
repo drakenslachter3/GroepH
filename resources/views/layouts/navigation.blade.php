@@ -32,7 +32,7 @@
                         </x-etc.nav-link>
 
                         <x-etc.nav-link :href="route('admin.prediction-settings.index')" :active="request()->routeIs('admin.prediction-settings.*')">
-                            {{ __('Voorspellingsinstellingen') }}
+                            {{ __('Voorspellings Instellingen') }}
                         </x-etc.nav-link>
 
                         <x-etc.nav-link :href="route('admin.influxdb-outages.index')" :active="request()->routeIs('admin.influxdb-outages.*')">
@@ -41,7 +41,7 @@
                         </x-etc.nav-link>
 
                         <x-etc.nav-link :href="route('admin.refresh-settings.index')" :active="request()->routeIs('admin.refresh-settings.*')">
-                        {{ __('Verversinstellingen') }}
+                        {{ __('Ververs Instellingen') }}
 
                         </x-etc.nav-link>
                     @endif
@@ -51,12 +51,12 @@
             <!-- Settings Dropdown -->
             <div class="flex items-center" aria-label="Gebruikersinstellingen">
                 @if (Auth::check() && (Auth::user()->isAdmin() || Auth::user()->isOwner()))
-                    <div class="mr-3" aria-label="Beheerdersmeldingen">
+                    <div class="mx-3" aria-label="Beheerdersmeldingen">
                         <x-admin-notification-inbox />
                     </div>
                 @endif
                 @if (Auth::check())
-                    <div class="mr-3" aria-label="Energieverbruik meldingen">
+                    <div class="mx-3" aria-label="Energieverbruik meldingen">
                         <x-energy-notification-inbox />
                     </div>
                 @endif
