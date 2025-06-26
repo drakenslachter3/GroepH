@@ -80,7 +80,7 @@
             </div>
 
             <!-- Legenda -->
-            <div class="mt-5 flex space-x-4 text-sm">
+            <div class="mt-5 flex space-x-4 text-sm justify-center">
                 <!-- Zelf opgewekt -->
                 @if($percentageProduced > 0)
                 <div class="flex items-center space-x-2">
@@ -108,8 +108,10 @@
     </div>
 
     <!-- Canvas voor pie chart -->
-    <div class="mt-6 w-56 flex justify-center">
-        <canvas id="nettoPieChart" class="max-w-xs"></canvas>
+    <div class="mt-6 w-full flex justify-center">
+        <div class="w-56 flex justify-center">
+            <canvas id="nettoPieChart" class="max-w-xs"></canvas>
+        </div>
     </div>
 </div>
 

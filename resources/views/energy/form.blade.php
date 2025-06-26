@@ -168,13 +168,11 @@
                                         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
                                             <div class="budget-progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
                                         </div>
-                                        <div class="h-6">
-                                            <div class="budget-warning text-sm text-yellow-500 dark:text-yellow-400 hidden" aria-live="assertive">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                </svg>
-                                                Maandelijkse waarden mogen niet meer dan het jaarbudget zijn.
-                                            </div>
+                                        <div class="budget-warning text-sm text-yellow-500 dark:text-yellow-400 hidden" aria-live="assertive">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            Maandelijkse waarden mogen niet meer dan het jaarbudget zijn.
                                         </div>
                                     </div>
 
@@ -304,6 +302,12 @@
 
         .gas .range-vertical::-moz-range-thumb {
             background: #F59E0B;
+        }
+
+        /* Prevent slider from exceeding yearly budget by disabling at max */
+        .slider-maxed {
+            pointer-events: none;
+            opacity: 0.6;
         }
     </style>
 
@@ -474,12 +478,12 @@
                 const monthlyValues = data[activeUtility].monthly;
                 const unit = activeUtility === 'electricity' ? 'kWh' : 'm³';
                 const maxSliderValue = Math.ceil(yearlyValue / 6); // Max value for sliders
-                
+                const currentTotal = monthlyValues.reduce((sum, val) => sum + val, 0);
+                const canIncrease = currentTotal < yearlyValue;
+
                 container.innerHTML = '';
-                
                 const slidersGrid = document.createElement('div');
                 slidersGrid.className = 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4';
-                
                 months.forEach((month, index) => {
                     const monthDiv = document.createElement('div');
                     monthDiv.className = `bg-gray-50 dark:bg-gray-700 rounded-lg p-3 flex flex-col items-center ${activeUtility}`;
@@ -501,14 +505,16 @@
                     const slider = document.createElement('input');
                     slider.type = 'range';
                     slider.min = '0';
-                    // Calculate the max for this slider: current value + remaining budget
-                    const currentValue = monthlyValues[index];
-                    const totalOtherMonths = monthlyValues.reduce((sum, val, i) => i === index ? sum : sum + val, 0);
-                    const maxForThisSlider = Math.max(0, yearlyValue - totalOtherMonths + currentValue);
-                    slider.max = maxForThisSlider;
+                    slider.max = maxSliderValue;
                     slider.step = '0.1';
-                    slider.value = Math.min(currentValue, maxForThisSlider);
+                    slider.value = Math.min(monthlyValues[index], maxSliderValue);
                     slider.className = 'range-vertical';
+                    // Disable slider if yearly max is reached and this month can't increase
+                    const totalWithoutThis = currentTotal - monthlyValues[index];
+                    if (totalWithoutThis >= yearlyValue) {
+                        slider.disabled = true;
+                        slider.classList.add('slider-maxed');
+                    }
                     slider.addEventListener('input', function() {
                         handleSliderChange(meterId, index, parseFloat(this.value));
                     });
@@ -528,7 +534,7 @@
                     valueInput.addEventListener('change', function() {
                         const newValue = parseFloat(this.value) || 0;
                         handleSliderChange(meterId, index, newValue);
-                        slider.value = Math.min(newValue, maxForThisSlider);
+                        slider.value = Math.min(newValue, maxSliderValue);
                     });
                     
                     monthDiv.appendChild(valueInput);
@@ -549,24 +555,30 @@
                 const data = meterBudgetData.get(meterId);
                 const activeUtility = data.activeUtility;
                 const yearlyValue = data[activeUtility].yearly;
-                const monthlyValues = data[activeUtility].monthly;
-                const currentTotal = monthlyValues.reduce((sum, val) => sum + val, 0);
-                const currentValue = monthlyValues[monthIndex];
-                const totalOtherMonths = currentTotal - currentValue;
-                // Cap the value so the yearly budget is not exceeded
-                const maxAllowed = Math.max(0, yearlyValue - totalOtherMonths + currentValue);
-                if (newValue > maxAllowed) {
-                    newValue = maxAllowed;
-                }
-                data[activeUtility].monthly[monthIndex] = newValue;
-                // Show/hide warning
-                const warningEl = document.querySelector(`.meter-budget-section[data-meter-id="${meterId}"] .budget-warning`);
-                if (monthlyValues.reduce((sum, val) => sum + val, 0) > yearlyValue + 0.01) {
+                const currentTotal = data[activeUtility].monthly.reduce((sum, val) => sum + val, 0);
+                const currentValue = data[activeUtility].monthly[monthIndex];
+                const proposedTotal = currentTotal - currentValue + newValue;
+                
+                if (proposedTotal > yearlyValue) {
+                    const maxAllowed = yearlyValue - (currentTotal - currentValue);
+                    data[activeUtility].monthly[monthIndex] = maxAllowed;
+                    
+                    // Show warning
+                    const warningEl = document.querySelector(`.meter-budget-section[data-meter-id="${meterId}"] .budget-warning`);
                     warningEl.classList.remove('hidden');
+                    
+                    // Update input field
+                    const container = document.querySelector(`.monthly-sliders-container[data-meter-id="${meterId}"]`);
+                    const valueInput = container.querySelectorAll('input[type="number"]')[monthIndex];
+                    valueInput.value = maxAllowed.toFixed(1);
                 } else {
+                    data[activeUtility].monthly[monthIndex] = newValue;
+                    
+                    // Hide warning
+                    const warningEl = document.querySelector(`.meter-budget-section[data-meter-id="${meterId}"] .budget-warning`);
                     warningEl.classList.add('hidden');
                 }
-                renderMonthlySliders(meterId); // Re-render to update slider maxes
+                
                 updateBudgetDisplay(meterId);
             }
 
