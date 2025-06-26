@@ -55,11 +55,7 @@
                 <span class="font-bold dark:text-white">{{ $formattedEnergyProduced }} kWh</span>
             </div>
 
-            <!-- Percentage zelf opgewekt -->
-            <div class="flex justify-between items-center">
-                <span class="text-gray-700 dark:text-gray-300">U heeft <span class="font-bold">{{ $percentageProduced }}%</span> van uw stroomverbruik zelf opgewekt!</span>
-                <span class="font-bold dark:text-white"></span>
-            </div>
+            
             <!-- Overschot -->
             @if ($hasSurplus)
             <div class="flex justify-between items-center">
@@ -67,6 +63,12 @@
                 <span class="font-bold dark:text-white">{{ $formattedSurplus }} kWh</span>
             </div>
             @endif
+
+            <!-- Percentage zelf opgewekt -->
+            <div class="flex justify-between items-center">
+                <span class="text-gray-700 dark:text-gray-300">U heeft <span class="font-bold">{{ $percentageProduced }}%</span> van uw stroomverbruik zelf opgewekt!</span>
+                <span class="font-bold dark:text-white"></span>
+            </div>
 
             <!-- Legenda -->
             <div class="mt-5 flex space-x-4 text-sm">
