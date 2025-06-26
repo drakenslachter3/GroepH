@@ -80,8 +80,9 @@
 }
 
 *:focus {
-    outline: 3px solid #4a90e2;
+    outline: 0;
+    /* outline: 3px solid #4a90e2; */
+    /* box-shadow: 0 0 5px rgba(74, 144, 226, 0.8); */
     outline-offset: 2px;
-    box-shadow: 0 0 5px rgba(74, 144, 226, 0.8);
     transition: outline 0.2s, box-shadow 0.2s;
 }

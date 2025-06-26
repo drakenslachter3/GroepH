@@ -124,7 +124,7 @@ class DashboardController extends Controller
 
         // If a comparison_date is set, fetch historical data for that date (same period type)
         $comparisonDate = $request->input('comparison_date');
-        // dd($comparisonDate);
+
         if ($comparisonDate) {
             $historicalData = $this->getEnergyData($selectedMeterId, $period, $comparisonDate);
             $meterDataForPeriod['historical_data'] = $historicalData['current_data'] ?? $historicalData;
@@ -570,7 +570,7 @@ class DashboardController extends Controller
                 ->where('date', $date)
                 ->where('last_updated', '>', now()->subMinutes(15))
                 ->first();
-
+                
             if ($cachedData) {
                 // Return cached data from MySQL
                 return [
@@ -606,15 +606,6 @@ class DashboardController extends Controller
                         return is_numeric($value);
                     }));
                 }
-            }
-
-            // If we don't have data from the current period, use the total data
-            if ($electricityUsage == 0 && isset($influxData['total']['month']['electricity_usage'])) {
-                $electricityUsage = $influxData['total']['month']['electricity_usage'];
-            }
-
-            if ($gasUsage == 0 && isset($influxData['total']['month']['gas_usage'])) {
-                $gasUsage = $influxData['total']['month']['gas_usage'];
             }
 
             // Calculate targets for the selected period
