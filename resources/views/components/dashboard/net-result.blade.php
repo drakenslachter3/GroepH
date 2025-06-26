@@ -4,25 +4,26 @@
     $energyConsumed = array_filter($energyConsumed ?? [], 'is_numeric');
     $energyProduced = array_filter($energyProduced ?? [], 'is_numeric');
 
-    $sumConsumed = array_sum($energyConsumed);
-    $sumProduced = array_sum($energyProduced);
+    // Hardcoded voor test
+    $sumConsumed = 2.00;
+    $sumProduced = 3.00;
 
     $formattedEnergyConsumed = number_format($sumConsumed, 2);
     $formattedEnergyProduced = number_format($sumProduced, 2);
 
-    // Bereken percentages met limiet op 100%
+    $hasSurplus = $sumProduced > $sumConsumed;
+    $surplusEnergy = $hasSurplus ? $sumProduced - $sumConsumed : 0;
+    $formattedSurplus = number_format($surplusEnergy, 2);
+
     $rawPercentageProduced = $sumConsumed > 0
         ? ($sumProduced / $sumConsumed) * 100
         : 0;
 
     $percentageProduced = number_format(min(100, $rawPercentageProduced), 2);
     $percentageConsumed = number_format(100 - $percentageProduced, 2);
-
-    // Detecteer overschot
-    $hasSurplus = $sumProduced > $sumConsumed;
-    $surplusEnergy = $hasSurplus ? $sumProduced - $sumConsumed : 0;
-    $formattedSurplus = number_format($surplusEnergy, 2);
+    $percentageSurplus = number_format(max(0, $rawPercentageProduced - 100), 2);
 @endphp
+
 
 <div class="w-full p-2">
     <div class="flex flex-col">
@@ -47,11 +48,13 @@
                 <span class="text-gray-700 dark:text-gray-300">Verbruikte elektriciteit:</span>
                 <span class="font-bold dark:text-white">{{ $formattedEnergyConsumed }} kWh</span>
             </div>
+
             <!-- Opgewekte elektriciteit -->
             <div class="flex justify-between items-center">
                 <span class="text-gray-700 dark:text-gray-300">Opgewekte elektriciteit:</span>
                 <span class="font-bold dark:text-white">{{ $formattedEnergyProduced }} kWh</span>
             </div>
+
             <!-- Percentage zelf opgewekt -->
             <div class="flex justify-between items-center">
                 <span class="text-gray-700 dark:text-gray-300">U heeft <span class="font-bold">{{ $percentageProduced }}%</span> van uw stroomverbruik zelf opgewekt!</span>
@@ -68,22 +71,23 @@
             <!-- Legenda -->
             <div class="mt-5 flex space-x-4 text-sm">
                 <!-- Zelf opgewekt -->
-                <div class="flex items-center space-x-2">
-                    <div class="w-4 h-4 bg-yellow-500 rounded-sm border border-yellow-600"></div>
+               <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded-sm border" style="background-color: #0079ff; border-color: #0079ff;"></div>
                     <span class="text-gray-700 dark:text-gray-300">Zelf opgewekt</span>
                 </div>
+
                 <!-- Restant -->
                 <div class="flex items-center space-x-2">
                     <div class="w-4 h-4 bg-gray-300 rounded-sm border border-gray-400"></div>
                     <span class="text-gray-700 dark:text-gray-300">Restant</span>
                 </div>
                 <!-- Overschot (optioneel) -->
-                @if ($hasSurplus)
+
                 <div class="flex items-center space-x-2">
                     <div class="w-4 h-4 bg-blue-200 rounded-sm border border-blue-400"></div>
-                    <span class="text-gray-700 dark:text-gray-300">Overschot (buiten grafiek)</span>
+                    <span class="text-gray-700 dark:text-gray-300">Overschot</span>
                 </div>
-                @endif
+                
             </div>
         </div>
     </div>
@@ -98,42 +102,44 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const percentageConsumed = @json($percentageConsumed);
-    const percentageProduced = @json($percentageProduced);
+const percentageProduced = @json($percentageProduced);
+const percentageSurplus = @json($percentageSurplus);
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('nettoPieChart').getContext('2d');
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('nettoPieChart').getContext('2d');
 
-        const data = {
-            labels: ['Zelf opgewekte elektriciteit', 'Restant'],
-            datasets: [{
-                data: [percentageProduced, percentageConsumed],
-                backgroundColor: ['#0079ff', '#E5E7EB'],
-                borderWidth: 1
-            }]
-        };
+    const data = {
+        labels: ['Zelf opgewekt', 'Restant', 'Overschot'],
+        datasets: [{
+            data: [percentageProduced, percentageConsumed, percentageSurplus],
+            backgroundColor: ['#0079ff', '#E5E7EB', '#93c5fd'], // donkerblauw, grijs, lichtblauw
+            borderWidth: 1
+        }]
+    };
 
-        const options = {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed;
-                            return `${label}: ${value}%`;
-                        }
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        return `${label}: ${value}%`;
                     }
                 }
             }
-        };
+        }
+    };
 
-        new Chart(ctx, {
-            type: 'pie',
-            data: data,
-            options: options
-        });
+    new Chart(ctx, {
+        type: 'pie',
+        data: data,
+        options: options
     });
+});
+
 </script>
