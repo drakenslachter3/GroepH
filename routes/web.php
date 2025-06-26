@@ -6,9 +6,12 @@ use App\Http\Controllers\EnergyPredictionController;
 use App\Http\Controllers\EnergyVisualizationController;
 use App\Http\Controllers\InfluxController;
 use App\Http\Controllers\InfluxDataController;
+use App\Http\Controllers\PredictionSettingsController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RefreshSettingsController;
 use App\Http\Controllers\SmartMeterController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,7 +31,21 @@ Route::get('/influx/error', function () {
 Route::get('/energy/data-form', [InfluxDataController::class, 'showEnergyForm'])
     ->name('energy.form');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'budget.check'])->group(function () {
+    // Budget routes - updated for per-meter functionality
+    Route::get('/budget/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
+    Route::post('/budget/store-per-meter', [EnergyBudgetController::class, 'storePerMeter'])->name('budget.store-per-meter');
+
+    // Legacy routes for backwards compatibility
+    Route::post('/budget/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
+    Route::post('/budget/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
+
+    // Additional budget management routes
+    Route::get('/budget/meter/{meter}', [EnergyBudgetController::class, 'getBudgetForMeter'])->name('budget.meter');
+    Route::delete('/budget/meter/{meter}', [EnergyBudgetController::class, 'deleteBudgetForMeter'])->name('budget.meter.delete');
+});
+
+Route::middleware('auth', 'budget.check')->group(function () {
     Route::get('/form', [EnergyBudgetController::class, 'index'])->name('budget.form');
     Route::post('/calculate', [EnergyBudgetController::class, 'calculate'])->name('budget.calculate');
     Route::post('/store', [EnergyBudgetController::class, 'store'])->name('budget.store');
@@ -54,6 +71,8 @@ Route::middleware('auth')->group(function () {
     // Opslaan geselecteerde meter dashboard route
     Route::post('/dashboard', [DashboardController::class, 'saveSelectedMeter'])->name('dashboard.saveSelectedMeter');
     Route::post('/dashboard/refresh', [DashboardController::class, 'refreshData'])->name('dashboard.refresh');
+
+    Route::post('/dashboard/comparison-toggle', [DashboardController::class, 'saveComparisonToggle'])->name('dashboard.comparison-toggle');
 
     Route::post('/energy/store-data', [InfluxDataController::class, 'storeEnergyData'])
         ->name('energy.store-data');
@@ -92,11 +111,48 @@ Route::middleware('auth')->group(function () {
 });
 
 // Testroutes - apart van de productie routes
-Route::middleware('auth')->prefix('testing')->group(function () {
+Route::middleware(['auth', CheckRole::class . ':admin'])->prefix('testing')->group(function () {
     Route::get('/generate-notification', [App\Http\Controllers\TestNotificationController::class, 'generateTestNotification'])
         ->name('testing.notification');
 });
 
+// Prediction settings routes - match other admin routes pattern
+Route::middleware(['auth', CheckRole::class . ':admin'])->group(function () {
+    Route::get('/admin/prediction-settings', [PredictionSettingsController::class, 'index'])
+        ->name('admin.prediction-settings.index');
+    Route::post('/admin/prediction-settings', [PredictionSettingsController::class, 'update'])
+        ->name('admin.prediction-settings.update');
+    Route::get('/admin/refresh-settings', [RefreshSettingsController::class, 'index'])
+        ->name('admin.refresh-settings.index');
+    Route::post('/admin/refresh-settings', [RefreshSettingsController::class, 'update'])
+        ->name('admin.refresh-settings.update');
+
+    Route::get('/influxdb-outages/index', [App\Http\Controllers\InfluxdbOutageController::class, 'index'])->name('admin.influxdb-outages.index');
+    Route::get('/influxdb-outages/create', [App\Http\Controllers\InfluxdbOutageController::class, 'create'])->name('admin.influxdb-outages.create');
+    Route::post('/influxdb-outages/create', [App\Http\Controllers\InfluxdbOutageController::class, 'store'])->name('admin.influxdb-outages.store');
+    Route::get('/influxdb-outages/edit', [App\Http\Controllers\InfluxdbOutageController::class, 'edit'])->name('admin.influxdb-outages.edit');
+    Route::delete('/influxdb-outages/{influxdbOutage}', [App\Http\Controllers\InfluxdbOutageController::class, 'destroy'])->name('admin.influxdb-outages.destroy');
+    Route::get('/influxdb-outages', [App\Http\Controllers\InfluxdbOutageController::class, 'index'])->name('admin.influxdb-outages.index');
+    Route::get('/influxdb-outages/create', [App\Http\Controllers\InfluxdbOutageController::class, 'create'])->name('admin.influxdb-outages.create');
+    Route::post('/influxdb-outages', [App\Http\Controllers\InfluxdbOutageController::class, 'store'])->name('admin.influxdb-outages.store');
+    Route::get('/influxdb-outages/{influxdbOutage}/edit', [App\Http\Controllers\InfluxdbOutageController::class, 'edit'])->name('admin.influxdb-outages.edit');
+    Route::put('/influxdb-outages/{influxdbOutage}/edit', [App\Http\Controllers\InfluxdbOutageController::class, 'update'])->name('admin.influxdb-outages.update');
+    Route::delete('/influxdb-outages/{influxdbOutage}', [App\Http\Controllers\InfluxdbOutageController::class, 'destroy'])->name('admin.influxdb-outages.destroy');
+
+    Route::get('/users/{user}/suggestions/create', [UserController::class, 'createSuggestion'])
+        ->name('users.create-suggestion');
+    Route::post('/users/{user}/suggestions', [UserController::class, 'storeSuggestion'])
+        ->name('users.store-suggestion');
+    Route::delete('/suggestions/{suggestion}', [UserController::class, 'deleteSuggestion'])
+        ->name('users.delete-suggestion');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('/profile/suggestions/{suggestion}/dismiss', [ProfileController::class, 'dismissSuggestion'])
+        ->name('profile.suggestions.dismiss');
+    Route::post('/profile/suggestions/{suggestion}/complete', [ProfileController::class, 'completeSuggestion'])
+        ->name('profile.suggestions.complete');
+});
 require __DIR__ . '/auth.php';
 
 Route::get('/influx', [InfluxDataController::class, 'index'])->name('influx.index');

@@ -12,7 +12,7 @@
         <x-dashboard.widget-heading :title="$title" :period="$period" :date="$date" />
         <x-dashboard.widget-navigation :showNext="true" />
         
-        <!-- Confidence Indicator -->
+        <!-- Confidence Indicator
         <div class="mb-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
@@ -24,7 +24,7 @@
                     <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">{{ $confidence }}%</span>
                 </div>
             </div>
-        </div>
+        </div> -->
         
         <!-- Prediction Chart -->
         <div class="relative mb-4" style="height: 200px;">

@@ -71,7 +71,7 @@
                                     </div>
                                     <p class="font-medium text-gray-900 dark:text-white mt-1">{{ $notification->message }}</p>
 
-                                    @if(count($notification->suggestions) > 0)
+                                    @if(!empty($notification->suggestions))
                                         <div class="mt-2 text-sm">
                                             <p class="font-medium text-gray-700 dark:text-gray-300">Suggesties:</p>
                                             <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 mt-1">
