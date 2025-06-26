@@ -1,15 +1,12 @@
-@extends('layouts.app')
-
-@section('title', 'Profiel Bewerken')
-
-@section('content')
-    <div class="min-h-screen bg-gray-900 text-white">
+<x-app-layout>
+    {{-- Meta tags --}}
+    <div class="">
         {{-- Header --}}
-        <div class="bg-gray-800 px-4 py-6">
-            <div class="max-w-4xl mx-auto">
-                <h1 class="text-2xl font-bold text-white mb-2">Bewerk je persoonlijke informatie</h1>
-            </div>
-        </div>
+        <x-slot name="header">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">
+                Bewerk je persoonlijke informatie
+            </h2>
+        </x-slot>
 
         <div class="max-w-4xl mx-auto px-4 py-8">
             {{-- Success Message --}}
@@ -32,60 +29,60 @@
                 @method('PATCH')
 
                 {{-- Basic Info --}}
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h2 class="text-xl font-semibold text-white mb-6">Basis Informatie</h2>
+                <div class="bg-white p-6 rounded-lg dark:bg-gray-700">
+                    <h2 class="text-xl font-semibold mb-6 text-gray-800 dark:text-gray-100">Basis Informatie</h2>
 
                     <div class="space-y-6">
                         {{-- Name --}}
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-300 mb-2">
-                                Naam <span class="text-red-400">*</span>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Naam <span class="text-red-500 dark:text-red-400">*</span>
                             </label>
                             <input type="text" name="name" id="name" required value="{{ old('name', $user->name) }}"
-                                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('name') border-red-500 @enderror">
+                                class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100 @error('name') border-red-500 @enderror">
                             @error('name')
-                                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-500 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
 
                         {{-- Email --}}
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
-                                E-mailadres <span class="text-red-400">*</span>
+                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                E-mailadres <span class="text-red-500 dark:text-red-400">*</span>
                             </label>
                             <input type="email" name="email" id="email" required value="{{ old('email', $user->email) }}"
-                                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('email') border-red-500 @enderror">
+                                class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100 @error('email') border-red-500 @enderror">
                             @error('email')
-                                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-500 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
                 </div>
 
                 {{-- Extra Info --}}
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h2 class="text-xl font-semibold text-white mb-4">Extra Informatie</h2>
+                <div class="bg-white p-6 rounded-lg dark:bg-gray-700">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Extra Informatie</h2>
 
-                    <p class="text-gray-400 mb-6">
+                    <p class="text-gray-600 mb-6 dark:text-gray-400">
                         Deel optioneel extra informatie over je energiegebruik, woning of situatie. Dit helpt
                         ons je betere, gepersonaliseerde bespaartips te geven.
                     </p>
 
                     <div>
-                        <label for="additional_info" class="block text-sm font-medium text-gray-300 mb-2">
+                        <label for="additional_info" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Aanvullende informatie (optioneel)
                         </label>
                         <textarea name="additional_info" id="additional_info" rows="6" maxlength="1000"
                             placeholder="Bijvoorbeeld: 'Ik heb zonnepanelen sinds 2020', 'Woon in een appartement uit 1985', 'Werk veel thuis', etc."
-                            class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('additional_info') border-red-500 @enderror">{{ old('additional_info', $user->additional_info) }}</textarea>
+                            class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100 @error('additional_info') border-red-500 @enderror">{{ old('additional_info', $user->additional_info) }}</textarea>
 
-                        <div class="mt-2 flex justify-between text-sm text-gray-500">
+                        <div class="mt-2 flex justify-between text-sm text-gray-500 dark:text-gray-400">
                             <span>Deze informatie wordt alleen gebruikt voor betere energietips</span>
                             <span id="char-count">{{ strlen($user->additional_info ?? '') }}/1000</span>
                         </div>
 
                         @error('additional_info')
-                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-500 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -200,4 +197,4 @@
                 });
         }
     </script>
-@endsection
+</x-app-layout>

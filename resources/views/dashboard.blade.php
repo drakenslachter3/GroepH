@@ -387,6 +387,10 @@
     <script src="{{ asset('js/widget-navigation.js') }}" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Ensure config section is closed by default unless explicitly set to open
+            if (localStorage.getItem('configSectionOpen') === null) {
+                localStorage.setItem('configSectionOpen', 'false');
+            }
             // Configuration section toggle
             const toggleBtn = document.getElementById('toggleConfigSection');
             const content = document.getElementById('configSectionContent');
@@ -399,6 +403,9 @@
                 if (isOpen) {
                     content.classList.remove('hidden');
                     icon.classList.add('rotate-180');
+                } else {
+                    content.classList.add('hidden');
+                    icon.classList.remove('rotate-180');
                 }
 
                 toggleBtn.addEventListener('click', function() {
@@ -407,69 +414,8 @@
                     content.classList.toggle('hidden');
                     icon.classList.toggle('rotate-180');
 
-                    localStorage.setItem('configSectionOpen', isHidden);
-                });
-            }
-
-            // Auto-hide status message
-            const statusMsg = document.getElementById('status-message');
-            if (statusMsg) {
-                setTimeout(() => {
-                    statusMsg.classList.add('opacity-0');
-                    setTimeout(() => statusMsg.remove(), 1000);
-                }, 5000);
-            }
-
-            // Date picker change handler
-            const datePicker = document.getElementById('datePicker');
-            if (datePicker) {
-                datePicker.addEventListener('change', function() {
-                    const form = document.createElement('form');
-                    form.method = 'GET';
-                    form.action = '{{ route("dashboard") }}';
-
-                    const inputs = [
-                        { name: 'period', value: '{{ $period }}' },
-                        { name: 'date', value: this.value },
-                        { name: 'housing_type', value: '{{ request("housing_type", "tussenwoning") }}' }
-                    ];
-
-                    inputs.forEach(input => {
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.name = input.name;
-                        hiddenInput.value = input.value;
-                        form.appendChild(hiddenInput);
-                    });
-
-                    document.body.appendChild(form);
-                    form.submit();
-                });
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configuration section toggle
-            const toggleBtn = document.getElementById('toggleConfigSection');
-            const content = document.getElementById('configSectionContent');
-            const icon = document.getElementById('configSectionIcon');
-
-            if (toggleBtn && content && icon) {
-                // Check saved state
-                const isOpen = localStorage.getItem('configSectionOpen') === 'true';
-
-                if (isOpen) {
-                    content.classList.remove('hidden');
-                    icon.classList.add('rotate-180');
-                }
-
-                toggleBtn.addEventListener('click', function() {
-                    const isHidden = content.classList.contains('hidden');
-
-                    content.classList.toggle('hidden');
-                    icon.classList.toggle('rotate-180');
-
-                    localStorage.setItem('configSectionOpen', isHidden);
+                    // Save the new state: true if open, false if closed
+                    localStorage.setItem('configSectionOpen', !isHidden);
                 });
             }
 
