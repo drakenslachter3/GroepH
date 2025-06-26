@@ -188,29 +188,23 @@
                                 </section>
 
                                 <!-- Daily budget section -->
-                                <section id="daily-budget-section-{{ $meter->id }}" class="md:col-span-4 h-full" aria-labelledby="daily-budget-heading-{{ $meter->id }}" data-month="1" data-budget-for-month="0">
+                                @php 
+                                        $year = $currentYear;
+                                        $month = 1;
+                                        $days_in_current_month = \Carbon\Carbon::createFromDate($year, $month, 1)->daysInMonth;
+                                        $extra_days = $days_in_current_month - 28;
+                                        $day_counter = 1;
+                                        $budget_for_current_month = $monthlyBudgets->firstWhere('month', $month);
+                                        $electricityBudget = $budget_for_current_month->electricity_target_kwh;
+                                        $budget_divided = floor(($electricityBudget / $days_in_current_month) * 10) / 10;
+                                @endphp
+
+                                <section id="daily-budget-section-{{ $meter->id }}" class="md:col-span-4 h-full" aria-labelledby="daily-budget-heading-{{ $meter->id }}" data-month="1" data-budget-for-month="{{ $electricityBudget }}">
                                     <div class="flex flex-col h-full">
                                         <div class="mb-6">
                                             <h3 class="font-semibold text-lg dark:text-gray-200 mb-4">
                                                 {{ __('Dagelijkse budgetten') }}
                                             </h3>
-                                            
-                                            @php 
-                                                $months = [
-                                                    1 => 'Januari',
-                                                    2 => 'Februari', 
-                                                    3 => 'Maart',
-                                                    4 => 'April',
-                                                    5 => 'Mei',
-                                                    6 => 'Juni',
-                                                    7 => 'Juli',
-                                                    8 => 'Augustus',
-                                                    9 => 'September',
-                                                    10 => 'Oktober',
-                                                    11 => 'November',
-                                                    12 => 'December'
-                                                ];
-                                            @endphp
 
                                             <!-- Month navigation -->
                                             <div class="flex flex-row gap-2">
@@ -235,7 +229,7 @@
                                         <!-- Budget Progress -->
                                         <div class="mb-4" role="status" aria-live="polite">
                                             <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
-                                                <span>Budget voor deze maand: <span class="monthly-total"></span> <span class="total-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span></span>
+                                                <span>Budget voor deze maand: <span class="monthly-total"></span><span class="total-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span></span>
                                                 <span>Verdeeld: <span class="used-total"></span> <span class="used-unit">{{ $meter->measures_electricity ? 'kWh' : 'm³' }}</span> (<span class="used-percentage">100</span>%)</span>
                                             </div>
                                             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
@@ -247,17 +241,7 @@
                                                 </svg>
                                                 De dagelijkse budgetten mogen opgeteld niet boven het maandbudget uitkomen.
                                             </div>
-                                        </div>
-
-                                        @php 
-                                            $year = 2025;
-                                            $month = 1;
-                                            $days_in_current_month = \Carbon\Carbon::createFromDate($year, $month, 1)->daysInMonth;
-                                            $extra_days = $days_in_current_month - 28;
-                                            $day_counter = 1;
-                                            $budget_for_current_month = 1500;
-                                            $budget_divided = floor($budget_for_current_month / $days_in_current_month);
-                                        @endphp
+                                        </div>   
 
                                         <div class="flex-1 flex flex-col gap-6">
 
@@ -766,7 +750,7 @@
             //#section Daily budgets
 
             document.addEventListener('DOMContentLoaded', () => {
-                
+
             });
 
             window.handleMonthChange = function(meter_id, month_number) {

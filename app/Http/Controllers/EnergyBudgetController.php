@@ -42,11 +42,39 @@ class EnergyBudgetController extends Controller
                 }])
                 ->get();
         }
+
+        $userId = Auth::user()->id;
+        $monthlyBudgets = MonthlyEnergyBudget::with(['dailyEnergyBudgets' => function($query) {
+            $query->select('monthly_energy_budget_id', 'day', 'gas_target_m3', 'electricity_target_kwh')
+                ->orderBy('day');
+        }])
+        ->where('user_id', $user->id)
+        ->select('id', 'month')
+        ->orderBy('month')
+        ->get();
+
+                
+        $months = [
+            1 => 'Januari',
+            2 => 'Februari', 
+            3 => 'Maart',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Augustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'December'
+        ];
         
         return view('energy.form', [
             'smartMeters' => $smartMeters,
             'existingBudgets' => $existingBudgets,
-            'currentYear' => $currentYear
+            'currentYear' => $currentYear,
+            'montlyBudgets' => $monthlyBudgets,
+            'months' => $months
         ]);
     }
 

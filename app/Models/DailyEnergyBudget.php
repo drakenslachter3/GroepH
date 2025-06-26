@@ -4,23 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class MonthlyEnergyBudget extends Model
+class DailyEnergyBudget extends Model
 {
     protected $fillable = [
         'user_id',
-        'energy_budget_id',
-        'month',
+        'monthly_energy_budget_id',
+        'day',
         'gas_target_m3',
         'electricity_target_kwh',
-        'is_default',
     ];
 
     protected $casts = [
         'gas_target_m3' => 'float',
         'electricity_target_kwh' => 'float',
-        'is_default' => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -28,13 +25,8 @@ class MonthlyEnergyBudget extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function energyBudget(): BelongsTo
+    public function monthlyBudget(): BelongsTo
     {
-        return $this->belongsTo(EnergyBudget::class);
-    }
-
-    public function dailyEnergyBudgets(): HasMany
-    {
-        return $this->hasMany(DailyEnergyBudget::class, 'monthly_energy_budget_id');
+        return $this->belongsTo(MonthlyEnergyBudget::class, 'monthly_energy_budget_id');
     }
 }

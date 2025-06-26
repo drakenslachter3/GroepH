@@ -2,7 +2,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\InfluxData;
+use App\Models\MonthlyEnergyBudget;
 use App\Services\InfluxDBService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class InfluxDataController extends Controller
