@@ -44,7 +44,7 @@
                 </div>
                 <!-- Content section (collapsible) -->
                 <div id="configSectionContent" class="hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border-t">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border-t border-gray-200 dark:border-gray-700">
                         <!-- Widget Configuration Section -->
                         <div>
                             <h2 class="text-xl font-semibold text-gray-800 mb-6 dark:text-white">Widget Configuratie</h2>
@@ -81,9 +81,6 @@
                                             <option value="energy-chart-gas" {{ old('widget_type') == 'energy-chart-gas' ? 'selected' : '' }}>
                                                 Gas Grafiek
                                             </option>
-                                            <option value="energy-suggestions" {{ old('widget_type') == 'energy-suggestions' ? 'selected' : '' }}>
-                                                Energiebesparingstips
-                                            </option>
                                             <option value="net-result" {{ old('widget_type') == 'net-result' ? 'selected' : '' }}>
                                                 Netto resultante
                                             </option>
@@ -108,7 +105,7 @@
                                 </button>
                             </form>
 
-                            <div class="mt-6 border-t border-gray-200 pt-6 flex space-x-4">
+                            <div class="mt-6 border-t border-gray-200  dark:border-gray-700 pt-6 flex space-x-4">
                                 <form action="{{ route('dashboard.resetLayout') }}" method="POST" class="flex-1">
                                     @csrf
                                     <button type="submit"
@@ -258,7 +255,6 @@
                             'energy-status-gas',
                             'energy-chart-electricity',
                             'energy-chart-gas',
-                            'energy-suggestions',
                             'energy-prediction-chart-electricity',
                             'energy-prediction-chart-gas',
                             'net-result',
@@ -273,7 +269,6 @@
                             'usage-prediction' => 'large',
                             'energy-status-electricity', 'energy-status-gas' => 'small',
                             'energy-chart-electricity', 'energy-chart-gas' => 'large',
-                            'energy-suggestions' => 'large',
                             'energy-prediction-chart-electricity', 'energy-prediction-chart-gas' => 'large',
                             'switch-meter' => 'full',
                             'net-result' => 'large',
@@ -329,17 +324,6 @@
                                         :previousYearData="$meterDataForPeriod['historical_data'] ?? []" />
                                 @break
 
-                                @case('energy-suggestions')
-                                    <x-dashboard.energy-suggestions title="Gepersonaliseerde Energiebesparingstips"
-                                        :usagePattern="$usagePattern ?? 'avond'" :housingType="$housingType" :season="date('n') >= 3 && date('n') <= 5
-                                        ? 'lente'
-                                        : (date('n') >= 6 && date('n') <= 8
-                                            ? 'zomer'
-                                            : (date('n') >= 9 && date('n') <= 11
-                                                ? 'herfst'
-                                                : 'winter'))" />
-                                @break
-
                                 @case('energy-prediction-chart-electricity')
                                     <x-dashboard.energy-prediction-chart type="electricity" title="Voorspelling Elektriciteitsverbruik"
                                         :period="$period" :date="$date" unit="kWh"
@@ -387,7 +371,7 @@
     <script src="{{ asset('js/widget-navigation.js') }}" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Ensure config section is closed by default unless explicitly set to open
+            // Only set default if key does not exist at all
             if (localStorage.getItem('configSectionOpen') === null) {
                 localStorage.setItem('configSectionOpen', 'false');
             }
@@ -398,7 +382,7 @@
 
             if (toggleBtn && content && icon) {
                 // Check saved state
-                const isOpen = localStorage.getItem('configSectionOpen') === 'true';
+                const isOpen = localStorage.getItem('configSectionOpen') === 'false';
 
                 if (isOpen) {
                     content.classList.remove('hidden');

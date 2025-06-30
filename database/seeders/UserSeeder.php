@@ -37,11 +37,11 @@ class UserSeeder extends Seeder
             'active' => true,
         ]);
 
-        // Create some smart meters
+        // Create some realistic smart meters
         $meter1 = SmartMeter::create([
             'meter_id' => '2019-ETI-EMON-V01-105C4E-16405E',
-            'name' => '1',
-            'location' => 'Woonkamer',
+            'name' => 'Bedrijfspand A - Meterkast',
+            'location' => 'Meterkast',
             'measures_electricity' => true,
             'measures_gas' => true,
             'installation_date' => now(),
@@ -50,8 +50,8 @@ class UserSeeder extends Seeder
 
         $meter2 = SmartMeter::create([
             'meter_id' => '2019-ETI-EMON-V01-107560-16405E',
-            'name' => '2',
-            'location' => 'Woonkamer',
+            'name' => 'Huis B - Technische ruimte',
+            'location' => 'Technische ruimte',
             'measures_electricity' => true,
             'measures_gas' => true,
             'installation_date' => now(),
@@ -60,8 +60,8 @@ class UserSeeder extends Seeder
 
         $meter3 = SmartMeter::create([
             'meter_id' => '2019-ETI-EMON-V01-F271AE-16405E',
-            'name' => '3',
-            'location' => 'Woonkamer',
+            'name' => 'Kantoor C - Meterkast',
+            'location' => 'Meterkast',
             'measures_electricity' => true,
             'measures_gas' => true,
             'installation_date' => now(),

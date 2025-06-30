@@ -65,38 +65,53 @@
             @endif
 
             <!-- Percentage zelf opgewekt -->
-            <div class="flex justify-between items-center">
-                <span class="text-gray-700 dark:text-gray-300">U heeft <span class="font-bold">{{ $percentageProduced }}%</span> van uw stroomverbruik zelf opgewekt!</span>
-                <span class="font-bold dark:text-white"></span>
+            <div class="flex flex-col justify-between items-start gap-1 py-2">
+                @if($percentageProduced > 0)
+                <span class="text-gray-700 dark:text-gray-300">
+                    U heeft <span class="font-bold">{{ $percentageProduced }}%</span> van uw stroomverbruik zelf opgewekt!
+                </span>
+                @endif
+
+                @if($percentageSurplus > 0)
+                    <span class="text-gray-700 dark:text-gray-300">
+                        U heeft <span class="font-bold">{{ $percentageSurplus }}%</span> meer opgewekt dan u heeft verbruikt!
+                    </span>
+                @endif
             </div>
 
             <!-- Legenda -->
-            <div class="mt-5 flex space-x-4 text-sm">
+            <div class="mt-5 flex space-x-4 text-sm justify-center">
                 <!-- Zelf opgewekt -->
-               <div class="flex items-center space-x-2">
+                @if($percentageProduced > 0)
+                <div class="flex items-center space-x-2">
                     <div class="w-4 h-4 rounded-sm border" style="background-color: #0079ff; border-color: #0079ff;"></div>
                     <span class="text-gray-700 dark:text-gray-300">Zelf opgewekt</span>
                 </div>
+                @endif
 
                 <!-- Restant -->
+                @if($percentageConsumed > 0)
                 <div class="flex items-center space-x-2">
                     <div class="w-4 h-4 bg-gray-300 rounded-sm border border-gray-400"></div>
                     <span class="text-gray-700 dark:text-gray-300">Restant</span>
                 </div>
+                @endif
                 <!-- Overschot (optioneel) -->
-
+                @if($percentageSurplus > 0)
                 <div class="flex items-center space-x-2">
                     <div class="w-4 h-4 bg-blue-200 rounded-sm border border-blue-400"></div>
                     <span class="text-gray-700 dark:text-gray-300">Overschot</span>
                 </div>
-                
+                @endif
             </div>
         </div>
     </div>
 
     <!-- Canvas voor pie chart -->
-    <div class="mt-6 w-56 flex justify-center">
-        <canvas id="nettoPieChart" class="max-w-xs"></canvas>
+    <div class="mt-6 w-full flex justify-center">
+        <div class="w-56 flex justify-center">
+            <canvas id="nettoPieChart" class="max-w-xs"></canvas>
+        </div>
     </div>
 </div>
 
