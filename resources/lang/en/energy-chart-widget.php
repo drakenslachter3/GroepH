@@ -58,4 +58,7 @@ return [
 'comparison_shown' => 'Vergelijking met vorig jaar is nu zichtbaar',
 'comparison_hidden' => 'Vergelijking met vorig jaar is nu verborgen',
 'total' => 'Totaal',
+'period_column_day' => 'Datum',
+'period_column_month' => 'Maand',
+'period_column_year' => 'Jaar',
 ];
